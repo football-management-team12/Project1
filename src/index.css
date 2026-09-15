@@ -1,0 +1,34 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+
+body{
+
+    font-family: Arial, sans-serif;
+
+    color:#1F2937;
+
+    background:#FFFFFF;
+
+}
+
+
+button{
+
+    cursor:pointer;
+
+    font-size:14px;
+
+}
+
+
+a{
+
+    text-decoration:none;
+
+    color:inherit;
+
+}
