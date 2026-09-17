@@ -1,95 +1,109 @@
+import { Link } from "react-router-dom";
 import "./Footer.css";
 
+function Footer() {
+  return (
+    <footer className="footer">
+      <div className="footer-container">
+        <div className="footer-main">
+          {/* Logo + description */}
 
-function Footer(){
+          <div className="footer-brand">
+            <div className="footer-logo">
+              <span className="footer-logo-icon">
+                ⚽
+              </span>
 
-    return (
-
-        <footer className="footer">
-
-
-            <div className="footer-column">
-
-                <h3>Sân bóng</h3>
-
-                <p>
-                    Hệ thống đặt sân bóng trực tuyến
-                </p>
-
-                <p>
-                    Sân chất lượng - Giá hợp lý
-                </p>
-
+              <span>Sân Bóng</span>
             </div>
 
+            <p>
+              Hệ thống đặt sân bóng trực tuyến thông minh,
+              kết nối các sân bóng chất lượng cao đến mọi
+              cầu thủ trên toàn quốc.
+            </p>
+          </div>
 
+          {/* About */}
 
-            <div className="footer-column">
+          <div className="footer-column">
+            <h3>Về chúng tôi</h3>
 
-                <h3>Về chúng tôi</h3>
+            <Link to="/gioi-thieu">
+              Giới thiệu hệ thống
+            </Link>
 
-                <p>
-                    Giới thiệu
-                </p>
+            <Link to="/dieu-khoan">
+              Điều khoản sử dụng
+            </Link>
 
-                <p>
-                    Điều khoản sử dụng
-                </p>
+            <Link to="/bao-mat">
+              Chính sách bảo mật
+            </Link>
 
-                <p>
-                    Chính sách bảo mật
-                </p>
+            <Link to="/tin-tuc">
+              Tin tức & sự kiện
+            </Link>
+          </div>
 
-            </div>
+          {/* Support */}
 
+          <div className="footer-column">
+            <h3>Hỗ trợ khách hàng</h3>
 
+            <Link to="/huong-dan">
+              Hướng dẫn đặt sân
+            </Link>
 
+            <Link to="/thanh-toan">
+              Phương thức thanh toán
+            </Link>
 
-            <div className="footer-column">
+            <Link to="/faq">
+              Câu hỏi thường gặp
+            </Link>
 
-                <h3>Hỗ trợ</h3>
+            <Link to="/trung-tam-tro-giup">
+              Trung tâm trợ giúp
+            </Link>
+          </div>
 
-                <p>
-                    Hướng dẫn đặt sân
-                </p>
+          {/* Contact */}
 
-                <p>
-                    Câu hỏi thường gặp
-                </p>
+          <div className="footer-column contact-column">
+            <h3>Liên hệ</h3>
 
-                <p>
-                    Hỗ trợ khách hàng
-                </p>
+            <p>Hotline: 1900 1234</p>
+            <p>Email: hotro@sanbong.vn</p>
+            <p>
+              Địa chỉ: Quận 7, TP. Hồ Chí Minh
+            </p>
+            <p>Hợp tác nhượng quyền</p>
+          </div>
+        </div>
 
-            </div>
+        <div className="footer-bottom">
+          <p>
+            © 2026 Sân Bóng. Tất cả quyền được bảo lưu.
+          </p>
 
+          <div className="social-icons">
+            <a href="#facebook" aria-label="Facebook">
+              f
+            </a>
 
+            <a href="#youtube" aria-label="Youtube">
+              ▶
+            </a>
 
-
-            <div className="footer-column">
-
-                <h3>Liên hệ</h3>
-
-                <p>
-                    📍 Hà Nội
-                </p>
-
-                <p>
-                    📞 0123 456 789
-                </p>
-
-                <p>
-                    ✉ support@sanbong.com
-                </p>
-
-            </div>
-
-
-        </footer>
-
-    )
-
+            <a href="#x" aria-label="X">
+              x
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
 }
-
 
 export default Footer;
