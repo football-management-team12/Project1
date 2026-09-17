@@ -1,7 +1,7 @@
-import Navbar from "../components/Navbar";
-import FieldCard from "../components/FieldCard";
-import "../css/Home.css";
-import Footer from "../components/Footer";
+import Navbar from "../../components/Navbar/Navbar";
+import FieldCard from "../../components/FieldCard/FieldCard";
+import "./Home.css";
+import Footer from "../../components/Footer/Footer";
 
 function Home(){
 

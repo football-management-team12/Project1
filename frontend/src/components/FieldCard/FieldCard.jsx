@@ -1,4 +1,4 @@
-import "../css/FieldCard.css";
+import "./FieldCard.css";
 
 
 function FieldCard({name}){
