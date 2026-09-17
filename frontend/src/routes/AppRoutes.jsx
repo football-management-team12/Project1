@@ -1,14 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 
 import Home from "../pages/Home/Home";
-
-function Login() {
-  return <h1>Login Page</h1>;
-}
-
-function Register() {
-  return <h1>Register Page</h1>;
-}
+import Login from "../pages/Login/Login";
+import Register from "../pages/Register/Register";
 
 function Fields() {
   return <h1>Fields Page</h1>;

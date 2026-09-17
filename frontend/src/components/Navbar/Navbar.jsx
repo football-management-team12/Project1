@@ -57,11 +57,11 @@ function Navbar() {
             <SearchIcon />
           </div>
 
-          <Link to="/dang-nhap" className="login-link">
+          <Link to="/login" className="login-link">
             Đăng nhập
           </Link>
 
-          <Link to="/dang-ky" className="register-button">
+          <Link to="/register" className="register-button">
             Đăng ký
           </Link>
         </div>

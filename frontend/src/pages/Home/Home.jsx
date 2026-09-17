@@ -1,14 +1,12 @@
 import { Link } from "react-router-dom";
 
+import footballField from "../../assets/images/football-field.jpg";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import FieldCard from "../../components/FieldCard/FieldCard";
 
 import "./Home.css";
 
-// Nếu bạn có ảnh local thì thay các URL bên dưới
-// bằng:
-// import heroImage from "../../assets/images/hero-stadium.jpg";
 
 const fields = [
   {
@@ -188,7 +186,7 @@ function Home() {
 
           <div className="hero-image-wrapper">
             <img
-              src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=85"
+              src={footballField}
               alt="Sân bóng đá"
               className="hero-image"
             />
