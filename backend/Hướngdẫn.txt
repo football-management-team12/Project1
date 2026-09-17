@@ -1,0 +1,3 @@
+Chỉ được:
+Xóa file test.py.
+Xóa nội dung trong các file .dockerignore, Dockerfile, requirements.txt.
