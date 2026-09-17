@@ -31,7 +31,7 @@ function Navbar() {
             Trang chủ
           </Link>
 
-          <Link to="/san-bong" className="navbar-link">
+          <Link to="/fields" className="navbar-link">
             Sân bóng
           </Link>
 

@@ -177,7 +177,7 @@ function Home() {
             </p>
 
             <Link
-              to="/san-bong"
+              to="/fields"
               className="hero-button"
             >
               Đặt sân ngay

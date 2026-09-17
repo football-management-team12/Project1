@@ -1,0 +1,380 @@
+.field-list-page {
+  min-height: 100vh;
+  background: #f7f9fc;
+  color: #0f172a;
+}
+
+/* =========================
+   FILTER
+========================= */
+
+.field-filter-section {
+  background: #ffffff;
+  border-top: 1px solid #edf1f5;
+  border-bottom: 1px solid #dfe6ee;
+}
+
+.field-filter {
+  width: min(1360px, calc(100% - 48px));
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns:
+    minmax(300px, 2fr)
+    minmax(190px, 1fr)
+    minmax(170px, 0.85fr)
+    145px;
+
+  gap: 16px;
+  align-items: end;
+
+  padding: 26px 0;
+}
+
+.field-filter__group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-filter__group label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.field-filter__input-wrapper {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 0 13px;
+
+  border: 1px solid #d8e0e9;
+  border-radius: 7px;
+  background: #f8fafc;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.field-filter__input-wrapper:focus-within {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.08);
+}
+
+.field-filter__input-wrapper svg {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.field-filter__input-wrapper input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+
+  font-family: inherit;
+  font-size: 14px;
+  color: #334155;
+}
+
+.field-filter__input-wrapper input::placeholder {
+  color: #64748b;
+}
+
+.field-filter__group select {
+  width: 100%;
+  height: 44px;
+
+  padding: 0 14px;
+
+  border: 1px solid #d8e0e9;
+  border-radius: 7px;
+
+  outline: none;
+  background: #f8fafc;
+
+  font-family: inherit;
+  font-size: 14px;
+  color: #334155;
+
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.field-filter__group select:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.08);
+}
+
+.field-filter__submit {
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: none;
+  border-radius: 7px;
+
+  background: #16a34a;
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.field-filter__submit:hover {
+  background: #15803d;
+}
+
+.field-filter__submit:active {
+  transform: scale(0.98);
+}
+
+/* =========================
+   LIST CONTAINER
+========================= */
+
+.field-list-container {
+  width: min(1360px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 42px 0 50px;
+}
+
+.field-list__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+
+  margin-bottom: 32px;
+}
+
+.field-list__heading h1 {
+  margin: 0 0 6px;
+
+  color: #111827;
+
+  font-size: 25px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.field-list__heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.field-list__result {
+  margin-top: 13px;
+
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+/* =========================
+   GRID
+========================= */
+
+.field-list__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+
+/* =========================
+   EMPTY
+========================= */
+
+.field-list__empty {
+  min-height: 330px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+
+  color: #64748b;
+}
+
+.field-list__empty svg {
+  margin-bottom: 14px;
+  color: #16a34a;
+}
+
+.field-list__empty h2 {
+  margin: 0 0 7px;
+  font-size: 19px;
+  color: #1e293b;
+}
+
+.field-list__empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* =========================
+   PAGINATION
+========================= */
+
+.field-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 10px;
+  margin-top: 70px;
+}
+
+.field-pagination button {
+  height: 40px;
+  border: 1px solid #dbe3ec;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #475569;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.field-pagination__page {
+  width: 42px;
+}
+
+.field-pagination__navigation {
+  padding: 0 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.field-pagination button:hover:not(:disabled) {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.field-pagination
+  .field-pagination__page--active {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.field-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1200px) {
+  .field-list__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .field-filter {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
+
+  .field-filter__submit {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .field-filter {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .field-filter__name {
+    grid-column: 1 / -1;
+  }
+
+  .field-list__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .field-filter,
+  .field-list-container {
+    width: min(100% - 28px, 1360px);
+  }
+
+  .field-filter {
+    grid-template-columns: 1fr;
+    padding: 20px 0;
+  }
+
+  .field-filter__name,
+  .field-filter__submit {
+    grid-column: auto;
+  }
+
+  .field-list-container {
+    padding-top: 30px;
+  }
+
+  .field-list__heading {
+    flex-direction: column;
+    margin-bottom: 24px;
+  }
+
+  .field-list__heading h1 {
+    font-size: 22px;
+  }
+
+  .field-list__result {
+    margin-top: 0;
+  }
+
+  .field-list__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field-pagination {
+    margin-top: 40px;
+    gap: 6px;
+  }
+
+  .field-pagination__navigation {
+    padding: 0 10px;
+  }
+}
