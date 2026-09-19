@@ -3,10 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Home from "../pages/Home/Home";
 import Login from "../pages/Login/Login";
 import Register from "../pages/Register/Register";
-
-function Fields() {
-  return <h1>Fields Page</h1>;
-}
+import FieldList from "../pages/FieldList/FieldList";
 
 function Booking() {
   return <h1>Booking Page</h1>;
@@ -25,7 +22,7 @@ function AppRoutes() {
 
       <Route path="/register" element={<Register />} />
 
-      <Route path="/fields" element={<Fields />} />
+      <Route path="/fields" element={<FieldList />} />
 
       <Route path="/booking" element={<Booking />} />
 
