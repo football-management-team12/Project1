@@ -4,14 +4,12 @@ import Home from "../pages/Home/Home";
 import Login from "../pages/Login/Login";
 import Register from "../pages/Register/Register";
 import FieldList from "../pages/FieldList/FieldList";
-
+import Admin from "../pages/Admin/Admin";
 function Booking() {
   return <h1>Booking Page</h1>;
 }
 
-function Admin() {
-  return <h1>Admin Page</h1>;
-}
+
 
 function AppRoutes() {
   return (

@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -10,12 +11,12 @@ import {
 
 import AuthLayout from "../../components/AuthLayout/AuthLayout";
 import loginField from "../../assets/images/football-field.jpg";
-
+import {useNavigate} from "react-router-dom";
 import "./Login.css";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
-
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     account: "",
     password: "",
@@ -75,22 +76,48 @@ function Login() {
     }
 
     try {
-      console.log("Login data:", formData);
+      const response = await axios.post(
+    "http://localhost:5000/api/auth/login",
+    {
+        account: formData.account,
+        password: formData.password
+    }
+);
 
-      /*
-        Sau này khi Backend hoàn thành:
 
-        const response = await authService.login({
-          account: formData.account,
-          password: formData.password,
-        });
+console.log(response.data);
 
-        console.log(response);
-      */
 
-      setServerMessage(
-        "Dữ liệu hợp lệ. Sẵn sàng gửi tới Backend."
-      );
+if(response.data.success){
+
+
+    setServerMessage(
+        "Đăng nhập thành công"
+    );
+
+
+    // lưu thông tin user
+    localStorage.setItem(
+        "user",
+        JSON.stringify(response.data.user)
+    );
+
+
+    // chuyển sang admin
+    navigate("/admin");
+
+
+}
+else{
+
+
+    setServerMessage(
+        "Sai tài khoản hoặc mật khẩu"
+    );
+
+
+}
+
     } catch (error) {
       setServerMessage(
         error.message || "Đăng nhập thất bại."
