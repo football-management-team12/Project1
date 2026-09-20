@@ -1,15 +1,20 @@
 .navbar {
   width: 100%;
-  height: 72px;
+  height: 64px;
   background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  position: relative;
-  z-index: 100;
+  border-bottom: 1px solid #eeeeee;
+
+  display: flex;
+  align-items: center;
+
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .navbar-container {
-  max-width: 1280px;
-  height: 100%;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
 
@@ -18,62 +23,71 @@
   justify-content: space-between;
 }
 
-/* Logo */
 
-.navbar-logo {
+/* =========================
+   LOGO
+========================= */
+
+.navbar-brand {
   display: flex;
   align-items: center;
   gap: 9px;
 
-  color: #16a34a;
-  font-size: 20px;
-  font-weight: 700;
   text-decoration: none;
+  color: #0b9b4b;
+
+  font-size: 18px;
+  font-weight: 700;
 
   white-space: nowrap;
 }
 
-.logo-icon {
-  width: 30px;
-  height: 30px;
+.navbar-logo-icon {
+  width: 32px;
+  height: 32px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
+  background: #0ba34a;
   border-radius: 50%;
-  background: #16a34a;
-  color: #ffffff;
-  font-size: 15px;
+
+  color: white;
+  font-size: 17px;
 }
 
-/* Menu */
+
+/* =========================
+   MENU
+========================= */
 
 .navbar-menu {
   display: flex;
   align-items: center;
-  gap: 34px;
-  margin-left: 35px;
+  gap: 28px;
 }
 
 .navbar-link {
   position: relative;
 
-  color: #64748b;
+  color: #4b5563;
   text-decoration: none;
+
   font-size: 14px;
   font-weight: 500;
 
-  transition: 0.2s ease;
+  padding: 23px 0 19px;
+
+  transition: color 0.2s ease;
 }
 
 .navbar-link:hover {
-  color: #16a34a;
+  color: #0ba34a;
 }
 
 .navbar-link.active {
-  color: #16a34a;
-  font-weight: 600;
+  color: #0ba34a;
 }
 
 .navbar-link.active::after {
@@ -81,125 +95,79 @@
 
   position: absolute;
   left: 0;
-  right: 0;
-  bottom: -9px;
+  bottom: 14px;
 
-  height: 2px;
-  background: #16a34a;
-  border-radius: 10px;
-}
-
-/* Right */
-
-.navbar-right {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-}
-
-/* Search */
-
-.search-box {
-  width: 220px;
-  height: 40px;
-
-  display: flex;
-  align-items: center;
-
-  padding: 0 13px;
-
-  border: 1px solid #e2e8f0;
-  border-radius: 22px;
-
-  color: #64748b;
-}
-
-.search-box input {
   width: 100%;
-  border: none;
-  outline: none;
+  height: 2px;
 
-  font-size: 13px;
-  color: #334155;
-  background: transparent;
+  background: #0ba34a;
 }
 
-.search-box input::placeholder {
-  color: #94a3b8;
-}
 
-/* Login */
+/* =========================
+   LOGIN / REGISTER
+========================= */
+
+.navbar-auth {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  white-space: nowrap;
+}
 
 .login-link {
-  color: #1e293b;
+  color: #111827;
+  text-decoration: none;
+
   font-size: 14px;
   font-weight: 600;
-  text-decoration: none;
 }
 
 .login-link:hover {
-  color: #16a34a;
+  color: #0ba34a;
 }
 
-/* Register */
-
-.register-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  height: 40px;
-  padding: 0 17px;
-
-  background: #16a34a;
+.register-btn {
+  background: #0ba34a;
   color: #ffffff;
 
-  border-radius: 6px;
+  text-decoration: none;
+
+  padding: 9px 14px;
+  border-radius: 7px;
 
   font-size: 14px;
   font-weight: 600;
-  text-decoration: none;
 
-  transition: 0.2s ease;
+  transition: background 0.2s ease;
 }
 
-.register-button:hover {
-  background: #15803d;
+.register-btn:hover {
+  background: #078d3e;
 }
 
-/* Responsive */
 
-@media (max-width: 1100px) {
-  .navbar-menu {
-    gap: 18px;
-    margin-left: 15px;
-  }
-
-  .search-box {
-    width: 170px;
-  }
-}
+/* =========================
+   RESPONSIVE
+========================= */
 
 @media (max-width: 900px) {
   .navbar-menu {
-    display: none;
+    gap: 14px;
   }
 
-  .navbar-right {
-    margin-left: auto;
+  .navbar-brand {
+    font-size: 16px;
+  }
+
+  .navbar-link {
+    font-size: 13px;
   }
 }
 
-@media (max-width: 600px) {
-  .search-box {
+@media (max-width: 768px) {
+  .navbar-menu {
     display: none;
-  }
-
-  .login-link {
-    display: none;
-  }
-
-  .navbar-container {
-    padding: 0 16px;
   }
 }

@@ -1,19 +1,11 @@
-import { Link } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import "./Navbar.css";
 
-function SearchIcon() {
+function FootballIcon() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-4-4" />
-    </svg>
+    <div className="navbar-logo-icon">
+      ⚽
+    </div>
   );
 }
 
@@ -21,50 +13,66 @@ function Navbar() {
   return (
     <header className="navbar">
       <div className="navbar-container">
-        <Link to="/" className="navbar-logo">
-          <span className="logo-icon">⚽</span>
-          <span>Sân Bóng</span>
+
+        {/* Logo */}
+        <Link to="/" className="navbar-brand">
+          <FootballIcon />
+          <span>Sân Bóng Xuân Son</span>
         </Link>
 
+        {/* Menu */}
         <nav className="navbar-menu">
-          <Link to="/" className="navbar-link active">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              isActive ? "navbar-link active" : "navbar-link"
+            }
+          >
             Trang chủ
-          </Link>
+          </NavLink>
 
-          <Link to="/fields" className="navbar-link">
-            Sân bóng
-          </Link>
+          <NavLink
+            to="/fields"
+            className={({ isActive }) =>
+              isActive ? "navbar-link active" : "navbar-link"
+            }
+          >
+            Danh sách sân
+          </NavLink>
 
-          <Link to="/lich-dat" className="navbar-link">
+          <NavLink
+            to="/booking"
+            className={({ isActive }) =>
+              isActive ? "navbar-link active" : "navbar-link"
+            }
+          >
             Lịch đặt
-          </Link>
+          </NavLink>
 
-          <Link to="/bang-gia" className="navbar-link">
+          <a href="#pricing" className="navbar-link">
             Bảng giá
-          </Link>
+          </a>
 
-          <Link to="/lien-he" className="navbar-link">
+          <a href="#about" className="navbar-link">
+            Giới thiệu
+          </a>
+
+          <a href="#contact" className="navbar-link">
             Liên hệ
-          </Link>
+          </a>
         </nav>
 
-        <div className="navbar-right">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sân bóng"
-            />
-            <SearchIcon />
-          </div>
-
+        {/* Auth */}
+        <div className="navbar-auth">
           <Link to="/login" className="login-link">
             Đăng nhập
           </Link>
 
-          <Link to="/register" className="register-button">
+          <Link to="/register" className="register-btn">
             Đăng ký
           </Link>
         </div>
+
       </div>
     </header>
   );
