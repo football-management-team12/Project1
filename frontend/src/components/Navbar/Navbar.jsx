@@ -52,10 +52,15 @@ function Navbar() {
           <a href="#pricing" className="navbar-link">
             Bảng giá
           </a>
-
-          <a href="#about" className="navbar-link">
+          
+          <NavLink
+            to="/about"
+            className={({ isActive }) =>
+              isActive ? "navbar-link active" : "navbar-link"
+            }
+          >
             Giới thiệu
-          </a>
+          </NavLink>
 
           <a href="#contact" className="navbar-link">
             Liên hệ
