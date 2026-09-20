@@ -6,10 +6,7 @@ import Register from "../pages/Register/Register";
 import FieldList from "../pages/FieldList/FieldList";
 import Admin from "../pages/Admin/Admin";
 import About from "../pages/About/About";
-function Booking() {
-  return <h1>Booking Page</h1>;
-}
-
+import Booking from "../pages/Booking/Booking";
 
 
 function AppRoutes() {

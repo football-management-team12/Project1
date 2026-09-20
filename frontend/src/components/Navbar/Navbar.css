@@ -42,19 +42,11 @@
   white-space: nowrap;
 }
 
-.navbar-logo-icon {
-  width: 32px;
-  height: 32px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #0ba34a;
-  border-radius: 50%;
-
-  color: white;
-  font-size: 17px;
+.navbar-logo-image {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  display: block;
 }
 
 

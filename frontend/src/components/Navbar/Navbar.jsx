@@ -1,13 +1,7 @@
 import { NavLink, Link } from "react-router-dom";
 import "./Navbar.css";
+import logoIcon from "../../assets/icons/ball.png";
 
-function FootballIcon() {
-  return (
-    <div className="navbar-logo-icon">
-      ⚽
-    </div>
-  );
-}
 
 function Navbar() {
   return (
@@ -16,7 +10,7 @@ function Navbar() {
 
         {/* Logo */}
         <Link to="/" className="navbar-brand">
-          <FootballIcon />
+          <img src={logoIcon} alt="Logo Sân Bóng Xuân Son" className="navbar-logo-image" />
           <span>Sân Bóng Xuân Son</span>
         </Link>
 
