@@ -1,78 +1,70 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 
 import Navbar from "../../components/Navbar/Navbar";
 import FieldCard from "../../components/FieldCard/FieldCard";
 
-import field1 from "../../assets/images/football-field.jpg";
-
 import "./FieldList.css";
 
-const fields = [
-  {
-    id: 1,
-    name: "Sân bóng Sport Link ABC",
-    address: "Chu Văn An, Bình Thạnh, TP.HCM",
-    type: "Sân cỏ nhân tạo 7 người",
-    rating: 4.8,
-    price: 300000,
-    image: field1,
-  },
-  {
-    id: 2,
-    name: "Sân bóng B",
-    address: "Đào Duy Từ, Quận 10, TP.HCM",
-    type: "Sân tiêu chuẩn 11 người",
-    rating: 4.9,
-    price: 800000,
-    image: field1,
-  },
-  {
-    id: 3,
-    name: "Sân bóng PT",
-    address: "Lý Thường Kiệt, Quận 11, TP.HCM",
-    type: "Sân 7 người / 5 người",
-    rating: 4.7,
-    price: 350000,
-    image: field1,
-  },
-  {
-    id: 4,
-    name: "Sân bóng 789",
-    address: "Bình Quới, Bình Thạnh, TP.HCM",
-    type: "Sân 7 người ven sông",
-    rating: 4.5,
-    price: 280000,
-    image: field1,
-  },
-  {
-    id: 5,
-    name: "Sân bóng Club",
-    address: "Quốc Hương, Quận 2, TP.HCM",
-    type: "Sân 5 người cao cấp",
-    rating: 4.6,
-    price: 400000,
-    image: field1,
-  },
-  {
-    id: 6,
-    name: "Sân bóng Tân Bình Arena",
-    address: "Cộng Hòa, Tân Bình, TP.HCM",
-    type: "Sân 7 người mái che",
-    rating: 4.4,
-    price: 320000,
-    image: field1,
-  },
-];
-
 function FieldList() {
+  const [fields, setFields] = useState([]);
   const [keyword, setKeyword] = useState("");
+  const [location, setLocation] = useState("");
+  const [fieldType, setFieldType] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filteredFields = fields.filter((field) =>
-    field.name
+  useEffect(() => {
+    fetch("http://localhost:5000/api/fields")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Không thể kết nối đến server");
+        }
+
+        return response.json();
+      })
+      .then((result) => {
+        if (result.success) {
+          setFields(result.data);
+        } else {
+          setError(result.message || "Không thể lấy danh sách sân");
+        }
+      })
+      .catch((error) => {
+        console.error("Lỗi khi lấy danh sách sân:", error);
+        setError("Không thể kết nối đến server");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  const filteredFields = fields.filter((field) => {
+    const matchKeyword = field.name
       .toLowerCase()
-      .includes(keyword.toLowerCase())
-  );
+      .includes(keyword.toLowerCase());
+
+    const matchLocation =
+      location === "" || field.address === location;
+
+    const matchFieldType =
+      fieldType === "" || field.type === fieldType;
+
+    return matchKeyword && matchLocation && matchFieldType;
+  });
+
+  const locations = [
+    ...new Set(fields.map((field) => field.address)),
+  ];
+
+  const fieldTypes = [
+    ...new Set(fields.map((field) => field.type)),
+  ];
+
+  const handleSearch = () => {
+    // Bo loc da duoc xu ly truc tiep bang state.
+    // Nut nay giu de nguoi dung chu dong thuc hien tim kiem.
+  };
 
   return (
     <>
@@ -82,6 +74,7 @@ function FieldList() {
         <section className="field-filter-section">
           <div className="field-filter">
 
+            {/* TEN SAN */}
             <div className="field-filter__group field-filter__name">
               <label>TÊN SÂN BÓNG</label>
 
@@ -90,38 +83,54 @@ function FieldList() {
 
                 <input
                   type="text"
-                  placeholder="Nhập tên sân (vd: Phú Thọ, Tân Bình...)"
+                  placeholder="Nhập tên sân..."
                   value={keyword}
-                  onChange={(e) =>
-                    setKeyword(e.target.value)
-                  }
+                  onChange={(e) => setKeyword(e.target.value)}
                 />
               </div>
             </div>
 
+            {/* KHU VUC */}
             <div className="field-filter__group">
               <label>KHU VỰC</label>
 
-              <select>
-                <option>Tất cả quận huyện</option>
-                <option>Bình Thạnh</option>
-                <option>Tân Bình</option>
-                <option>Quận 10</option>
-                <option>Quận 11</option>
+              <select
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              >
+                <option value="">Tất cả khu vực</option>
+
+                {locations.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
               </select>
             </div>
 
+            {/* LOAI SAN */}
             <div className="field-filter__group">
               <label>LOẠI SÂN</label>
 
-              <select>
-                <option>Sân 7 người</option>
-                <option>Sân 5 người</option>
-                <option>Sân 11 người</option>
+              <select
+                value={fieldType}
+                onChange={(e) => setFieldType(e.target.value)}
+              >
+                <option value="">Tất cả loại sân</option>
+
+                {fieldTypes.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
               </select>
             </div>
 
-            <button className="field-filter__submit">
+            {/* TIM KIEM */}
+            <button
+              className="field-filter__submit"
+              onClick={handleSearch}
+            >
               <Search size={18} />
               Tìm sân
             </button>
@@ -141,25 +150,59 @@ function FieldList() {
               </p>
             </div>
 
-            <span className="field-list__result">
-              Tìm thấy {filteredFields.length} kết quả
-            </span>
+            {!loading && !error && (
+              <span className="field-list__result">
+                Tìm thấy {filteredFields.length} kết quả
+              </span>
+            )}
           </div>
 
-          <div className="field-list__grid">
-            {filteredFields.map((field) => (
-              <FieldCard
-                key={field.id}
-                id={field.id}
-                image={field.image}
-                name={field.name}
-                address={field.address}
-                type={field.type}
-                rating={field.rating}
-                price={field.price}
-              />
-            ))}
-          </div>
+          {/* LOADING */}
+          {loading && (
+            <div className="field-list__empty">
+              <h2>Đang tải dữ liệu...</h2>
+              <p>Vui lòng chờ trong giây lát.</p>
+            </div>
+          )}
+
+          {/* ERROR */}
+          {!loading && error && (
+            <div className="field-list__empty">
+              <h2>Không thể tải danh sách sân</h2>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {/* DANH SACH SAN */}
+          {!loading && !error && filteredFields.length > 0 && (
+            <div className="field-list__grid">
+              {filteredFields.map((field) => (
+                <FieldCard
+                  key={field.id}
+                  id={field.id}
+                  image={field.image}
+                  name={field.name}
+                  address={field.address}
+                  type={field.type}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* KHONG CO KET QUA */}
+          {!loading &&
+            !error &&
+            filteredFields.length === 0 && (
+              <div className="field-list__empty">
+                <Search size={40} />
+
+                <h2>Không tìm thấy sân bóng</h2>
+
+                <p>
+                  Hãy thử thay đổi từ khóa hoặc bộ lọc.
+                </p>
+              </div>
+            )}
 
         </section>
       </main>
