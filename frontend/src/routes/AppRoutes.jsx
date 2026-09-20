@@ -5,6 +5,7 @@ import Login from "../pages/Login/Login";
 import Register from "../pages/Register/Register";
 import FieldList from "../pages/FieldList/FieldList";
 import Admin from "../pages/Admin/Admin";
+import About from "../pages/About/About";
 function Booking() {
   return <h1>Booking Page</h1>;
 }
@@ -23,6 +24,8 @@ function AppRoutes() {
       <Route path="/fields" element={<FieldList />} />
 
       <Route path="/booking" element={<Booking />} />
+
+      <Route path="/about" element={<About />} />
 
       <Route path="/admin" element={<Admin />} />
     </Routes>
