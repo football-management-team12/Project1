@@ -1,0 +1,10 @@
+$kind: collection
+name: Football Pitch Management API
+description: API collection for the Football Pitch Management system. Covers authentication and field management endpoints.
+variables:
+  - key: baseUrl
+    value: 'http://127.0.0.1:5000'
+    description: Base URL of the backend server
+  - key: field_id
+    value: '1'
+    description: ID of the football field

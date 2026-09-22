@@ -1,0 +1,89 @@
+swagger: "2.0"
+info:
+  title: "Football Pitch Management API"
+  description: "Tài liệu API Hệ thống Quản lý Sân bóng"
+  version: "1.0.0"
+host: "127.0.0.1:5000"
+basePath: "/"
+schemes:
+  - "http"
+
+paths:
+  # ------------------------------------
+  # 1. API Authentication (routes/auth.py)
+  # ------------------------------------
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: "Đăng nhập người dùng"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              account:
+                type: "string"
+                example: "admin"
+              password:
+                type: "string"
+                example: "123456"
+      responses:
+        200:
+          description: "Đăng nhập thành công"
+        401:
+          description: "Sai tài khoản hoặc mật khẩu"
+
+  # ------------------------------------
+  # 2. API Fields (routes/field.py)
+  # ------------------------------------
+  /api/fields/:
+    get:
+      tags:
+        - Fields
+      summary: "Lấy danh sách sân bóng kèm bảng giá"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Trả về danh sách sân bóng thành công"
+
+  /api/fields/price/{field_id}:
+    put:
+      tags:
+        - Fields
+      summary: "Cập nhật giá sân bóng theo FieldID"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "path"
+          name: "field_id"
+          required: true
+          type: "integer"
+          description: "ID của sân bóng cần cập nhật"
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              StartTime:
+                type: "string"
+                example: "06:00:00"
+              EndTime:
+                type: "string"
+                example: "17:00:00"
+              Price:
+                type: "number"
+                example: 200000
+      responses:
+        200:
+          description: "Cập nhật giá thành công"

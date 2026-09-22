@@ -63,3 +63,36 @@ jobs:
 
       - name: Build Docker images
         run: docker compose build
+        
+  api-test:
+    runs-on: ubuntu-latest
+    needs: [backend, docker] # Chờ backend và docker build xong mới chạy
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 1. Cài đặt Newman
+      - name: Install Newman
+        run: npm install -g newman
+
+      # 2. Khởi chạy hệ thống bằng Docker Compose để có Server test
+      - name: Start Services with Docker
+        run: |
+          docker compose up -d --build
+          sleep 10 # Chờ 10 giây để DB và Backend khởi động xong hoàn toàn
+
+      # 3. Chạy Newman API Test từ thư mục .postman
+      - name: Run Postman Tests with Newman
+        run: |
+          newman run .postman/*.json
+
+      # 4. Tắt môi trường Docker sau khi test xong
+      - name: Stop Services
+        if: always()
+        run: docker compose down
