@@ -1,14 +1,33 @@
 import pyodbc
 
+
 def get_connection():
+
     try:
-        return pyodbc.connect(
+
+        conn = pyodbc.connect(
+
             "DRIVER={ODBC Driver 17 for SQL Server};"
-            "SERVER=THAFIE\\SQLEXPRESS;"
+            
+            "SERVER=127.0.0.1;"
+            
             "DATABASE=FootballBookingDB;"
-            "Trusted_Connection=yes;"
-            "TrustServerCertificate=yes;"   
+            
+            "UID=sa;"
+            
+            "PWD=HuyPhu@999;"
+            
+            "TrustServerCertificate=yes;"
+
         )
+
+
+        return conn
+
+
     except Exception as e:
-        print("Database connection error:", e)
-        raise
+
+        print("Database connection error:")
+        print(e)
+
+        return None

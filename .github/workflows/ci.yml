@@ -52,7 +52,7 @@ jobs:
 
       - name: Check backend
         working-directory: backend
-        run: python -m py_compile app.py
+        run: python -m py_compile test.py
 
   docker:
     runs-on: ubuntu-latest

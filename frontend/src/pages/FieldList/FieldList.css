@@ -17,11 +17,17 @@
 .field-filter {
   width: min(1360px, calc(100% - 48px));
   margin: 0 auto;
+
   display: grid;
   grid-template-columns:
-    minmax(300px, 2fr) minmax(190px, 1fr) minmax(170px, 0.85fr) 145px;
+    minmax(300px, 2fr)
+    minmax(190px, 1fr)
+    minmax(170px, 0.85fr)
+    145px;
+
   gap: 16px;
   align-items: end;
+
   padding: 26px 0;
 }
 
@@ -42,10 +48,13 @@
   display: flex;
   align-items: center;
   gap: 9px;
+
   padding: 0 13px;
+
   border: 1px solid #d8e0e9;
   border-radius: 7px;
   background: #f8fafc;
+
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -66,6 +75,7 @@
   border: none;
   outline: none;
   background: transparent;
+
   font-family: inherit;
   font-size: 14px;
   color: #334155;
@@ -78,14 +88,19 @@
 .field-filter__group select {
   width: 100%;
   height: 44px;
+
   padding: 0 14px;
+
   border: 1px solid #d8e0e9;
   border-radius: 7px;
+
   outline: none;
   background: #f8fafc;
+
   font-family: inherit;
   font-size: 14px;
   color: #334155;
+
   cursor: pointer;
   transition:
     border-color 0.2s ease,
@@ -99,18 +114,24 @@
 
 .field-filter__submit {
   height: 44px;
+
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+
   border: none;
   border-radius: 7px;
+
   background: #16a34a;
   color: #ffffff;
+
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
+
   cursor: pointer;
+
   transition:
     background 0.2s ease,
     transform 0.2s ease;
@@ -139,12 +160,15 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
+
   margin-bottom: 32px;
 }
 
 .field-list__heading h1 {
   margin: 0 0 6px;
+
   color: #111827;
+
   font-size: 25px;
   line-height: 1.25;
   font-weight: 800;
@@ -158,9 +182,11 @@
 
 .field-list__result {
   margin-top: 13px;
+
   color: #16a34a;
   font-size: 14px;
   font-weight: 600;
+
   white-space: nowrap;
 }
 
@@ -180,14 +206,18 @@
 
 .field-list__empty {
   min-height: 330px;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
   text-align: center;
+
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
+
   color: #64748b;
 }
 
@@ -215,6 +245,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+
   gap: 10px;
   margin-top: 70px;
 }
@@ -223,12 +254,16 @@
   height: 40px;
   border: 1px solid #dbe3ec;
   border-radius: 8px;
+
   background: #ffffff;
   color: #475569;
+
   font-family: inherit;
   font-size: 14px;
   font-weight: 500;
+
   cursor: pointer;
+
   transition:
     background 0.2s ease,
     color 0.2s ease,
@@ -241,6 +276,7 @@
 
 .field-pagination__navigation {
   padding: 0 16px;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -252,7 +288,8 @@
   color: #16a34a;
 }
 
-.field-pagination .field-pagination__page--active {
+.field-pagination
+  .field-pagination__page--active {
   border-color: #16a34a;
   background: #16a34a;
   color: #ffffff;
@@ -296,7 +333,6 @@
 }
 
 @media (max-width: 640px) {
-
   .field-filter,
   .field-list-container {
     width: min(100% - 28px, 1360px);

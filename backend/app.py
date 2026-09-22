@@ -10,7 +10,8 @@ CORS(app)
 
 # import blueprint sau khi có app
 from routes.auth import auth_bp
-from routes.fields import fields
+from routes.field import field_bp
+
 
 
 app.register_blueprint(
@@ -18,7 +19,12 @@ app.register_blueprint(
     url_prefix="/api/auth"
 )
 
-app.register_blueprint(fields, url_prefix="/api")
+
+app.register_blueprint(
+    field_bp,
+    url_prefix="/api/fields"
+)
+
 
 
 @app.route("/")
@@ -32,7 +38,7 @@ def home():
 
 if __name__ == "__main__":
 
-     app.run(
+    app.run(
         host="0.0.0.0",
         port=5000,
         debug=True
