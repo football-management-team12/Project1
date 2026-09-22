@@ -43,9 +43,14 @@ function Navbar() {
             Lịch đặt
           </NavLink>
 
-          <a href="#pricing" className="navbar-link">
+          <NavLink
+            to="/pricing"
+            className={({ isActive }) =>
+              isActive ? "navbar-link active" : "navbar-link"
+            }
+          >
             Bảng giá
-          </a>
+          </NavLink>
           
           <NavLink
             to="/about"

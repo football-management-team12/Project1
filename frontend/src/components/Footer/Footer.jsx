@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import "./Footer.css";
+import logoIcon from "../../assets/icons/ball.png";
 
 function Footer() {
   return (
@@ -10,11 +11,9 @@ function Footer() {
 
           <div className="footer-brand">
             <div className="footer-logo">
-              <span className="footer-logo-icon">
-                ⚽
-              </span>
+             <img src={logoIcon} alt="Logo Sân Bóng Xuân Son" className="navbar-logo-image" />
 
-              <span>Sân Bóng</span>
+              <span>Sân Bóng Xuân Son</span>
             </div>
 
             <p>
