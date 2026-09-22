@@ -13,9 +13,9 @@ def get_all_fields():
             FieldType,
             Description,
             Image,
-            Status
+            Status,
+            CreatedAt
         FROM dbo.FootballFields
-        WHERE Status = 'AVAILABLE'
     """)
 
     rows = cursor.fetchall()
@@ -30,10 +30,12 @@ def get_all_fields():
             "type": row.FieldType,
             "description": row.Description,
             "image": row.Image,
-            "status": row.Status
+            "status": row.Status,
+            "createdAt": row.CreatedAt
         })
 
     cursor.close()
     conn.close()
 
     return fields
+
