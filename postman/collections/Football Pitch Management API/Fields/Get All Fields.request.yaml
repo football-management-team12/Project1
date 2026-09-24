@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get All Fields
+order: 1000
+method: GET
+url: '{{baseUrl}}/api/fields/'

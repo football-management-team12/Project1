@@ -63,3 +63,37 @@ jobs:
 
       - name: Build Docker images
         run: docker compose build
+
+  api-test:
+    runs-on: ubuntu-latest
+    needs: [backend, docker] # Chờ backend và docker build xong mới chạy
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 1. Cài đặt Newman và công cụ chuyển đổi OpenAPI/Swagger
+      - name: Install Newman and OpenAPI Converter
+        run: npm install -g newman openapi-to-postmanv2
+
+      # 2. Khởi chạy hệ thống bằng Docker Compose
+      - name: Start Services with Docker
+        run: |
+          docker compose up -d --build
+          sleep 10
+
+      # 3. Chuyển đổi backend/swagger.yaml sang Collection & Chạy Test
+      - name: Convert Swagger to Postman Collection & Run Tests
+        run: |
+          openapi2postmanv2 -s backend/swagger.yaml -o converted_collection.json -p
+          newman run converted_collection.json
+
+      # 4. Tắt môi trường Docker
+      - name: Stop Services
+        if: always()
+        run: docker compose down
