@@ -1,103 +1,322 @@
-import { useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import {
+  useEffect,
+  useMemo,
+  useState
+} from "react";
 
-import Navbar from "../../components/Navbar/Navbar";
-import FieldCard from "../../components/FieldCard/FieldCard";
+import {
+  CalendarDays,
+  Search
+} from "lucide-react";
 
-import { getFields } from "../../services/field_service";
+import Navbar
+  from "../../components/Navbar/Navbar";
+
+import FieldCard
+  from "../../components/FieldCard/FieldCard";
+
+import {
+  getFields,
+  getFieldAvailability
+} from "../../services/field_service";
 
 import "./FieldList.css";
 
 
+/* =========================================================
+   GET TODAY LOCAL DATE
+========================================================= */
+
+const getToday = () => {
+
+  const now = new Date();
+
+  const year =
+    now.getFullYear();
+
+  const month =
+    String(
+      now.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
+    );
+
+  const day =
+    String(
+      now.getDate()
+    ).padStart(
+      2,
+      "0"
+    );
+
+  return `${year}-${month}-${day}`;
+};
+
+
 function FieldList() {
 
-  const [fields, setFields] = useState([]);
-  const [keyword, setKeyword] = useState("");
-  const [fieldType, setFieldType] = useState("");
-  const [location, setLocation] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [fields, setFields] =
+    useState([]);
+
+  const [keyword, setKeyword] =
+    useState("");
+
+  const [fieldType, setFieldType] =
+    useState("");
+
+  const [location, setLocation] =
+    useState("");
+
+  const [selectedDate, setSelectedDate] =
+    useState(
+      getToday()
+    );
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
 
 
-  // =========================================================
-  // LOAD FIELDS
-  // =========================================================
+  /* =========================================================
+     INITIAL LOAD
+  ========================================================= */
 
   useEffect(() => {
-    loadFields();
+
+    loadFields(
+      selectedDate
+    );
+
   }, []);
 
 
-  const loadFields = async () => {
+  /* =========================================================
+     LOAD FIELDS + AVAILABILITY
+  ========================================================= */
+
+  const loadFields = async (
+    date = selectedDate
+  ) => {
 
     try {
 
       setLoading(true);
 
-      const data = await getFields();
+      setError("");
 
 
-      // Gom nhiều dòng giá thành 1 sân
-      const groupedFields = Object.values(
+      /* -----------------------------------------
+         GET RAW FIELD DATA
+      ----------------------------------------- */
 
-        data.reduce((result, row) => {
-
-          // Nếu sân chưa tồn tại thì tạo
-          if (!result[row.FieldID]) {
-
-            result[row.FieldID] = {
-
-              FieldID: row.FieldID,
-
-              FieldName: row.FieldName,
-
-              FieldType: row.FieldType,
-
-              Location: row.Location,
-
-              Status: row.Status,
-
-              prices: []
-            };
-          }
+      const data =
+        await getFields();
 
 
-          // Thêm từng khung giờ vào sân
-          if (row.PriceID) {
+      /* -----------------------------------------
+         GROUP BY FIELD ID
 
-            result[row.FieldID].prices.push({
+         Backend:
+         Field 1 + Price 1
+         Field 1 + Price 2
+         Field 1 + Price 3
 
-              PriceID: row.PriceID,
+         Frontend:
+         Field 1 {
+             prices: [...]
+         }
+      ----------------------------------------- */
 
-              StartTime:
-                row.StartTime?.slice(0, 5),
+      const grouped =
+        Object.values(
 
-              EndTime:
-                row.EndTime?.slice(0, 5),
+          data.reduce(
+            (
+              result,
+              row
+            ) => {
 
-              Price:
-                Number(row.Price || 0),
+              if (
+                !result[
+                  row.FieldID
+                ]
+              ) {
 
-              available:
-                row.IsAvailable !== undefined
-                  ? row.IsAvailable
-                  : row.Status === "AVAILABLE"
-            });
-          }
+                result[
+                  row.FieldID
+                ] = {
+
+                  FieldID:
+                    row.FieldID,
+
+                  FieldName:
+                    row.FieldName,
+
+                  FieldType:
+                    row.FieldType,
+
+                  Location:
+                    row.Location,
+
+                  Status:
+                    row.Status,
+
+                  prices: []
+                };
+              }
 
 
-          return result;
+              if (
+                row.PriceID
+                !== null
+                &&
+                row.PriceID
+                !== undefined
+              ) {
 
-        }, {})
+                result[
+                  row.FieldID
+                ].prices.push({
+
+                  PriceID:
+                    row.PriceID,
+
+                  StartTime:
+                    row.StartTime
+                      ?.slice(
+                        0,
+                        5
+                      ),
+
+                  EndTime:
+                    row.EndTime
+                      ?.slice(
+                        0,
+                        5
+                      ),
+
+                  Price:
+                    Number(
+                      row.Price ||
+                      0
+                    ),
+
+                  available:
+                    row.Status
+                    ===
+                    "AVAILABLE",
+
+                  reason:
+                    null
+                });
+              }
+
+
+              return result;
+
+            },
+            {}
+          )
+        );
+
+
+      /* -----------------------------------------
+         BE-05
+
+         Call availability for EACH field
+      ----------------------------------------- */
+
+      const fieldsWithAvailability =
+        await Promise.all(
+
+          grouped.map(
+            async field => {
+
+              try {
+
+                const availability =
+                  await getFieldAvailability(
+                    field.FieldID,
+                    date
+                  );
+
+
+                return {
+
+                  ...field,
+
+                  Status:
+                    availability
+                      .FieldStatus,
+
+                  FieldAvailable:
+                    availability
+                      .FieldAvailable,
+
+                  AvailableCount:
+                    availability
+                      .AvailableCount,
+
+                  UnavailableCount:
+                    availability
+                      .UnavailableCount,
+
+                  prices:
+                    availability
+                      .Slots ||
+                    []
+                };
+
+              } catch (
+                availabilityError
+              ) {
+
+                console.error(
+                  `Availability field ${field.FieldID}:`,
+                  availabilityError
+                );
+
+
+                /*
+                  Nếu API availability
+                  của một sân lỗi,
+                  vẫn hiển thị sân đó.
+                */
+
+                return {
+
+                  ...field,
+
+                  FieldAvailable:
+                    field.Status
+                    ===
+                    "AVAILABLE",
+
+                  AvailableCount:
+                    field.prices.length,
+
+                  UnavailableCount:
+                    0
+                };
+              }
+            }
+          )
+        );
+
+
+      setFields(
+        fieldsWithAvailability
       );
-
-
-      setFields(groupedFields);
 
     } catch (error) {
 
       console.error(error);
 
-      alert(
+      setError(
+        error.message ||
         "Không thể tải danh sách sân bóng"
       );
 
@@ -108,82 +327,164 @@ function FieldList() {
   };
 
 
-  // =========================================================
-  // LOCATION LIST
-  // =========================================================
+  /* =========================================================
+     CHANGE DATE
+  ========================================================= */
 
-  const locations = useMemo(() => {
+  const handleDateChange = async (
+    event
+  ) => {
 
-    return [
-      ...new Set(
-        fields
-          .map(field => field.Location)
-          .filter(Boolean)
-      )
-    ];
-
-  }, [fields]);
+    const newDate =
+      event.target.value;
 
 
-  // =========================================================
-  // FIELD TYPE LIST
-  // =========================================================
-
-  const fieldTypes = useMemo(() => {
-
-    return [
-      ...new Set(
-        fields
-          .map(field => field.FieldType)
-          .filter(Boolean)
-      )
-    ];
-
-  }, [fields]);
+    setSelectedDate(
+      newDate
+    );
 
 
-  // =========================================================
-  // FILTER
-  // =========================================================
+    if (
+      newDate
+    ) {
 
-  const filteredFields = useMemo(() => {
-
-    return fields.filter(field => {
-
-      const matchKeyword =
-        (field.FieldName || "")
-          .toLowerCase()
-          .includes(
-            keyword
-              .trim()
-              .toLowerCase()
-          );
-
-
-      const matchLocation =
-        !location ||
-        field.Location === location;
-
-
-      const matchType =
-        !fieldType ||
-        field.FieldType === fieldType;
-
-
-      return (
-        matchKeyword &&
-        matchLocation &&
-        matchType
+      await loadFields(
+        newDate
       );
-    });
+    }
+  };
 
-  }, [
-    fields,
-    keyword,
-    location,
-    fieldType
-  ]);
 
+  /* =========================================================
+     SEARCH BUTTON
+  ========================================================= */
+
+  const handleSearch = () => {
+
+    loadFields(
+      selectedDate
+    );
+  };
+
+
+  /* =========================================================
+     LOCATION OPTIONS
+  ========================================================= */
+
+  const locations =
+    useMemo(
+      () => {
+
+        return [
+          ...new Set(
+
+            fields
+              .map(
+                field =>
+                  field.Location
+              )
+              .filter(
+                Boolean
+              )
+          )
+        ];
+
+      },
+      [fields]
+    );
+
+
+  /* =========================================================
+     FIELD TYPE OPTIONS
+  ========================================================= */
+
+  const fieldTypes =
+    useMemo(
+      () => {
+
+        return [
+          ...new Set(
+
+            fields
+              .map(
+                field =>
+                  field.FieldType
+              )
+              .filter(
+                Boolean
+              )
+          )
+        ];
+
+      },
+      [fields]
+    );
+
+
+  /* =========================================================
+     FILTER
+  ========================================================= */
+
+  const filteredFields =
+    useMemo(
+      () => {
+
+        return fields.filter(
+          field => {
+
+            const fieldName =
+              String(
+                field.FieldName ||
+                ""
+              )
+                .toLowerCase();
+
+
+            const matchKeyword =
+              fieldName.includes(
+                keyword
+                  .trim()
+                  .toLowerCase()
+              );
+
+
+            const matchLocation =
+              !location ||
+              field.Location
+              ===
+              location;
+
+
+            const matchType =
+              !fieldType ||
+              field.FieldType
+              ===
+              fieldType;
+
+
+            return (
+              matchKeyword
+              &&
+              matchLocation
+              &&
+              matchType
+            );
+          }
+        );
+
+      },
+      [
+        fields,
+        keyword,
+        location,
+        fieldType
+      ]
+    );
+
+
+  /* =========================================================
+     JSX
+  ========================================================= */
 
   return (
 
@@ -192,41 +493,114 @@ function FieldList() {
       <Navbar />
 
 
-      <main className="field-list-page">
+      <main
+        className="field-list-page"
+      >
 
 
-        {/* =====================================================
+        {/* =================================================
             FILTER
-        ====================================================== */}
+        ================================================= */}
 
-        <section className="field-filter-section">
+        <section
+          className="field-filter-section"
+        >
 
-          <div className="field-filter">
+          <div
+            className="field-filter"
+          >
 
 
-            {/* SEARCH */}
+            {/* SEARCH NAME */}
 
-            <div className="field-filter__group field-filter__name">
+            <div
+              className="
+                field-filter__group
+                field-filter__name
+              "
+            >
 
               <label>
                 TÊN SÂN BÓNG
               </label>
 
 
-              <div className="field-filter__input-wrapper">
+              <div
+                className="
+                  field-filter__input-wrapper
+                "
+              >
 
-                <Search size={19} />
+                <Search
+                  size={18}
+                />
 
 
                 <input
+
                   type="text"
+
                   placeholder="Nhập tên sân..."
-                  value={keyword}
-                  onChange={e =>
-                    setKeyword(
-                      e.target.value
-                    )
+
+                  value={
+                    keyword
                   }
+
+                  onChange={
+                    event =>
+                      setKeyword(
+                        event.target.value
+                      )
+                  }
+
+                />
+
+              </div>
+
+            </div>
+
+
+            {/* DATE */}
+
+            <div
+              className="
+                field-filter__group
+              "
+            >
+
+              <label>
+                NGÀY ĐẶT
+              </label>
+
+
+              <div
+                className="
+                  field-filter__input-wrapper
+                  field-filter__date
+                "
+              >
+
+                <CalendarDays
+                  size={18}
+                />
+
+
+                <input
+
+                  type="date"
+
+                  value={
+                    selectedDate
+                  }
+
+                  min={
+                    getToday()
+                  }
+
+                  onChange={
+                    handleDateChange
+                  }
+
                 />
 
               </div>
@@ -236,7 +610,11 @@ function FieldList() {
 
             {/* LOCATION */}
 
-            <div className="field-filter__group">
+            <div
+              className="
+                field-filter__group
+              "
+            >
 
               <label>
                 KHU VỰC
@@ -244,12 +622,18 @@ function FieldList() {
 
 
               <select
-                value={location}
-                onChange={e =>
-                  setLocation(
-                    e.target.value
-                  )
+
+                value={
+                  location
                 }
+
+                onChange={
+                  event =>
+                    setLocation(
+                      event.target.value
+                    )
+                }
+
               >
 
                 <option value="">
@@ -258,16 +642,24 @@ function FieldList() {
 
 
                 {
-                  locations.map(item => (
+                  locations.map(
+                    item => (
 
-                    <option
-                      key={item}
-                      value={item}
-                    >
-                      {item}
-                    </option>
+                      <option
+                        key={
+                          item
+                        }
+                        value={
+                          item
+                        }
+                      >
 
-                  ))
+                        {item}
+
+                      </option>
+
+                    )
+                  )
                 }
 
               </select>
@@ -275,9 +667,13 @@ function FieldList() {
             </div>
 
 
-            {/* FIELD TYPE */}
+            {/* TYPE */}
 
-            <div className="field-filter__group">
+            <div
+              className="
+                field-filter__group
+              "
+            >
 
               <label>
                 LOẠI SÂN
@@ -285,12 +681,18 @@ function FieldList() {
 
 
               <select
-                value={fieldType}
-                onChange={e =>
-                  setFieldType(
-                    e.target.value
-                  )
+
+                value={
+                  fieldType
                 }
+
+                onChange={
+                  event =>
+                    setFieldType(
+                      event.target.value
+                    )
+                }
+
               >
 
                 <option value="">
@@ -299,16 +701,24 @@ function FieldList() {
 
 
                 {
-                  fieldTypes.map(type => (
+                  fieldTypes.map(
+                    type => (
 
-                    <option
-                      key={type}
-                      value={type}
-                    >
-                      {type}
-                    </option>
+                      <option
+                        key={
+                          type
+                        }
+                        value={
+                          type
+                        }
+                      >
 
-                  ))
+                        {type}
+
+                      </option>
+
+                    )
+                  )
                 }
 
               </select>
@@ -317,10 +727,22 @@ function FieldList() {
 
 
             <button
-              className="field-filter__submit"
+
+              type="button"
+
+              className="
+                field-filter__submit
+              "
+
+              onClick={
+                handleSearch
+              }
+
             >
 
-              <Search size={18} />
+              <Search
+                size={18}
+              />
 
               Tìm sân
 
@@ -331,14 +753,22 @@ function FieldList() {
         </section>
 
 
-        {/* =====================================================
+        {/* =================================================
             FIELD LIST
-        ====================================================== */}
+        ================================================= */}
 
-        <section className="field-list-container">
+        <section
+          className="
+            field-list-container
+          "
+        >
 
 
-          <div className="field-list__heading">
+          <div
+            className="
+              field-list__heading
+            "
+          >
 
             <div>
 
@@ -346,17 +776,32 @@ function FieldList() {
                 DANH SÁCH SÂN BÓNG
               </h1>
 
+
               <p>
-                Chọn sân và khung giờ phù hợp
+
+                Lịch sân ngày{" "}
+
+                <strong>
+                  {selectedDate}
+                </strong>
+
               </p>
 
             </div>
 
 
-            <span className="field-list__result">
+            <span
+              className="
+                field-list__result
+              "
+            >
 
               Tìm thấy{" "}
-              {filteredFields.length}
+
+              {
+                filteredFields.length
+              }
+
               {" "}sân
 
             </span>
@@ -369,72 +814,130 @@ function FieldList() {
           {
             loading ? (
 
-              <div className="field-list__empty">
+              <div
+                className="
+                  field-list__empty
+                "
+              >
+
+                <div
+                  className="
+                    field-loading-spinner
+                  "
+                />
 
                 <h2>
-                  Đang tải sân bóng...
+                  Đang kiểm tra lịch sân...
                 </h2>
 
               </div>
 
-            ) : filteredFields.length === 0 ? (
+            ) : error ? (
 
-              // EMPTY
+              /* ERROR */
 
-              <div className="field-list__empty">
+              <div
+                className="
+                  field-list__empty
+                "
+              >
+
+                <h2>
+                  Không thể tải dữ liệu
+                </h2>
+
+                <p>
+                  {error}
+                </p>
+
+
+                <button
+                  type="button"
+                  onClick={
+                    handleSearch
+                  }
+                >
+                  Thử lại
+                </button>
+
+              </div>
+
+            ) : (
+              filteredFields.length
+              ===
+              0
+            ) ? (
+
+              /* EMPTY */
+
+              <div
+                className="
+                  field-list__empty
+                "
+              >
 
                 <h2>
                   Không tìm thấy sân
                 </h2>
 
                 <p>
-                  Hãy thử thay đổi bộ lọc
+                  Hãy thử thay đổi bộ lọc.
                 </p>
 
               </div>
 
             ) : (
 
-              // FIELD CARDS
+              /* FIELD CARDS */
 
-              <div className="field-list__grid">
+              <div
+                className="
+                  field-list__grid
+                "
+              >
 
                 {
-                  filteredFields.map(field => (
+                  filteredFields.map(
+                    field => (
 
-                    <FieldCard
+                      <FieldCard
 
-                      key={
-                        field.FieldID
-                      }
+                        key={
+                          field.FieldID
+                        }
 
-                      id={
-                        field.FieldID
-                      }
+                        id={
+                          field.FieldID
+                        }
 
-                      name={
-                        field.FieldName
-                      }
+                        name={
+                          field.FieldName
+                        }
 
-                      address={
-                        field.Location
-                      }
+                        address={
+                          field.Location
+                        }
 
-                      type={
-                        field.FieldType
-                      }
+                        type={
+                          field.FieldType
+                        }
 
-                      status={
-                        field.Status
-                      }
+                        status={
+                          field.Status
+                        }
 
-                      slots={
-                        field.prices
-                      }
+                        selectedDate={
+                          selectedDate
+                        }
 
-                    />
+                        slots={
+                          field.prices
+                        }
 
-                  ))
+                      />
+
+                    )
+                  )
                 }
 
               </div>

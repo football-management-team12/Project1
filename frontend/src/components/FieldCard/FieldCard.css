@@ -15,7 +15,9 @@
 
   overflow: hidden;
 
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-shadow:
+    0 2px 8px
+    rgba(15, 23, 42, 0.04);
 
   transition:
     transform 0.25s ease,
@@ -29,7 +31,8 @@
   border-color: #bbf7d0;
 
   box-shadow:
-    0 14px 32px rgba(15, 23, 42, 0.1);
+    0 14px 32px
+    rgba(15, 23, 42, 0.1);
 }
 
 
@@ -49,18 +52,65 @@
 }
 
 .field-image {
+  display: block;
+
   width: 100%;
   height: 100%;
 
-  display: block;
-
   object-fit: cover;
 
-  transition: transform 0.35s ease;
+  transition:
+    transform 0.35s ease;
 }
 
-.field-card:hover .field-image {
+.field-card:hover
+.field-image {
   transform: scale(1.04);
+}
+
+
+/* =========================================================
+   FIELD STATUS
+========================================================= */
+
+.field-status {
+  position: absolute;
+
+  top: 12px;
+  right: 12px;
+
+  padding: 5px 9px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  backdrop-filter: blur(4px);
+}
+
+.field-status--available {
+  background:
+    rgba(
+      220,
+      252,
+      231,
+      0.95
+    );
+
+  color: #15803d;
+}
+
+.field-status--maintenance {
+  background:
+    rgba(
+      254,
+      226,
+      226,
+      0.95
+    );
+
+  color: #dc2626;
 }
 
 
@@ -71,6 +121,7 @@
 .field-content {
   display: flex;
   flex-direction: column;
+
   flex: 1;
 
   padding: 16px;
@@ -83,8 +134,11 @@
 
 .field-title-row {
   display: flex;
+
   align-items: center;
-  justify-content: space-between;
+
+  justify-content:
+    space-between;
 
   gap: 10px;
 
@@ -100,16 +154,20 @@
 
   font-size: 17px;
   font-weight: 700;
+
   line-height: 1.35;
 
   white-space: nowrap;
+
   overflow: hidden;
-  text-overflow: ellipsis;
+
+  text-overflow:
+    ellipsis;
 }
 
 
 /* =========================================================
-   INFORMATION
+   INFO
 ========================================================= */
 
 .field-info {
@@ -123,6 +181,7 @@
 
 .field-info-row {
   display: flex;
+
   align-items: center;
 
   gap: 7px;
@@ -132,6 +191,7 @@
   color: #64748b;
 
   font-size: 13px;
+
   line-height: 1.4;
 }
 
@@ -145,20 +205,23 @@
   min-width: 0;
 
   white-space: nowrap;
+
   overflow: hidden;
-  text-overflow: ellipsis;
+
+  text-overflow:
+    ellipsis;
 }
 
 
 /* =========================================================
-   TIME SLOT AREA
+   SLOT AREA
 ========================================================= */
 
 .field-slots {
   display: flex;
   flex-direction: column;
 
-  gap: 7px;
+  gap: 8px;
 }
 
 .field-slots-title {
@@ -174,77 +237,67 @@
 
 
 /* =========================================================
-   ONE TIME SLOT
+   SLOT
 ========================================================= */
 
 .field-slot {
   display: flex;
+
   align-items: center;
-  justify-content: space-between;
+
+  justify-content:
+    space-between;
 
   gap: 10px;
 
-  min-height: 48px;
+  min-height: 52px;
 
-  padding: 8px 10px;
+  padding: 9px 10px;
 
-  border: 1px solid transparent;
-  border-radius: 9px;
+  border: 1px solid;
+
+  border-radius: 10px;
 
   transition:
     transform 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
+    background 0.2s ease;
 }
 
-
-/* Giờ + giá */
-
-.field-slot > div {
+.field-slot-main {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
 
-  flex: 1;
+  flex-direction: column;
 
-  gap: 10px;
+  gap: 3px;
 
   min-width: 0;
 }
 
-
-/* Giờ */
-
-.field-slot strong {
-  color: inherit;
-
+.field-slot-main strong {
   font-size: 13px;
   font-weight: 700;
 
   white-space: nowrap;
 }
 
-
-/* Giá */
-
-.field-slot span {
-  color: inherit;
-
+.field-slot-price {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 
   white-space: nowrap;
 }
 
 
-/* Trạng thái */
+/* =========================================================
+   SLOT STATUS
+========================================================= */
 
-.field-slot small {
+.field-slot-status {
   flex-shrink: 0;
 
-  min-width: 46px;
+  min-width: 58px;
 
-  padding: 4px 7px;
+  padding: 5px 8px;
 
   border-radius: 999px;
 
@@ -268,14 +321,14 @@
 }
 
 .field-slot.available:hover {
-  transform: translateX(2px);
+  transform:
+    translateX(2px);
 
   background: #dcfce7;
-
-  border-color: #86efac;
 }
 
-.field-slot.available small {
+.field-slot.available
+.field-slot-status {
   background: #dcfce7;
 
   color: #15803d;
@@ -294,7 +347,8 @@
   color: #b91c1c;
 }
 
-.field-slot.booked small {
+.field-slot.booked
+.field-slot-status {
   background: #fee2e2;
 
   color: #dc2626;
@@ -308,7 +362,10 @@
 .field-no-slot {
   padding: 12px;
 
-  border: 1px dashed #cbd5e1;
+  border:
+    1px dashed
+    #cbd5e1;
+
   border-radius: 9px;
 
   background: #f8fafc;
@@ -341,8 +398,11 @@
 
 .field-bottom {
   display: flex;
+
   align-items: flex-end;
-  justify-content: space-between;
+
+  justify-content:
+    space-between;
 
   gap: 12px;
 
@@ -377,7 +437,8 @@
   color: #16a34a;
 
   font-size: 17px;
-  font-weight: 750;
+  font-weight: 700;
+
   line-height: 1.2;
 
   white-space: nowrap;
@@ -390,17 +451,22 @@
 
 .field-detail-button {
   display: inline-flex;
+
   align-items: center;
+
   justify-content: center;
 
   flex-shrink: 0;
 
-  min-width: 82px;
-  height: 35px;
+  min-width: 86px;
+  height: 36px;
 
   padding: 0 14px;
 
-  border: 1px solid #bbf7d0;
+  border:
+    1px solid
+    #bbf7d0;
+
   border-radius: 9px;
 
   background: #dcfce7;
@@ -417,12 +483,13 @@
   transition:
     background 0.2s ease,
     color 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .field-detail-button:hover {
-  transform: translateY(-1px);
+  transform:
+    translateY(-1px);
 
   background: #16a34a;
 
@@ -433,7 +500,7 @@
 
 
 /* =========================================================
-   DISABLED
+   DISABLED BUTTON
 ========================================================= */
 
 .field-detail-button.field-disabled {
@@ -463,7 +530,9 @@
    RESPONSIVE
 ========================================================= */
 
-@media (max-width: 768px) {
+@media (
+  max-width: 768px
+) {
 
   .field-image-wrapper {
     height: 165px;
@@ -474,6 +543,6 @@
   }
 
   .field-slot {
-    min-height: 45px;
+    min-height: 48px;
   }
 }

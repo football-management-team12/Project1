@@ -1,75 +1,191 @@
-import { Link } from "react-router-dom";
-import { MapPin, Users } from "lucide-react";
+import {
+  Link
+} from "react-router-dom";
 
-import fieldImage from "../../assets/images/football-field1.jpg";
+import {
+  CalendarDays,
+  MapPin,
+  Users
+} from "lucide-react";
+
+import fieldImage
+  from "../../assets/images/football-field.jpg";
+
 import "./FieldCard.css";
 
 
 function FieldCard({
+
   id,
+
   name,
+
   address,
+
   type,
+
   status,
+
+  selectedDate,
+
   slots = []
+
 }) {
 
-  const hasAvailableSlot = slots.some(
-    slot => slot.available
-  );
+
+  /* =========================================================
+     AVAILABLE SLOT
+  ========================================================= */
+
+  const hasAvailableSlot =
+    slots.some(
+      slot =>
+        slot.available
+    );
+
+
+  /* =========================================================
+     MIN PRICE
+  ========================================================= */
+
+  const prices =
+    slots
+      .map(
+        slot =>
+          Number(
+            slot.Price
+          )
+      )
+      .filter(
+        price =>
+          !Number.isNaN(
+            price
+          )
+      );
 
 
   const minPrice =
-    slots.length > 0
+    prices.length > 0
+
       ? Math.min(
-          ...slots.map(
-            slot => Number(slot.Price || 0)
-          )
+          ...prices
         )
+
       : 0;
 
 
+  /* =========================================================
+     STATUS
+  ========================================================= */
+
+  const fieldAvailable =
+    status === "AVAILABLE";
+
+
+  /* =========================================================
+     JSX
+  ========================================================= */
+
   return (
 
-    <article className="field-card">
+    <article
+      className="
+        field-card
+      "
+    >
 
 
-      {/* ẢNH SÂN */}
+      {/* IMAGE */}
 
-      <div className="field-image-wrapper">
+      <div
+        className="
+          field-image-wrapper
+        "
+      >
 
         <img
-          src={fieldImage}
-          alt={name}
-          className="field-image"
+
+          src={
+            fieldImage
+          }
+
+          alt={
+            name
+          }
+
+          className="
+            field-image
+          "
+
         />
+
+
+        <span
+          className={
+            fieldAvailable
+              ? "field-status field-status--available"
+              : "field-status field-status--maintenance"
+          }
+        >
+
+          {
+            fieldAvailable
+              ? "Đang hoạt động"
+              : "Bảo trì"
+          }
+
+        </span>
 
       </div>
 
 
-      {/* NỘI DUNG */}
+      {/* CONTENT */}
 
-      <div className="field-content">
+      <div
+        className="
+          field-content
+        "
+      >
 
 
-        {/* TÊN SÂN */}
+        {/* TITLE */}
 
-        <div className="field-title-row">
+        <div
+          className="
+            field-title-row
+          "
+        >
 
-          <h3 title={name}>
+          <h3
+            title={
+              name
+            }
+          >
+
             {name}
+
           </h3>
 
         </div>
 
 
-        {/* THÔNG TIN */}
+        {/* INFORMATION */}
 
-        <div className="field-info">
+        <div
+          className="
+            field-info
+          "
+        >
 
-          <div className="field-info-row">
+          <div
+            className="
+              field-info-row
+            "
+          >
 
-            <MapPin size={16} />
+            <MapPin
+              size={16}
+            />
 
             <span>
               {address}
@@ -78,9 +194,15 @@ function FieldCard({
           </div>
 
 
-          <div className="field-info-row">
+          <div
+            className="
+              field-info-row
+            "
+          >
 
-            <Users size={16} />
+            <Users
+              size={16}
+            />
 
             <span>
               {type}
@@ -88,98 +210,177 @@ function FieldCard({
 
           </div>
 
+
+          <div
+            className="
+              field-info-row
+            "
+          >
+
+            <CalendarDays
+              size={16}
+            />
+
+            <span>
+              {selectedDate}
+            </span>
+
+          </div>
+
         </div>
 
 
-        {/* KHUNG GIỜ */}
+        {/* SLOT */}
 
-        <div className="field-slots">
+        <div
+          className="
+            field-slots
+          "
+        >
 
-          <div className="field-slots-title">
+          <div
+            className="
+              field-slots-title
+            "
+          >
             KHUNG GIỜ
           </div>
 
 
           {
-            slots.length === 0 ? (
+            slots.length === 0
+            ? (
 
-              <div className="field-no-slot">
+              <div
+                className="
+                  field-no-slot
+                "
+              >
                 Chưa có bảng giá
               </div>
 
-            ) : (
+            )
+            : (
 
-              slots.map(slot => (
+              slots.map(
+                slot => (
 
-                <div
+                  <div
 
-                  key={slot.PriceID}
+                    key={
+                      slot.PriceID
+                    }
 
-                  className={
-                    slot.available
-                      ? "field-slot available"
-                      : "field-slot booked"
-                  }
-                >
+                    className={
+                      slot.available
 
-                  <div>
+                        ? "field-slot available"
 
-                    <strong>
+                        : "field-slot booked"
+                    }
 
-                      {slot.StartTime}
-
-                      {" - "}
-
-                      {slot.EndTime}
-
-                    </strong>
+                  >
 
 
-                    <span>
+                    {/* TIME + PRICE */}
+
+                    <div
+                      className="
+                        field-slot-main
+                      "
+                    >
+
+                      <strong>
+
+                        {
+                          slot.StartTime
+                        }
+
+                        {" - "}
+
+                        {
+                          slot.EndTime
+                        }
+
+                      </strong>
+
+
+                      <span
+                        className="
+                          field-slot-price
+                        "
+                      >
+
+                        {
+                          Number(
+                            slot.Price ||
+                            0
+                          ).toLocaleString(
+                            "vi-VN"
+                          )
+                        }
+
+                        đ
+
+                      </span>
+
+                    </div>
+
+
+                    {/* STATUS */}
+
+                    <span
+                      className="
+                        field-slot-status
+                      "
+                    >
 
                       {
-                        Number(
-                          slot.Price || 0
-                        ).toLocaleString("vi-VN")
+                        slot.available
+                          ? "Trống"
+                          : (
+                            slot.reason
+                            ===
+                            "FIELD_UNAVAILABLE"
+                              ? "Bảo trì"
+                              : "Đã đặt"
+                          )
                       }
-
-                      đ
 
                     </span>
 
                   </div>
 
-
-                  <small>
-
-                    {
-                      slot.available
-                        ? "Trống"
-                        : "Đã đặt"
-                    }
-
-                  </small>
-
-                </div>
-
-              ))
-
+                )
+              )
             )
           }
 
         </div>
 
 
-        <div className="field-divider" />
+        <div
+          className="
+            field-divider
+          "
+        />
 
 
-        {/* GIÁ + CHỌN SÂN */}
+        {/* BOTTOM */}
 
-        <div className="field-bottom">
+        <div
+          className="
+            field-bottom
+          "
+        >
 
           <div>
 
-            <span className="price-label">
+            <span
+              className="
+                price-label
+              "
+            >
               GIÁ THUÊ TỪ
             </span>
 
@@ -187,9 +388,10 @@ function FieldCard({
             <strong>
 
               {
-                minPrice.toLocaleString(
-                  "vi-VN"
-                )
+                minPrice
+                  .toLocaleString(
+                    "vi-VN"
+                  )
               }
 
               đ/h
@@ -200,30 +402,47 @@ function FieldCard({
 
 
           {
-            hasAvailableSlot &&
-            status === "AVAILABLE" ? (
+            fieldAvailable
+            &&
+            hasAvailableSlot
+            ? (
 
               <Link
 
-                to={`/booking?fieldId=${id}`}
+                to={
+                  `/booking?fieldId=${id}&date=${selectedDate}`
+                }
 
-                className="field-detail-button"
+                className="
+                  field-detail-button
+                "
               >
+
                 Chọn sân
+
               </Link>
 
-            ) : (
+            )
+            : (
 
               <button
+
+                type="button"
+
+                disabled
 
                 className="
                   field-detail-button
                   field-disabled
                 "
-
-                disabled
               >
-                Hết lịch
+
+                {
+                  fieldAvailable
+                    ? "Hết lịch"
+                    : "Bảo trì"
+                }
+
               </button>
 
             )
