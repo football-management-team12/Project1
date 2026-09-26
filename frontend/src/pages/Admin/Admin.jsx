@@ -1,861 +1,1232 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     getFields,
-    updateFieldPrice
+    updateFieldPrice,
+    createField
 } from "../../services/field_service";
 
 import "./Admin.css";
 
 
-function Admin(){
-
-
-const [user,setUser]=useState(null);
-
-const [fields,setFields]=useState([]);
-
-const [editField,setEditField]=useState(null);
-
-
-
-useEffect(()=>{
-
-
-const userData=localStorage.getItem("user");
-
-
-if(userData){
-
-setUser(
-JSON.parse(userData)
-);
-
-}
-
-
-loadFields();
-
-
-},[]);
-
-
-
-
-
-const loadFields=async()=>{
-
-
-try{
-
-
-const data=await getFields();
-
-setFields(data);
-
-
-}
-catch(err){
-
-console.log(err);
-
-}
-
-
+const EMPTY_FIELD = {
+    FieldName: "",
+    FieldType: "5 player",
+    Location: "",
+    Image: "",
+    Status: "AVAILABLE",
+    StartTime: "06:00",
+    EndTime: "16:00",
+    Price: ""
 };
 
 
+function Admin() {
 
+    const [user, setUser] = useState(null);
+    const [fields, setFields] = useState([]);
 
+    const [editField, setEditField] = useState(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newField, setNewField] = useState(EMPTY_FIELD);
 
-// đếm sân không trùng
+    const [searchText, setSearchText] = useState("");
+    const [fieldType, setFieldType] = useState("");
+    const [status, setStatus] = useState("");
 
-const totalFields=
-new Set(
-fields.map(
-f=>f.FieldID
-)
-).size;
+    const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [adding, setAdding] = useState(false);
+    const [deletingFieldID, setDeletingFieldID] = useState(null);
 
 
+    // =========================================================
+    // LOAD DATA
+    // =========================================================
 
-const activeFields=
-new Set(
-fields
-.filter(
-f=>f.Status==="AVAILABLE"
-)
-.map(
-f=>f.FieldID
-)
-).size;
+    useEffect(() => {
 
+        const storedUser = localStorage.getItem("user");
 
+        if (storedUser) {
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch {
+                localStorage.removeItem("user");
+            }
+        }
 
-const maintenanceFields=
-new Set(
-fields
-.filter(
-f=>f.Status!=="AVAILABLE"
-)
-.map(
-f=>f.FieldID
-)
-).size;
+        loadFields();
 
+    }, []);
 
 
+    const loadFields = async () => {
 
+        try {
 
-return (
+            setLoading(true);
 
+            const data = await getFields();
 
-<div className="admin-container">
+            setFields(
+                Array.isArray(data) ? data : []
+            );
 
+        } catch (error) {
 
+            console.error(error);
+            alert("Không thể tải danh sách sân");
 
-{/* SIDEBAR */}
+        } finally {
 
-<aside className="sidebar">
+            setLoading(false);
+        }
+    };
 
 
-<h2>
-⚽ SÂN BÓNG
-</h2>
+    // =========================================================
+    // STATISTICS
+    // =========================================================
 
+    const stats = useMemo(() => {
 
+        const uniqueFields = [
+            ...new Map(
+                fields.map(field => [
+                    field.FieldID,
+                    field
+                ])
+            ).values()
+        ];
 
-<ul>
+        return {
+            total: uniqueFields.length,
 
+            available: uniqueFields.filter(
+                field => field.Status === "AVAILABLE"
+            ).length,
 
-<li>
-Tổng quan
-</li>
+            maintenance: uniqueFields.filter(
+                field => field.Status !== "AVAILABLE"
+            ).length
+        };
 
+    }, [fields]);
 
-<li className="active">
-Quản lý sân bóng
-</li>
 
+    // =========================================================
+    // FILTER
+    // =========================================================
 
-<li>
-Quản lý đặt sân
-</li>
+    const fieldTypes = useMemo(
+        () => [
+            ...new Set(
+                fields
+                    .map(field => field.FieldType)
+                    .filter(Boolean)
+            )
+        ],
+        [fields]
+    );
+
+
+    const filteredFields = useMemo(() => {
+
+        return fields.filter(field => {
+
+            const matchName =
+                (field.FieldName || "")
+                    .toLowerCase()
+                    .includes(
+                        searchText.trim().toLowerCase()
+                    );
+
+            const matchType =
+                !fieldType ||
+                field.FieldType === fieldType;
+
+            const matchStatus =
+                !status ||
+                field.Status === status;
+
+            return (
+                matchName &&
+                matchType &&
+                matchStatus
+            );
+        });
+
+    }, [
+        fields,
+        searchText,
+        fieldType,
+        status
+    ]);
+
+
+    // =========================================================
+    // HELPER
+    // =========================================================
+
+    const isValidTime = (
+        startTime,
+        endTime
+    ) => {
+
+        if (!startTime || !endTime) {
+            alert("Vui lòng nhập đầy đủ khung giờ");
+            return false;
+        }
 
+        if (startTime >= endTime) {
+            alert(
+                "Giờ kết thúc phải lớn hơn giờ bắt đầu"
+            );
+            return false;
+        }
 
-<li>
-Quản lý khách hàng
-</li>
+        return true;
+    };
 
 
-<li>
-Quản lý nhân viên
-</li>
+    const formatPrice = price =>
+        Number(price || 0)
+            .toLocaleString("vi-VN");
 
 
-<li>
-Hóa đơn & thanh toán
-</li>
+    const updateNewField = (
+        key,
+        value
+    ) => {
 
+        setNewField(prev => ({
+            ...prev,
+            [key]: value
+        }));
+    };
 
-<li>
-Thống kê & báo cáo
-</li>
 
+    const updateEditField = (
+        key,
+        value
+    ) => {
 
-<li>
-Cài đặt
-</li>
+        setEditField(prev => ({
+            ...prev,
+            [key]: value
+        }));
+    };
 
 
-</ul>
+    // =========================================================
+    // ADD FIELD
+    // =========================================================
 
+    const handleAddField = async () => {
 
+        if (!newField.FieldName.trim()) {
+            alert("Vui lòng nhập tên sân");
+            return;
+        }
 
-<div className="logout">
+        if (!newField.Location.trim()) {
+            alert("Vui lòng nhập địa điểm");
+            return;
+        }
 
-↪ Đăng xuất
+        if (
+            !isValidTime(
+                newField.StartTime,
+                newField.EndTime
+            )
+        ) {
+            return;
+        }
 
-</div>
+        const price = Number(newField.Price);
 
+        if (
+            Number.isNaN(price) ||
+            price < 0
+        ) {
+            alert("Giá sân không hợp lệ");
+            return;
+        }
 
-</aside>
 
+        try {
 
+            setAdding(true);
 
+            await createField({
+                ...newField,
+                FieldName:
+                    newField.FieldName.trim(),
 
+                Location:
+                    newField.Location.trim(),
 
+                Price:
+                    price
+            });
 
-{/* MAIN */}
+            setShowAddModal(false);
+            setNewField(EMPTY_FIELD);
 
+            await loadFields();
 
-<main className="admin-content">
+            alert("Thêm sân thành công");
 
+        } catch (error) {
 
+            console.error(error);
 
+            alert(
+                error.message ||
+                "Không thể thêm sân"
+            );
 
+        } finally {
 
-{/* HEADER */}
+            setAdding(false);
+        }
+    };
 
-<div className="top-header">
 
+    // =========================================================
+    // EDIT PRICE
+    // =========================================================
 
-<input
-placeholder="🔍 Tìm kiếm nhanh..."
-/>
+    const openEdit = field => {
 
+        if (!field.PriceID) {
 
+            alert(
+                "Sân này chưa có bảng giá"
+            );
 
-<div className="admin-user">
+            return;
+        }
 
+        setEditField({
+            ...field,
 
-<span>
-🔔
-</span>
+            StartTime:
+                field.StartTime?.slice(0, 5) || "",
 
+            EndTime:
+                field.EndTime?.slice(0, 5) || ""
+        });
+    };
 
-<div>
 
-<b>
-{
-user?.FullName || "Admin sân bóng"
-}
-</b>
+    const handleSaveEdit = async () => {
 
+        if (!editField?.PriceID) {
+            return;
+        }
 
-<small>
-Quản trị viên
-</small>
+        if (
+            !isValidTime(
+                editField.StartTime,
+                editField.EndTime
+            )
+        ) {
+            return;
+        }
 
+        const price =
+            Number(editField.Price);
 
-</div>
+        if (
+            Number.isNaN(price) ||
+            price < 0
+        ) {
+            alert("Giá sân không hợp lệ");
+            return;
+        }
 
 
-</div>
+        try {
 
+            setSaving(true);
 
-</div>
+            await updateFieldPrice(
+                editField.PriceID,
+                {
+                    StartTime:
+                        editField.StartTime,
 
+                    EndTime:
+                        editField.EndTime,
 
+                    Price:
+                        price
+                }
+            );
 
+            setEditField(null);
 
+            await loadFields();
 
+            alert(
+                "Cập nhật giá thành công"
+            );
 
+        } catch (error) {
 
-<div className="title-row">
+            console.error(error);
 
+            alert(
+                error.message ||
+                "Không thể cập nhật"
+            );
 
-<h1>
-QUẢN LÝ SÂN BÓNG
-</h1>
+        } finally {
 
+            setSaving(false);
+        }
+    };
 
 
-<button className="add-btn">
+    // =========================================================
+    // DELETE FIELD
+    // =========================================================
 
-+ Thêm sân mới
+    const handleDeleteField = async field => {
 
-</button>
+        const confirmDelete =
+            window.confirm(
+                `Bạn có chắc muốn xóa "${field.FieldName}"?\n\n` +
+                "Toàn bộ bảng giá của sân cũng sẽ bị xóa."
+            );
 
+        if (!confirmDelete) {
+            return;
+        }
 
 
-</div>
+        try {
 
+            setDeletingFieldID(
+                field.FieldID
+            );
 
+            const response = await fetch(
+                `http://127.0.0.1:5000/api/fields/${field.FieldID}`,
+                {
+                    method: "DELETE"
+                }
+            );
 
+            const result =
+                await response.json();
 
+            if (!response.ok) {
+                throw new Error(
+                    result.message ||
+                    "Không thể xóa sân"
+                );
+            }
 
+            await loadFields();
 
+            alert(
+                result.message ||
+                "Xóa sân thành công"
+            );
 
+        } catch (error) {
 
+            console.error(error);
 
-{/* CARD */}
+            alert(
+                error.message ||
+                "Không thể xóa sân"
+            );
 
+        } finally {
 
-<div className="cards">
+            setDeletingFieldID(null);
+        }
+    };
 
 
-<div className="card">
+    // =========================================================
+    // LOGOUT
+    // =========================================================
 
-<p>
-Tổng số sân
-</p>
+    const handleLogout = () => {
 
+        if (
+            !window.confirm(
+                "Bạn có muốn đăng xuất?"
+            )
+        ) {
+            return;
+        }
 
-<h2>
-{totalFields}
-</h2>
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+    };
 
 
-</div>
+    // =========================================================
+    // UI
+    // =========================================================
 
+    return (
 
+        <div className="admin-container">
 
-<div className="card">
 
-<p>
-Đang hoạt động
-</p>
+            {/* SIDEBAR */}
 
+            <aside className="sidebar">
 
-<h2>
-{activeFields}
-</h2>
+                <h2>
+                    ⚽ SÂN BÓNG
+                </h2>
 
+                <ul className="sidebar-menu">
 
-</div>
+                    <li>
+                        Tổng quan
+                    </li>
 
+                    <li className="active">
+                        Quản lý sân bóng
+                    </li>
 
+                    <li>
+                        Quản lý đặt sân
+                    </li>
 
-<div className="card">
+                    <li>
+                        Quản lý khách hàng
+                    </li>
 
-<p>
-Đang bảo trì
-</p>
+                    <li>
+                        Quản lý nhân viên
+                    </li>
 
+                    <li>
+                        Hóa đơn & thanh toán
+                    </li>
 
-<h2>
-{maintenanceFields}
-</h2>
+                    <li>
+                        Thống kê & báo cáo
+                    </li>
 
+                    <li>
+                        Cài đặt
+                    </li>
 
-</div>
+                </ul>
 
+                <button
+                    className="logout"
+                    onClick={handleLogout}
+                >
+                    ↪ Đăng xuất
+                </button>
 
+            </aside>
 
 
-<div className="card">
+            {/* MAIN */}
 
-<p>
-Đã đặt hôm nay
-</p>
+            <main className="admin-content">
 
 
-<h2>
-0
-</h2>
+                {/* HEADER */}
 
+                <div className="top-header">
 
-</div>
+                    <input
+                        placeholder="🔍 Tìm kiếm nhanh..."
+                    />
 
+                    <div className="admin-user">
 
+                        <span>
+                            🔔
+                        </span>
 
-</div>
+                        <div>
 
+                            <b>
+                                {
+                                    user?.FullName ||
+                                    "Admin sân bóng"
+                                }
+                            </b>
 
+                            <small>
+                                Quản trị viên
+                            </small>
 
+                        </div>
 
+                    </div>
 
+                </div>
 
 
+                {/* TITLE */}
 
+                <div className="title-row">
 
-{/* FILTER */}
+                    <h1>
+                        QUẢN LÝ SÂN BÓNG
+                    </h1>
 
-<div className="filter">
+                    <button
+                        className="add-btn"
+                        onClick={() =>
+                            setShowAddModal(true)
+                        }
+                    >
+                        + Thêm sân mới
+                    </button>
 
+                </div>
 
-<input
-placeholder="🔍 Tìm kiếm tên sân..."
-/>
 
+                {/* STATISTICS */}
 
-<select>
+                <div className="cards">
 
-<option>
-Loại sân
-</option>
+                    <div className="card">
+                        <p>Tổng số sân</p>
+                        <h2>{stats.total}</h2>
+                    </div>
 
-<option>
-5 player
-</option>
+                    <div className="card">
+                        <p>Đang hoạt động</p>
+                        <h2>{stats.available}</h2>
+                    </div>
 
-<option>
-7 player
-</option>
+                    <div className="card">
+                        <p>Đang bảo trì</p>
+                        <h2>{stats.maintenance}</h2>
+                    </div>
 
+                    <div className="card">
+                        <p>Đã đặt hôm nay</p>
+                        <h2>0</h2>
+                    </div>
 
-<option>
-11 player
-</option>
+                </div>
 
-</select>
 
+                {/* FILTER */}
 
+                <div className="filter">
 
+                    <input
+                        placeholder="🔍 Tìm kiếm tên sân..."
+                        value={searchText}
+                        onChange={e =>
+                            setSearchText(
+                                e.target.value
+                            )
+                        }
+                    />
 
-<select>
+                    <select
+                        value={fieldType}
+                        onChange={e =>
+                            setFieldType(
+                                e.target.value
+                            )
+                        }
+                    >
 
-<option>
-Trạng thái
-</option>
+                        <option value="">
+                            Loại sân
+                        </option>
 
+                        {
+                            fieldTypes.map(type => (
+                                <option
+                                    key={type}
+                                    value={type}
+                                >
+                                    {type}
+                                </option>
+                            ))
+                        }
 
-<option>
-AVAILABLE
-</option>
+                    </select>
 
 
-<option>
-MAINTENANCE
-</option>
+                    <select
+                        value={status}
+                        onChange={e =>
+                            setStatus(
+                                e.target.value
+                            )
+                        }
+                    >
 
+                        <option value="">
+                            Trạng thái
+                        </option>
 
-</select>
+                        <option value="AVAILABLE">
+                            AVAILABLE
+                        </option>
 
+                        <option value="MAINTENANCE">
+                            MAINTENANCE
+                        </option>
 
-</div>
+                    </select>
 
+                </div>
 
 
+                {/* TABLE */}
 
+                <div className="table-box">
 
+                    <table>
 
+                        <thead>
 
+                            <tr>
 
+                                <th>Tên sân</th>
+                                <th>Loại sân</th>
+                                <th>Địa điểm</th>
+                                <th>Khung giờ</th>
+                                <th>Giá / giờ</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
 
-{/* TABLE */}
+                            </tr>
 
+                        </thead>
 
-<div className="table-box">
 
+                        <tbody>
 
-<table>
+                            {
+                                loading ? (
 
+                                    <tr>
 
-<thead>
+                                        <td
+                                            colSpan="7"
+                                            style={{
+                                                textAlign:
+                                                    "center"
+                                            }}
+                                        >
+                                            Đang tải...
+                                        </td>
 
+                                    </tr>
 
-<tr>
+                                ) : filteredFields.length === 0 ? (
 
+                                    <tr>
 
-<th>
-Tên sân
-</th>
+                                        <td
+                                            colSpan="7"
+                                            style={{
+                                                textAlign:
+                                                    "center"
+                                            }}
+                                        >
+                                            Không có dữ liệu
+                                        </td>
 
+                                    </tr>
 
-<th>
-Loại sân
-</th>
+                                ) : (
 
+                                    filteredFields.map(
+                                        (field, index) => {
 
-<th>
-Địa điểm
-</th>
+                                            const firstRow =
+                                                index === 0 ||
+                                                filteredFields[
+                                                    index - 1
+                                                ].FieldID !==
+                                                field.FieldID;
 
+                                            return (
 
-<th>
-Khung giờ
-</th>
+                                                <tr
+                                                    key={
+                                                        field.PriceID
+                                                            ? `price-${field.PriceID}`
+                                                            : `field-${field.FieldID}`
+                                                    }
+                                                >
 
+                                                    <td>
+                                                        {
+                                                            field.FieldName
+                                                        }
+                                                    </td>
 
-<th>
-Giá / giờ
-</th>
+                                                    <td>
+                                                        {
+                                                            field.FieldType
+                                                        }
+                                                    </td>
 
+                                                    <td>
+                                                        {
+                                                            field.Location
+                                                        }
+                                                    </td>
 
-<th>
-Trạng thái
-</th>
+                                                    <td>
+                                                        {
+                                                            field.StartTime
+                                                                ?.slice(
+                                                                    0,
+                                                                    5
+                                                                ) ||
+                                                            "--"
+                                                        }
 
+                                                        {" - "}
 
-<th>
-Thao tác
-</th>
+                                                        {
+                                                            field.EndTime
+                                                                ?.slice(
+                                                                    0,
+                                                                    5
+                                                                ) ||
+                                                            "--"
+                                                        }
+                                                    </td>
 
+                                                    <td>
+                                                        <strong>
+                                                            {
+                                                                formatPrice(
+                                                                    field.Price
+                                                                )
+                                                            }đ
+                                                        </strong>
+                                                    </td>
 
-</tr>
+                                                    <td>
 
+                                                        <span
+                                                            className={
+                                                                field.Status ===
+                                                                "AVAILABLE"
+                                                                    ? "status available"
+                                                                    : "status maintenance"
+                                                            }
+                                                        >
+                                                            {
+                                                                field.Status
+                                                            }
+                                                        </span>
 
-</thead>
+                                                    </td>
 
+                                                    <td>
 
+                                                        <div
+                                                            style={{
+                                                                display:
+                                                                    "flex",
+                                                                gap:
+                                                                    "8px",
+                                                                flexWrap:
+                                                                    "wrap"
+                                                            }}
+                                                        >
 
+                                                            <button
+                                                                className="edit-btn"
+                                                                onClick={() =>
+                                                                    openEdit(
+                                                                        field
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    !field.PriceID
+                                                                }
+                                                            >
+                                                                Sửa
+                                                            </button>
 
 
+                                                            {
+                                                                firstRow && (
 
-<tbody>
+                                                                    <button
+                                                                        className="delete-btn"
+                                                                        disabled={
+                                                                            deletingFieldID ===
+                                                                            field.FieldID
+                                                                        }
+                                                                        onClick={() =>
+                                                                            handleDeleteField(
+                                                                                field
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            deletingFieldID ===
+                                                                            field.FieldID
+                                                                                ? "Đang xóa..."
+                                                                                : "Xóa sân"
+                                                                        }
+                                                                    </button>
 
+                                                                )
+                                                            }
 
-{
+                                                        </div>
 
-fields.map(
-(field)=>(
+                                                    </td>
 
+                                                </tr>
+                                            );
+                                        }
+                                    )
+                                )
+                            }
 
-<tr
-key={
-field.FieldID+"-"+field.StartTime
-}
->
+                        </tbody>
 
+                    </table>
 
+                </div>
 
-<td>
-{field.FieldName}
-</td>
+            </main>
 
 
+            {/* =================================================
+                ADD FIELD MODAL
+            ================================================= */}
 
-<td>
-{field.FieldType}
-</td>
+            {
+                showAddModal && (
 
+                    <div className="modal">
 
+                        <div className="modal-content">
 
-<td>
-{field.Location}
-</td>
+                            <h2>
+                                Thêm sân mới
+                            </h2>
 
 
+                            <label>
+                                Tên sân
+                            </label>
 
+                            <input
+                                placeholder="Ví dụ: Sân 3"
+                                value={newField.FieldName}
+                                onChange={e =>
+                                    updateNewField(
+                                        "FieldName",
+                                        e.target.value
+                                    )
+                                }
+                            />
 
 
-<td>
+                            <label>
+                                Loại sân
+                            </label>
 
+                            <select
+                                value={newField.FieldType}
+                                onChange={e =>
+                                    updateNewField(
+                                        "FieldType",
+                                        e.target.value
+                                    )
+                                }
+                            >
 
-<div className="time">
+                                <option value="5 player">
+                                    5 player
+                                </option>
 
+                                <option value="7 player">
+                                    7 player
+                                </option>
 
-{field.StartTime}
+                                <option value="11 player">
+                                    11 player
+                                </option>
 
--
+                            </select>
 
-{field.EndTime}
 
+                            <label>
+                                Địa điểm
+                            </label>
 
-</div>
+                            <input
+                                placeholder="Ví dụ: Hà Nội"
+                                value={newField.Location}
+                                onChange={e =>
+                                    updateNewField(
+                                        "Location",
+                                        e.target.value
+                                    )
+                                }
+                            />
 
 
+                            <label>
+                                URL hình ảnh
+                            </label>
 
-</td>
+                            <input
+                                placeholder="Không bắt buộc"
+                                value={newField.Image}
+                                onChange={e =>
+                                    updateNewField(
+                                        "Image",
+                                        e.target.value
+                                    )
+                                }
+                            />
 
 
+                            <label>
+                                Trạng thái
+                            </label>
 
+                            <select
+                                value={newField.Status}
+                                onChange={e =>
+                                    updateNewField(
+                                        "Status",
+                                        e.target.value
+                                    )
+                                }
+                            >
 
+                                <option value="AVAILABLE">
+                                    AVAILABLE
+                                </option>
 
+                                <option value="MAINTENANCE">
+                                    MAINTENANCE
+                                </option>
 
-<td>
+                            </select>
 
 
-<strong>
+                            <label>
+                                Giờ bắt đầu
+                            </label>
 
-{
-field.Price
-?
-field.Price.toLocaleString()
-:
-0
-}
+                            <input
+                                type="time"
+                                value={newField.StartTime}
+                                onChange={e =>
+                                    updateNewField(
+                                        "StartTime",
+                                        e.target.value
+                                    )
+                                }
+                            />
 
-đ
 
-</strong>
+                            <label>
+                                Giờ kết thúc
+                            </label>
 
+                            <input
+                                type="time"
+                                value={newField.EndTime}
+                                onChange={e =>
+                                    updateNewField(
+                                        "EndTime",
+                                        e.target.value
+                                    )
+                                }
+                            />
 
 
-</td>
+                            <label>
+                                Giá / giờ
+                            </label>
 
+                            <input
+                                type="number"
+                                min="0"
+                                step="1000"
+                                placeholder="Ví dụ: 350000"
+                                value={newField.Price}
+                                onChange={e =>
+                                    updateNewField(
+                                        "Price",
+                                        e.target.value
+                                    )
+                                }
+                            />
 
 
+                            <button
+                                className="save-btn"
+                                disabled={adding}
+                                onClick={handleAddField}
+                            >
+                                {
+                                    adding
+                                        ? "Đang thêm..."
+                                        : "Thêm sân"
+                                }
+                            </button>
 
 
+                            <button
+                                className="cancel-btn"
+                                disabled={adding}
+                                onClick={() => {
 
-<td>
+                                    setShowAddModal(
+                                        false
+                                    );
 
+                                    setNewField(
+                                        EMPTY_FIELD
+                                    );
+                                }}
+                            >
+                                Hủy
+                            </button>
+
+                        </div>
 
-<span
+                    </div>
+                )
+            }
 
-className={
-field.Status==="AVAILABLE"
-?
-"status available"
-:
-"status maintenance"
-}
-
->
-
-{field.Status}
-
-
-</span>
-
-
-</td>
-
-
-
-
-
-
-<td>
-
-
-<button
-
-className="edit-btn"
-
-onClick={()=>setEditField(field)}
-
->
-
-Sửa
-
-</button>
-
-
-
-</td>
-
-
-
-
-
-
-</tr>
-
-
-)
-
-)
-
-
-}
-
-
-
-</tbody>
-
-
-
-</table>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-</main>
-
-
-
-
-
-
-
-
-
-{/* POPUP EDIT */}
-
-
-
-{
-
-editField &&
-
-
-<div className="modal">
-
-
-<div className="modal-content">
-
-
-<h2>
-Sửa giá sân
-</h2>
-
-
-
-<label>
-Giờ bắt đầu
-</label>
-
-
-<input
-
-type="time"
-
-value={
-editField.StartTime
-}
-
-
-onChange={
-e=>
-
-setEditField({
-
-...editField,
-
-StartTime:e.target.value
-
-})
-
-}
-
-
-/>
-
-
-
-
-
-
-<label>
-Giờ kết thúc
-</label>
-
-
-<input
-
-type="time"
-
-value={
-editField.EndTime
-}
-
-
-onChange={
-e=>
-
-setEditField({
-
-...editField,
-
-EndTime:e.target.value
-
-})
-
-}
-
-
-/>
-
-
-
-
-
-<label>
-Giá tiền
-</label>
-
-
-
-<input
-
-type="number"
-
-value={
-editField.Price
-}
-
-
-onChange={
-e=>
-
-setEditField({
-
-...editField,
-
-Price:e.target.value
-
-})
-
-}
-
-
-/>
-
-
-
-
-
-<button
-
-className="save-btn"
-
-
-onClick={async()=>{
-
-
-await updateFieldPrice(
-
-editField.FieldID,
-
-{
-
-StartTime:editField.StartTime,
-
-EndTime:editField.EndTime,
-
-Price:Number(editField.Price)
-
-}
-
-);
-
-
-
-setEditField(null);
-
-
-loadFields();
-
-
-}}
-
-
->
-
-Lưu thay đổi
-
-</button>
-
-
-
-
-
-<button
-
-className="cancel-btn"
-
-onClick={
-()=>setEditField(null)
-}
-
->
-
-Hủy
-
-</button>
-
-
-
-
-
-</div>
-
-
-</div>
-
-
-}
-
-
-
-</div>
-
-
-)
-
-
+
+            {/* =================================================
+                EDIT PRICE MODAL
+            ================================================= */}
+
+            {
+                editField && (
+
+                    <div className="modal">
+
+                        <div className="modal-content">
+
+                            <h2>
+                                Sửa giá sân
+                            </h2>
+
+                            <p>
+                                <b>
+                                    {
+                                        editField.FieldName
+                                    }
+                                </b>
+                            </p>
+
+
+                            <label>
+                                Giờ bắt đầu
+                            </label>
+
+                            <input
+                                type="time"
+                                value={
+                                    editField.StartTime
+                                }
+                                onChange={e =>
+                                    updateEditField(
+                                        "StartTime",
+                                        e.target.value
+                                    )
+                                }
+                            />
+
+
+                            <label>
+                                Giờ kết thúc
+                            </label>
+
+                            <input
+                                type="time"
+                                value={
+                                    editField.EndTime
+                                }
+                                onChange={e =>
+                                    updateEditField(
+                                        "EndTime",
+                                        e.target.value
+                                    )
+                                }
+                            />
+
+
+                            <label>
+                                Giá tiền
+                            </label>
+
+                            <input
+                                type="number"
+                                min="0"
+                                step="1000"
+                                value={
+                                    editField.Price ?? ""
+                                }
+                                onChange={e =>
+                                    updateEditField(
+                                        "Price",
+                                        e.target.value
+                                    )
+                                }
+                            />
+
+
+                            <button
+                                className="save-btn"
+                                disabled={saving}
+                                onClick={
+                                    handleSaveEdit
+                                }
+                            >
+                                {
+                                    saving
+                                        ? "Đang lưu..."
+                                        : "Lưu thay đổi"
+                                }
+                            </button>
+
+
+                            <button
+                                className="cancel-btn"
+                                disabled={saving}
+                                onClick={() =>
+                                    setEditField(null)
+                                }
+                            >
+                                Hủy
+                            </button>
+
+                        </div>
+
+                    </div>
+                )
+            }
+
+        </div>
+    );
 }
 
 
