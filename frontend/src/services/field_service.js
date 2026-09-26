@@ -1,4 +1,3 @@
-
 const API_URL = "http://127.0.0.1:5000/api/fields";
 
 
@@ -7,6 +6,22 @@ const API_URL = "http://127.0.0.1:5000/api/fields";
 ========================================================= */
 
 export const getFields = async () => {
+
+  const response = await fetch(
+    `${API_URL}/`
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+
+    throw new Error(
+      result.message ||
+      "Không thể lấy danh sách sân"
+    );
+  }
+
+  return result;
 };
 
 
@@ -15,24 +30,24 @@ export const getFields = async () => {
 ========================================================= */
 
 export const getFieldById = async (
-    fieldID
+  fieldID
 ) => {
 
-    const response = await fetch(
-        `${API_URL}/${fieldID}`
+  const response = await fetch(
+    `${API_URL}/${fieldID}`
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+
+    throw new Error(
+      result.message ||
+      "Không thể lấy thông tin sân"
     );
+  }
 
-    const result = await response.json();
-
-    if (!response.ok) {
-
-        throw new Error(
-            result.message ||
-            "Không thể lấy thông tin sân"
-        );
-    }
-
-    return result;
+  return result;
 };
 
 
@@ -42,25 +57,25 @@ export const getFieldById = async (
 ========================================================= */
 
 export const getFieldAvailability = async (
-    fieldID,
-    date
+  fieldID,
+  date
 ) => {
 
-    const response = await fetch(
-        `${API_URL}/${fieldID}/availability?date=${date}`
+  const response = await fetch(
+    `${API_URL}/${fieldID}/availability?date=${date}`
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+
+    throw new Error(
+      result.message ||
+      "Không thể kiểm tra lịch sân"
     );
+  }
 
-    const result = await response.json();
-
-    if (!response.ok) {
-
-        throw new Error(
-            result.message ||
-            "Không thể kiểm tra lịch sân"
-        );
-    }
-
-    return result;
+  return result;
 };
 
 
@@ -69,34 +84,34 @@ export const getFieldAvailability = async (
 ========================================================= */
 
 export const createField = async (
-    data
+  data
 ) => {
 
-    const response = await fetch(
-        `${API_URL}/`,
-        {
-            method: "POST",
+  const response = await fetch(
+    `${API_URL}/`,
+    {
+      method: "POST",
 
-            headers: {
-                "Content-Type":
-                    "application/json"
-            },
+      headers: {
+        "Content-Type":
+          "application/json"
+      },
 
-            body: JSON.stringify(data)
-        }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-
-        throw new Error(
-            result.message ||
-            "Không thể thêm sân"
-        );
+      body: JSON.stringify(data)
     }
+  );
 
-    return result;
+  const result = await response.json();
+
+  if (!response.ok) {
+
+    throw new Error(
+      result.message ||
+      "Không thể thêm sân"
+    );
+  }
+
+  return result;
 };
 
 
@@ -105,35 +120,35 @@ export const createField = async (
 ========================================================= */
 
 export const updateField = async (
-    fieldID,
-    data
+  fieldID,
+  data
 ) => {
 
-    const response = await fetch(
-        `${API_URL}/${fieldID}`,
-        {
-            method: "PUT",
+  const response = await fetch(
+    `${API_URL}/${fieldID}`,
+    {
+      method: "PUT",
 
-            headers: {
-                "Content-Type":
-                    "application/json"
-            },
+      headers: {
+        "Content-Type":
+          "application/json"
+      },
 
-            body: JSON.stringify(data)
-        }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-
-        throw new Error(
-            result.message ||
-            "Không thể cập nhật sân"
-        );
+      body: JSON.stringify(data)
     }
+  );
 
-    return result;
+  const result = await response.json();
+
+  if (!response.ok) {
+
+    throw new Error(
+      result.message ||
+      "Không thể cập nhật sân"
+    );
+  }
+
+  return result;
 };
 
 
@@ -142,37 +157,37 @@ export const updateField = async (
 ========================================================= */
 
 export const updateFieldStatus = async (
-    fieldID,
-    status
+  fieldID,
+  status
 ) => {
 
-    const response = await fetch(
-        `${API_URL}/${fieldID}/status`,
-        {
-            method: "PATCH",
+  const response = await fetch(
+    `${API_URL}/${fieldID}/status`,
+    {
+      method: "PATCH",
 
-            headers: {
-                "Content-Type":
-                    "application/json"
-            },
+      headers: {
+        "Content-Type":
+          "application/json"
+      },
 
-            body: JSON.stringify({
-                Status: status
-            })
-        }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-
-        throw new Error(
-            result.message ||
-            "Không thể cập nhật trạng thái sân"
-        );
+      body: JSON.stringify({
+        Status: status
+      })
     }
+  );
 
-    return result;
+  const result = await response.json();
+
+  if (!response.ok) {
+
+    throw new Error(
+      result.message ||
+      "Không thể cập nhật trạng thái sân"
+    );
+  }
+
+  return result;
 };
 
 
@@ -181,35 +196,35 @@ export const updateFieldStatus = async (
 ========================================================= */
 
 export const updateFieldPrice = async (
-    priceID,
-    data
+  priceID,
+  data
 ) => {
 
-    const response = await fetch(
-        `${API_URL}/price/${priceID}`,
-        {
-            method: "PUT",
+  const response = await fetch(
+    `${API_URL}/price/${priceID}`,
+    {
+      method: "PUT",
 
-            headers: {
-                "Content-Type":
-                    "application/json"
-            },
+      headers: {
+        "Content-Type":
+          "application/json"
+      },
 
-            body: JSON.stringify(data)
-        }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-
-        throw new Error(
-            result.message ||
-            "Không thể cập nhật giá"
-        );
+      body: JSON.stringify(data)
     }
+  );
 
-    return result;
+  const result = await response.json();
+
+  if (!response.ok) {
+
+    throw new Error(
+      result.message ||
+      "Không thể cập nhật giá"
+    );
+  }
+
+  return result;
 };
 
 
@@ -218,25 +233,25 @@ export const updateFieldPrice = async (
 ========================================================= */
 
 export const deleteField = async (
-    fieldID
+  fieldID
 ) => {
 
-    const response = await fetch(
-        `${API_URL}/${fieldID}`,
-        {
-            method: "DELETE"
-        }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-
-        throw new Error(
-            result.message ||
-            "Không thể xóa sân"
-        );
+  const response = await fetch(
+    `${API_URL}/${fieldID}`,
+    {
+      method: "DELETE"
     }
+  );
 
-    return result;
+  const result = await response.json();
+
+  if (!response.ok) {
+
+    throw new Error(
+      result.message ||
+      "Không thể xóa sân"
+    );
+  }
+
+  return result;
 };

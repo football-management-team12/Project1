@@ -1,83 +1,460 @@
-import { Link } from "react-router-dom";
 import {
+  Link
+} from "react-router-dom";
+
+import {
+  CalendarDays,
   MapPin,
-  Users,
-  Star,
+  Users
 } from "lucide-react";
 
-import { formatPrice } from "../../utils/pricing";
+import fieldImage
+  from "../../assets/images/football-field.jpg";
 
 import "./FieldCard.css";
 
+
 function FieldCard({
+
   id,
-  image,
+
   name,
-  status = "Còn sân",
-  type = "Sân 7 người",
-  rating = 4.8,
-  price,
+
+  address,
+
+  type,
+
+  status,
+
+  selectedDate,
+
+  slots = []
+
 }) {
+
+
+  /* =========================================================
+     AVAILABLE SLOT
+  ========================================================= */
+
+  const hasAvailableSlot =
+    slots.some(
+      slot =>
+        slot.available
+    );
+
+
+  /* =========================================================
+     MIN PRICE
+  ========================================================= */
+
+  const prices =
+    slots
+      .map(
+        slot =>
+          Number(
+            slot.Price
+          )
+      )
+      .filter(
+        price =>
+          !Number.isNaN(
+            price
+          )
+      );
+
+
+  const minPrice =
+    prices.length > 0
+
+      ? Math.min(
+          ...prices
+        )
+
+      : 0;
+
+
+  /* =========================================================
+     STATUS
+  ========================================================= */
+
+  const fieldAvailable =
+    status === "AVAILABLE";
+
+
+  /* =========================================================
+     JSX
+  ========================================================= */
+
   return (
-    <article className="field-card">
-      <div className="field-image-wrapper">
+
+    <article
+      className="
+        field-card
+      "
+    >
+
+
+      {/* IMAGE */}
+
+      <div
+        className="
+          field-image-wrapper
+        "
+      >
+
         <img
-          src={image}
-          alt={name}
-          className="field-image"
+
+          src={
+            fieldImage
+          }
+
+          alt={
+            name
+          }
+
+          className="
+            field-image
+          "
+
         />
+
+
+        <span
+          className={
+            fieldAvailable
+              ? "field-status field-status--available"
+              : "field-status field-status--maintenance"
+          }
+        >
+
+          {
+            fieldAvailable
+              ? "Đang hoạt động"
+              : "Bảo trì"
+          }
+
+        </span>
+
       </div>
 
-      <div className="field-content">
-        <div className="field-title-row">
-          <h3>{name}</h3>
 
-          <div className="field-rating">
-            <Star
-              size={17}
-              fill="currentColor"
+      {/* CONTENT */}
+
+      <div
+        className="
+          field-content
+        "
+      >
+
+
+        {/* TITLE */}
+
+        <div
+          className="
+            field-title-row
+          "
+        >
+
+          <h3
+            title={
+              name
+            }
+          >
+
+            {name}
+
+          </h3>
+
+        </div>
+
+
+        {/* INFORMATION */}
+
+        <div
+          className="
+            field-info
+          "
+        >
+
+          <div
+            className="
+              field-info-row
+            "
+          >
+
+            <MapPin
+              size={16}
             />
-            <span>{rating}</span>
-          </div>
-        </div>
 
-        <div className="field-info">
-          <div className="field-info-row">
-            <MapPin size={16} />
             <span>
-              Trạng thái: {status}
+              {address}
             </span>
+
           </div>
 
-          <div className="field-info-row">
-            <Users size={16} />
-            <span>{type}</span>
+
+          <div
+            className="
+              field-info-row
+            "
+          >
+
+            <Users
+              size={16}
+            />
+
+            <span>
+              {type}
+            </span>
+
           </div>
+
+
+          <div
+            className="
+              field-info-row
+            "
+          >
+
+            <CalendarDays
+              size={16}
+            />
+
+            <span>
+              {selectedDate}
+            </span>
+
+          </div>
+
         </div>
 
-        <div className="field-divider" />
 
-        <div className="field-bottom">
+        {/* SLOT */}
+
+        <div
+          className="
+            field-slots
+          "
+        >
+
+          <div
+            className="
+              field-slots-title
+            "
+          >
+            KHUNG GIỜ
+          </div>
+
+
+          {
+            slots.length === 0
+            ? (
+
+              <div
+                className="
+                  field-no-slot
+                "
+              >
+                Chưa có bảng giá
+              </div>
+
+            )
+            : (
+
+              slots.map(
+                slot => (
+
+                  <div
+
+                    key={
+                      slot.PriceID
+                    }
+
+                    className={
+                      slot.available
+
+                        ? "field-slot available"
+
+                        : "field-slot booked"
+                    }
+
+                  >
+
+
+                    {/* TIME + PRICE */}
+
+                    <div
+                      className="
+                        field-slot-main
+                      "
+                    >
+
+                      <strong>
+
+                        {
+                          slot.StartTime
+                        }
+
+                        {" - "}
+
+                        {
+                          slot.EndTime
+                        }
+
+                      </strong>
+
+
+                      <span
+                        className="
+                          field-slot-price
+                        "
+                      >
+
+                        {
+                          Number(
+                            slot.Price ||
+                            0
+                          ).toLocaleString(
+                            "vi-VN"
+                          )
+                        }
+
+                        đ
+
+                      </span>
+
+                    </div>
+
+
+                    {/* STATUS */}
+
+                    <span
+                      className="
+                        field-slot-status
+                      "
+                    >
+
+                      {
+                        slot.available
+                          ? "Trống"
+                          : (
+                            slot.reason
+                            ===
+                            "FIELD_UNAVAILABLE"
+                              ? "Bảo trì"
+                              : "Đã đặt"
+                          )
+                      }
+
+                    </span>
+
+                  </div>
+
+                )
+              )
+            )
+          }
+
+        </div>
+
+
+        <div
+          className="
+            field-divider
+          "
+        />
+
+
+        {/* BOTTOM */}
+
+        <div
+          className="
+            field-bottom
+          "
+        >
+
           <div>
-            <span className="price-label">
+
+            <span
+              className="
+                price-label
+              "
+            >
               GIÁ THUÊ TỪ
             </span>
 
+
             <strong>
-              {formatPrice(price)}đ/h
+
+              {
+                minPrice
+                  .toLocaleString(
+                    "vi-VN"
+                  )
+              }
+
+              đ/h
+
             </strong>
+
           </div>
 
-          <Link
-            to={`/fields/${id}`}
-            className="field-detail-button"
-          >
-            Chi tiết
-          </Link>
+
+          {
+            fieldAvailable
+            &&
+            hasAvailableSlot
+            ? (
+
+              <Link
+
+                to={
+                  `/booking?fieldId=${id}&date=${selectedDate}`
+                }
+
+                className="
+                  field-detail-button
+                "
+              >
+
+                Chọn sân
+
+              </Link>
+
+            )
+            : (
+
+              <button
+
+                type="button"
+
+                disabled
+
+                className="
+                  field-detail-button
+                  field-disabled
+                "
+              >
+
+                {
+                  fieldAvailable
+                    ? "Hết lịch"
+                    : "Bảo trì"
+                }
+
+              </button>
+
+            )
+          }
+
         </div>
+
       </div>
+
     </article>
   );
 }
+
 
 export default FieldCard;
