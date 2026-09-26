@@ -5,16 +5,18 @@ import {
   Star,
 } from "lucide-react";
 
+import { formatPrice } from "../../utils/pricing";
+
 import "./FieldCard.css";
 
 function FieldCard({
   id,
   image,
   name,
-  address,
-  price,
+  status = "Còn sân",
   type = "Sân 7 người",
   rating = 4.8,
+  price,
 }) {
   return (
     <article className="field-card">
@@ -28,9 +30,7 @@ function FieldCard({
 
       <div className="field-content">
         <div className="field-title-row">
-          <h3 title={name}>
-            {name}
-          </h3>
+          <h3>{name}</h3>
 
           <div className="field-rating">
             <Star
@@ -44,7 +44,9 @@ function FieldCard({
         <div className="field-info">
           <div className="field-info-row">
             <MapPin size={16} />
-            <span>{address}</span>
+            <span>
+              Trạng thái: {status}
+            </span>
           </div>
 
           <div className="field-info-row">
@@ -62,15 +64,12 @@ function FieldCard({
             </span>
 
             <strong>
-              {typeof price === "number"
-                ? price.toLocaleString("vi-VN")
-                : price}
-              đ/h
+              {formatPrice(price)}đ/h
             </strong>
           </div>
 
           <Link
-            to={id ? `/fields/${id}` : "/fields"}
+            to={`/fields/${id}`}
             className="field-detail-button"
           >
             Chi tiết
