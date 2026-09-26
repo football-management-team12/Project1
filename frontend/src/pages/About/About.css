@@ -1,0 +1,367 @@
+.about-page {
+  background: #ffffff;
+  color: #111827;
+}
+
+.about-container {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+/* =========================
+   HERO
+========================= */
+
+.about-hero {
+  background: #0f172a;
+  padding: 72px 0;
+}
+
+.about-hero-content {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 50px;
+  align-items: center;
+}
+
+.about-badge {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+
+  background: #182235;
+  color: #ffffff;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  margin-bottom: 20px;
+}
+
+.about-badge span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+}
+
+.about-hero-text h1 {
+  margin: 0;
+  color: #ffffff;
+
+  font-size: clamp(34px, 3.5vw, 52px);
+  line-height: 1.15;
+  font-weight: 800;
+
+  max-width: 620px;
+}
+
+.about-hero-text p {
+  margin-top: 24px;
+  max-width: 600px;
+
+  color: #94a3b8;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.about-hero-image img {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+
+  border-radius: 22px;
+  display: block;
+}
+
+/* =========================
+   COMMON
+========================= */
+
+.about-section,
+.gallery-section {
+  padding: 70px 0;
+}
+
+.section-heading {
+  margin-bottom: 30px;
+}
+
+.section-heading.center {
+  text-align: center;
+}
+
+.section-heading h2 {
+  margin: 0 0 8px;
+
+  font-size: 31px;
+  line-height: 1.2;
+  font-weight: 800;
+
+  color: #101827;
+}
+
+.section-heading p {
+  margin: 0;
+
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* =========================
+   MODEL
+========================= */
+
+.sports-model-card {
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr;
+  gap: 42px;
+  align-items: center;
+
+  padding: 28px;
+
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+}
+
+.sports-model-text h3 {
+  margin: 0 0 18px;
+
+  color: #16a34a;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.sports-model-text p {
+  color: #667085;
+  line-height: 1.75;
+  font-size: 14px;
+}
+
+.sports-model-image img {
+  display: block;
+  width: 100%;
+  height: 250px;
+
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+/* =========================
+   VALUES
+========================= */
+
+.about-values-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+
+  margin-top: 58px;
+}
+
+.value-card {
+  padding: 28px;
+
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.value-icon,
+.advantage-icon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #dcfce7;
+  color: #16a34a;
+
+  border-radius: 10px;
+
+  margin-bottom: 18px;
+}
+
+.value-card h3,
+.advantage-card h3 {
+  margin: 0 0 10px;
+
+  color: #111827;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.value-card p,
+.advantage-card p {
+  margin: 0;
+
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* =========================
+   ADVANTAGES
+========================= */
+
+.advantages-section {
+  padding: 70px 0;
+
+  background: #f8fafc;
+}
+
+.advantages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px 44px;
+
+  margin-top: 42px;
+}
+
+.advantage-card {
+  min-height: 210px;
+
+  padding: 28px;
+
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+/* =========================
+   GALLERY
+========================= */
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.gallery-grid img {
+  width: 100%;
+  height: 240px;
+
+  object-fit: cover;
+  border-radius: 14px;
+
+  display: block;
+}
+
+/* =========================
+   CTA
+========================= */
+
+.about-cta {
+  background: #0f172a;
+  padding: 70px 0;
+}
+
+.about-cta-content {
+  text-align: center;
+}
+
+.about-cta h2 {
+  margin: 0 0 12px;
+
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.about-cta p {
+  margin: 0 auto;
+  max-width: 650px;
+
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.cta-actions {
+  margin-top: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.cta-secondary,
+.cta-primary {
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+.cta-primary {
+  color: #ffffff;
+  background: #16a34a;
+
+  padding: 11px 18px;
+  border-radius: 7px;
+}
+
+.cta-primary:hover {
+  background: #15803d;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+  .about-hero-content {
+    grid-template-columns: 1fr;
+  }
+
+  .sports-model-card {
+    grid-template-columns: 1fr;
+  }
+
+  .about-values-grid,
+  .advantages-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .gallery-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .about-container {
+    width: min(100% - 32px, 1180px);
+  }
+
+  .about-hero {
+    padding: 48px 0;
+  }
+
+  .about-hero-image img {
+    height: 230px;
+  }
+
+  .about-values-grid,
+  .advantages-grid,
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery-grid img {
+    height: 220px;
+  }
+
+  .cta-actions {
+    flex-direction: column;
+  }
+}

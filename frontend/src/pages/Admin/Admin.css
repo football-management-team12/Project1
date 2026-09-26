@@ -1,0 +1,954 @@
+/* =========================
+   GLOBAL
+========================= */
+
+*{
+    box-sizing:border-box;
+}
+
+
+body{
+
+    margin:0;
+
+    font-family:
+    "Inter",
+    "Segoe UI",
+    Arial,
+    sans-serif;
+
+    background:#f6f8fb;
+
+    color:#1e293b;
+
+}
+
+
+
+
+
+/* =========================
+   LAYOUT
+========================= */
+
+
+.admin-container{
+
+    display:flex;
+
+    min-height:100vh;
+
+}
+
+
+
+/* =========================
+   SIDEBAR
+========================= */
+
+
+.sidebar{
+
+
+    width:260px;
+
+    background:#00563f;
+
+    color:white;
+
+    padding:30px 18px;
+
+    display:flex;
+
+    flex-direction:column;
+
+
+}
+
+
+
+.sidebar h2{
+
+
+    font-size:25px;
+
+    font-weight:800;
+
+    margin:0 0 40px;
+
+    letter-spacing:.5px;
+
+
+}
+
+
+
+
+.sidebar ul{
+
+
+    list-style:none;
+
+    padding:0;
+
+    margin:0;
+
+
+}
+
+
+
+
+.sidebar li{
+
+
+    padding:15px 18px;
+
+    margin-bottom:8px;
+
+    border-radius:10px;
+
+
+    cursor:pointer;
+
+    font-size:15px;
+
+    transition:.25s;
+
+
+}
+
+
+
+.sidebar li:hover{
+
+
+    background:#087957;
+
+
+}
+
+
+
+
+.sidebar .active{
+
+
+    background:white;
+
+    color:#00563f;
+
+    font-weight:700;
+
+
+}
+
+
+
+
+
+.logout{
+
+
+    margin-top:auto;
+
+    padding:15px 18px;
+
+    cursor:pointer;
+
+    font-weight:600;
+
+
+}
+
+
+
+
+
+
+/* =========================
+ CONTENT
+========================= */
+
+
+.admin-content{
+
+
+    flex:1;
+
+    padding:30px 40px;
+
+
+}
+
+
+
+
+
+
+/* =========================
+ HEADER
+========================= */
+
+
+.top-header{
+
+
+    height:70px;
+
+    background:white;
+
+    margin:-30px -40px 35px;
+
+    padding:0 35px;
+
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+
+    border-bottom:1px solid #e5e7eb;
+
+
+}
+
+
+
+
+
+.top-header input{
+
+
+    width:300px;
+
+
+    padding:12px 18px;
+
+
+    border-radius:10px;
+
+
+    border:1px solid #ddd;
+
+
+    outline:none;
+
+
+    font-size:14px;
+
+
+}
+
+
+
+
+.top-header input:focus{
+
+
+    border-color:#00875a;
+
+
+}
+
+
+
+
+
+
+.admin-user{
+
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+
+}
+
+
+
+.admin-user span{
+
+
+    font-size:22px;
+
+
+}
+
+
+
+
+.admin-user b{
+
+
+    display:block;
+
+    font-size:15px;
+
+
+}
+
+
+
+
+.admin-user small{
+
+
+    color:#777;
+
+}
+
+
+
+
+
+
+/* =========================
+ TITLE
+========================= */
+
+
+.title-row{
+
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+
+}
+
+
+
+.title-row h1{
+
+
+    color:#00563f;
+
+    font-size:30px;
+
+    font-weight:800;
+
+
+}
+
+
+
+
+
+.add-btn{
+
+
+    background:#000;
+
+    color:white;
+
+    border:none;
+
+    padding:12px 24px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-weight:600;
+
+
+}
+
+
+.add-btn:hover{
+
+
+    opacity:.85;
+
+
+}
+
+
+
+
+
+
+/* =========================
+ CARDS
+========================= */
+
+
+.cards{
+
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:22px;
+
+    margin:30px 0;
+
+
+}
+
+
+
+
+.card{
+
+
+    background:white;
+
+
+    padding:25px;
+
+
+    border-radius:16px;
+
+
+    border:1px solid #eee;
+
+
+    box-shadow:
+    0 8px 25px rgba(0,0,0,.06);
+
+
+}
+
+
+
+
+.card p{
+
+
+    margin:0;
+
+    color:#64748b;
+
+    font-size:14px;
+
+
+}
+
+
+
+
+.card h2{
+
+
+    margin-top:15px;
+
+    margin-bottom:0;
+
+    font-size:34px;
+
+    color:#00a651;
+
+
+}
+
+
+
+
+
+
+
+/* =========================
+ FILTER
+========================= */
+
+
+.filter{
+
+
+    display:flex;
+
+    gap:15px;
+
+    margin-bottom:25px;
+
+
+}
+
+
+
+
+.filter input,
+.filter select{
+
+
+    background:white;
+
+
+    border:1px solid #ddd;
+
+
+    padding:12px 15px;
+
+
+    border-radius:10px;
+
+
+    outline:none;
+
+
+    font-size:14px;
+
+
+}
+
+
+
+
+.filter input{
+
+
+    width:260px;
+
+
+}
+
+
+
+
+
+
+
+
+/* =========================
+ TABLE
+========================= */
+
+
+.table-box{
+
+
+    background:white;
+
+
+    border-radius:16px;
+
+
+    overflow:hidden;
+
+
+    box-shadow:
+    0 8px 25px rgba(0,0,0,.06);
+
+
+}
+
+
+
+
+
+table{
+
+
+    width:100%;
+
+
+    border-collapse:collapse;
+
+
+}
+
+
+
+
+thead{
+
+
+    background:#f1f5f9;
+
+
+}
+
+
+
+th{
+
+
+    padding:16px 20px;
+
+
+    text-align:left;
+
+
+    font-size:14px;
+
+
+    color:#475569;
+
+
+}
+
+
+
+
+td{
+
+
+    padding:18px 20px;
+
+
+    border-top:1px solid #edf0f3;
+
+
+    font-size:14px;
+
+
+}
+
+
+
+
+
+tbody tr{
+
+
+    transition:.2s;
+
+
+}
+
+
+
+tbody tr:hover{
+
+
+    background:#f8fafc;
+
+
+}
+
+
+
+
+
+
+/* =========================
+ TIME
+========================= */
+
+
+.time{
+
+
+    font-weight:600;
+
+    color:#00563f;
+
+
+}
+
+
+
+
+
+
+
+
+/* =========================
+ STATUS
+========================= */
+
+
+.status{
+
+
+    padding:7px 15px;
+
+    border-radius:30px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+
+}
+
+
+
+.available{
+
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+
+}
+
+
+
+.maintenance{
+
+
+    background:#fee2e2;
+
+    color:#dc2626;
+
+
+}
+
+
+
+
+
+
+
+
+/* =========================
+ EDIT BUTTON
+========================= */
+
+
+.edit-btn{
+
+
+    background:#00875a;
+
+    color:white;
+
+
+    border:none;
+
+
+    padding:8px 16px;
+
+
+    border-radius:8px;
+
+
+    cursor:pointer;
+
+
+    font-weight:600;
+
+
+}
+
+
+
+.edit-btn:hover{
+
+
+    background:#006b48;
+
+
+}
+
+
+
+
+
+
+
+
+/* =========================
+ MODAL
+========================= */
+
+
+.modal{
+
+
+    position:fixed;
+
+
+    inset:0;
+
+
+    background:rgba(0,0,0,.45);
+
+
+    display:flex;
+
+
+    align-items:center;
+
+
+    justify-content:center;
+
+
+    z-index:999;
+
+
+}
+
+
+
+
+
+.modal-content{
+
+
+    background:white;
+
+
+    width:420px;
+
+
+    padding:30px;
+
+
+    border-radius:18px;
+
+
+    box-shadow:
+    0 20px 50px rgba(0,0,0,.2);
+
+
+}
+
+
+
+
+.modal-content h2{
+
+
+    margin-top:0;
+
+    color:#00563f;
+
+
+}
+
+
+
+
+.modal-content label{
+
+
+    display:block;
+
+
+    margin-top:15px;
+
+
+    font-size:14px;
+
+
+    font-weight:600;
+
+
+}
+
+
+
+
+.modal-content input{
+
+
+    width:100%;
+
+
+    padding:12px;
+
+
+    margin-top:8px;
+
+
+    border:1px solid #ddd;
+
+
+    border-radius:10px;
+
+
+}
+
+
+
+
+
+
+
+.save-btn,
+.cancel-btn{
+
+
+    margin-top:25px;
+
+
+    padding:12px 20px;
+
+
+    border:none;
+
+
+    border-radius:10px;
+
+
+    cursor:pointer;
+
+
+    font-weight:600;
+
+
+}
+
+
+
+.save-btn{
+
+
+    background:#00875a;
+
+
+    color:white;
+
+
+}
+
+
+
+.cancel-btn{
+
+
+    margin-left:10px;
+
+
+    background:#e5e7eb;
+
+
+    color:#333;
+
+
+}
+
+
+
+
+
+
+
+/* =========================
+ RESPONSIVE
+========================= */
+
+
+@media(max-width:1000px){
+
+
+.cards{
+
+grid-template-columns:repeat(2,1fr);
+
+}
+
+
+.sidebar{
+
+width:220px;
+
+}
+
+
+
+}
