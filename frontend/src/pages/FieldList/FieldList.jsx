@@ -1,170 +1,454 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 import Navbar from "../../components/Navbar/Navbar";
 import FieldCard from "../../components/FieldCard/FieldCard";
 
-import field1 from "../../assets/images/football-field.jpg";
+import { getFields } from "../../services/field_service";
 
 import "./FieldList.css";
 
-const fields = [
-  {
-    id: 1,
-    name: "Sân bóng Sport Link ABC",
-    address: "Chu Văn An, Bình Thạnh, TP.HCM",
-    type: "Sân cỏ nhân tạo 7 người",
-    rating: 4.8,
-    price: 300000,
-    image: field1,
-  },
-  {
-    id: 2,
-    name: "Sân bóng B",
-    address: "Đào Duy Từ, Quận 10, TP.HCM",
-    type: "Sân tiêu chuẩn 11 người",
-    rating: 4.9,
-    price: 800000,
-    image: field1,
-  },
-  {
-    id: 3,
-    name: "Sân bóng PT",
-    address: "Lý Thường Kiệt, Quận 11, TP.HCM",
-    type: "Sân 7 người / 5 người",
-    rating: 4.7,
-    price: 350000,
-    image: field1,
-  },
-  {
-    id: 4,
-    name: "Sân bóng 789",
-    address: "Bình Quới, Bình Thạnh, TP.HCM",
-    type: "Sân 7 người ven sông",
-    rating: 4.5,
-    price: 280000,
-    image: field1,
-  },
-  {
-    id: 5,
-    name: "Sân bóng Club",
-    address: "Quốc Hương, Quận 2, TP.HCM",
-    type: "Sân 5 người cao cấp",
-    rating: 4.6,
-    price: 400000,
-    image: field1,
-  },
-  {
-    id: 6,
-    name: "Sân bóng Tân Bình Arena",
-    address: "Cộng Hòa, Tân Bình, TP.HCM",
-    type: "Sân 7 người mái che",
-    rating: 4.4,
-    price: 320000,
-    image: field1,
-  },
-];
 
 function FieldList() {
-  const [keyword, setKeyword] = useState("");
 
-  const filteredFields = fields.filter((field) =>
-    field.name
-      .toLowerCase()
-      .includes(keyword.toLowerCase())
-  );
+  const [fields, setFields] = useState([]);
+  const [keyword, setKeyword] = useState("");
+  const [fieldType, setFieldType] = useState("");
+  const [location, setLocation] = useState("");
+  const [loading, setLoading] = useState(true);
+
+
+  // =========================================================
+  // LOAD FIELDS
+  // =========================================================
+
+  useEffect(() => {
+    loadFields();
+  }, []);
+
+
+  const loadFields = async () => {
+
+    try {
+
+      setLoading(true);
+
+      const data = await getFields();
+
+
+      // Gom nhiều dòng giá thành 1 sân
+      const groupedFields = Object.values(
+
+        data.reduce((result, row) => {
+
+          // Nếu sân chưa tồn tại thì tạo
+          if (!result[row.FieldID]) {
+
+            result[row.FieldID] = {
+
+              FieldID: row.FieldID,
+
+              FieldName: row.FieldName,
+
+              FieldType: row.FieldType,
+
+              Location: row.Location,
+
+              Status: row.Status,
+
+              prices: []
+            };
+          }
+
+
+          // Thêm từng khung giờ vào sân
+          if (row.PriceID) {
+
+            result[row.FieldID].prices.push({
+
+              PriceID: row.PriceID,
+
+              StartTime:
+                row.StartTime?.slice(0, 5),
+
+              EndTime:
+                row.EndTime?.slice(0, 5),
+
+              Price:
+                Number(row.Price || 0),
+
+              available:
+                row.IsAvailable !== undefined
+                  ? row.IsAvailable
+                  : row.Status === "AVAILABLE"
+            });
+          }
+
+
+          return result;
+
+        }, {})
+      );
+
+
+      setFields(groupedFields);
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "Không thể tải danh sách sân bóng"
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
+  };
+
+
+  // =========================================================
+  // LOCATION LIST
+  // =========================================================
+
+  const locations = useMemo(() => {
+
+    return [
+      ...new Set(
+        fields
+          .map(field => field.Location)
+          .filter(Boolean)
+      )
+    ];
+
+  }, [fields]);
+
+
+  // =========================================================
+  // FIELD TYPE LIST
+  // =========================================================
+
+  const fieldTypes = useMemo(() => {
+
+    return [
+      ...new Set(
+        fields
+          .map(field => field.FieldType)
+          .filter(Boolean)
+      )
+    ];
+
+  }, [fields]);
+
+
+  // =========================================================
+  // FILTER
+  // =========================================================
+
+  const filteredFields = useMemo(() => {
+
+    return fields.filter(field => {
+
+      const matchKeyword =
+        (field.FieldName || "")
+          .toLowerCase()
+          .includes(
+            keyword
+              .trim()
+              .toLowerCase()
+          );
+
+
+      const matchLocation =
+        !location ||
+        field.Location === location;
+
+
+      const matchType =
+        !fieldType ||
+        field.FieldType === fieldType;
+
+
+      return (
+        matchKeyword &&
+        matchLocation &&
+        matchType
+      );
+    });
+
+  }, [
+    fields,
+    keyword,
+    location,
+    fieldType
+  ]);
+
 
   return (
+
     <>
+
       <Navbar />
 
+
       <main className="field-list-page">
+
+
+        {/* =====================================================
+            FILTER
+        ====================================================== */}
+
         <section className="field-filter-section">
+
           <div className="field-filter">
 
+
+            {/* SEARCH */}
+
             <div className="field-filter__group field-filter__name">
-              <label>TÊN SÂN BÓNG</label>
+
+              <label>
+                TÊN SÂN BÓNG
+              </label>
+
 
               <div className="field-filter__input-wrapper">
+
                 <Search size={19} />
+
 
                 <input
                   type="text"
-                  placeholder="Nhập tên sân (vd: Phú Thọ, Tân Bình...)"
+                  placeholder="Nhập tên sân..."
                   value={keyword}
-                  onChange={(e) =>
-                    setKeyword(e.target.value)
+                  onChange={e =>
+                    setKeyword(
+                      e.target.value
+                    )
                   }
                 />
+
               </div>
+
             </div>
+
+
+            {/* LOCATION */}
 
             <div className="field-filter__group">
-              <label>KHU VỰC</label>
 
-              <select>
-                <option>Tất cả quận huyện</option>
-                <option>Bình Thạnh</option>
-                <option>Tân Bình</option>
-                <option>Quận 10</option>
-                <option>Quận 11</option>
+              <label>
+                KHU VỰC
+              </label>
+
+
+              <select
+                value={location}
+                onChange={e =>
+                  setLocation(
+                    e.target.value
+                  )
+                }
+              >
+
+                <option value="">
+                  Tất cả khu vực
+                </option>
+
+
+                {
+                  locations.map(item => (
+
+                    <option
+                      key={item}
+                      value={item}
+                    >
+                      {item}
+                    </option>
+
+                  ))
+                }
+
               </select>
+
             </div>
+
+
+            {/* FIELD TYPE */}
 
             <div className="field-filter__group">
-              <label>LOẠI SÂN</label>
 
-              <select>
-                <option>Sân 7 người</option>
-                <option>Sân 5 người</option>
-                <option>Sân 11 người</option>
+              <label>
+                LOẠI SÂN
+              </label>
+
+
+              <select
+                value={fieldType}
+                onChange={e =>
+                  setFieldType(
+                    e.target.value
+                  )
+                }
+              >
+
+                <option value="">
+                  Tất cả loại sân
+                </option>
+
+
+                {
+                  fieldTypes.map(type => (
+
+                    <option
+                      key={type}
+                      value={type}
+                    >
+                      {type}
+                    </option>
+
+                  ))
+                }
+
               </select>
+
             </div>
 
-            <button className="field-filter__submit">
+
+            <button
+              className="field-filter__submit"
+            >
+
               <Search size={18} />
+
               Tìm sân
+
             </button>
 
           </div>
+
         </section>
+
+
+        {/* =====================================================
+            FIELD LIST
+        ====================================================== */}
 
         <section className="field-list-container">
 
+
           <div className="field-list__heading">
+
             <div>
-              <h1>DANH SÁCH SÂN BÓNG</h1>
+
+              <h1>
+                DANH SÁCH SÂN BÓNG
+              </h1>
 
               <p>
-                Tìm và đặt sân nhanh chóng, tiện lợi,
-                đầy đủ dịch vụ tiện ích đi kèm
+                Chọn sân và khung giờ phù hợp
               </p>
+
             </div>
 
+
             <span className="field-list__result">
-              Tìm thấy {filteredFields.length} kết quả
+
+              Tìm thấy{" "}
+              {filteredFields.length}
+              {" "}sân
+
             </span>
+
           </div>
 
-          <div className="field-list__grid">
-            {filteredFields.map((field) => (
-              <FieldCard
-                key={field.id}
-                id={field.id}
-                image={field.image}
-                name={field.name}
-                address={field.address}
-                type={field.type}
-                rating={field.rating}
-                price={field.price}
-              />
-            ))}
-          </div>
+
+          {/* LOADING */}
+
+          {
+            loading ? (
+
+              <div className="field-list__empty">
+
+                <h2>
+                  Đang tải sân bóng...
+                </h2>
+
+              </div>
+
+            ) : filteredFields.length === 0 ? (
+
+              // EMPTY
+
+              <div className="field-list__empty">
+
+                <h2>
+                  Không tìm thấy sân
+                </h2>
+
+                <p>
+                  Hãy thử thay đổi bộ lọc
+                </p>
+
+              </div>
+
+            ) : (
+
+              // FIELD CARDS
+
+              <div className="field-list__grid">
+
+                {
+                  filteredFields.map(field => (
+
+                    <FieldCard
+
+                      key={
+                        field.FieldID
+                      }
+
+                      id={
+                        field.FieldID
+                      }
+
+                      name={
+                        field.FieldName
+                      }
+
+                      address={
+                        field.Location
+                      }
+
+                      type={
+                        field.FieldType
+                      }
+
+                      status={
+                        field.Status
+                      }
+
+                      slots={
+                        field.prices
+                      }
+
+                    />
+
+                  ))
+                }
+
+              </div>
+
+            )
+          }
 
         </section>
+
       </main>
+
     </>
   );
 }
+
 
 export default FieldList;

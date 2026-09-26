@@ -1,27 +1,51 @@
+/* =========================================================
+   FIELD CARD
+========================================================= */
+
 .field-card {
+  display: flex;
+  flex-direction: column;
+
+  height: 100%;
+
   background: #ffffff;
-  border: 1px solid #dfe6ee;
+
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
+
   overflow: hidden;
+
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 
   transition:
     transform 0.25s ease,
-    box-shadow 0.25s ease;
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
 }
 
 .field-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+  transform: translateY(-5px);
+
+  border-color: #bbf7d0;
+
+  box-shadow:
+    0 14px 32px rgba(15, 23, 42, 0.1);
 }
 
-/* ======================
+
+/* =========================================================
    IMAGE
-====================== */
+========================================================= */
 
 .field-image-wrapper {
+  position: relative;
+
   width: 100%;
-  height: 190px;
+  height: 180px;
+
   overflow: hidden;
+
+  background: #f1f5f9;
 }
 
 .field-image {
@@ -29,6 +53,7 @@
   height: 100%;
 
   display: block;
+
   object-fit: cover;
 
   transition: transform 0.35s ease;
@@ -38,21 +63,32 @@
   transform: scale(1.04);
 }
 
-/* ======================
+
+/* =========================================================
    CONTENT
-====================== */
+========================================================= */
 
 .field-content {
-  padding: 15px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+
+  padding: 16px;
 }
+
+
+/* =========================================================
+   TITLE
+========================================================= */
 
 .field-title-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   gap: 10px;
 
-  margin-bottom: 10px;
+  margin-bottom: 9px;
 }
 
 .field-title-row h3 {
@@ -60,52 +96,38 @@
 
   min-width: 0;
 
-  color: #111827;
+  color: #0f172a;
 
   font-size: 17px;
-  line-height: 1.4;
   font-weight: 700;
+  line-height: 1.35;
 
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ======================
-   RATING
-====================== */
 
-.field-rating {
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  color: #111827;
-
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.field-rating svg {
-  color: #f59e0b;
-}
-
-/* ======================
+/* =========================================================
    INFORMATION
-====================== */
+========================================================= */
 
 .field-info {
   display: flex;
   flex-direction: column;
+
   gap: 6px;
+
+  margin-bottom: 14px;
 }
 
 .field-info-row {
   display: flex;
   align-items: center;
+
   gap: 7px;
+
+  min-width: 0;
 
   color: #64748b;
 
@@ -115,48 +137,238 @@
 
 .field-info-row svg {
   flex-shrink: 0;
+
   color: #64748b;
 }
 
 .field-info-row span {
+  min-width: 0;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ======================
+
+/* =========================================================
+   TIME SLOT AREA
+========================================================= */
+
+.field-slots {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.field-slots-title {
+  margin-bottom: 2px;
+
+  color: #475569;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 0.5px;
+}
+
+
+/* =========================================================
+   ONE TIME SLOT
+========================================================= */
+
+.field-slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  min-height: 48px;
+
+  padding: 8px 10px;
+
+  border: 1px solid transparent;
+  border-radius: 9px;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+
+/* Giờ + giá */
+
+.field-slot > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  flex: 1;
+
+  gap: 10px;
+
+  min-width: 0;
+}
+
+
+/* Giờ */
+
+.field-slot strong {
+  color: inherit;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+
+/* Giá */
+
+.field-slot span {
+  color: inherit;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+
+/* Trạng thái */
+
+.field-slot small {
+  flex-shrink: 0;
+
+  min-width: 46px;
+
+  padding: 4px 7px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   AVAILABLE
+========================================================= */
+
+.field-slot.available {
+  background: #f0fdf4;
+
+  border-color: #bbf7d0;
+
+  color: #15803d;
+}
+
+.field-slot.available:hover {
+  transform: translateX(2px);
+
+  background: #dcfce7;
+
+  border-color: #86efac;
+}
+
+.field-slot.available small {
+  background: #dcfce7;
+
+  color: #15803d;
+}
+
+
+/* =========================================================
+   BOOKED
+========================================================= */
+
+.field-slot.booked {
+  background: #fef2f2;
+
+  border-color: #fecaca;
+
+  color: #b91c1c;
+}
+
+.field-slot.booked small {
+  background: #fee2e2;
+
+  color: #dc2626;
+}
+
+
+/* =========================================================
+   NO SLOT
+========================================================= */
+
+.field-no-slot {
+  padding: 12px;
+
+  border: 1px dashed #cbd5e1;
+  border-radius: 9px;
+
+  background: #f8fafc;
+
+  color: #64748b;
+
+  font-size: 12px;
+
+  text-align: center;
+}
+
+
+/* =========================================================
    DIVIDER
-====================== */
+========================================================= */
 
 .field-divider {
   width: 100%;
   height: 1px;
 
-  margin: 13px 0 11px;
+  margin: 15px 0 12px;
 
   background: #e2e8f0;
 }
 
-/* ======================
+
+/* =========================================================
    BOTTOM
-====================== */
+========================================================= */
 
 .field-bottom {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+
   gap: 12px;
+
+  margin-top: auto;
 }
+
+.field-bottom > div {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   PRICE
+========================================================= */
 
 .price-label {
   display: block;
 
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 
   color: #94a3b8;
 
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 600;
+
+  letter-spacing: 0.4px;
 }
 
 .field-bottom strong {
@@ -165,40 +377,103 @@
   color: #16a34a;
 
   font-size: 17px;
+  font-weight: 750;
   line-height: 1.2;
-  font-weight: 700;
+
+  white-space: nowrap;
 }
 
-/* ======================
-   DETAIL BUTTON
-====================== */
+
+/* =========================================================
+   BUTTON
+========================================================= */
 
 .field-detail-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  min-width: 76px;
+  flex-shrink: 0;
 
-  padding: 8px 14px;
+  min-width: 82px;
+  height: 35px;
 
-  border-radius: 8px;
+  padding: 0 14px;
+
+  border: 1px solid #bbf7d0;
+  border-radius: 9px;
 
   background: #dcfce7;
 
-  color: #16a34a;
+  color: #15803d;
 
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
 
   text-decoration: none;
 
+  cursor: pointer;
+
   transition:
     background 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .field-detail-button:hover {
+  transform: translateY(-1px);
+
   background: #16a34a;
+
+  border-color: #16a34a;
+
   color: #ffffff;
+}
+
+
+/* =========================================================
+   DISABLED
+========================================================= */
+
+.field-detail-button.field-disabled {
+  background: #f1f5f9;
+
+  border-color: #e2e8f0;
+
+  color: #94a3b8;
+
+  cursor: not-allowed;
+
+  opacity: 1;
+}
+
+.field-detail-button.field-disabled:hover {
+  transform: none;
+
+  background: #f1f5f9;
+
+  border-color: #e2e8f0;
+
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .field-image-wrapper {
+    height: 165px;
+  }
+
+  .field-content {
+    padding: 14px;
+  }
+
+  .field-slot {
+    min-height: 45px;
+  }
 }
