@@ -378,3 +378,77 @@
     padding: 0 10px;
   }
 }
+/* =========================================================
+   DATE FILTER
+========================================================= */
+
+.field-filter__date {
+  background: #ffffff;
+}
+
+.field-filter__date input {
+  width: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #334155;
+
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.field-loading-spinner {
+  width: 34px;
+  height: 34px;
+
+  margin: 0 auto 14px;
+
+  border: 3px solid #dcfce7;
+
+  border-top-color: #16a34a;
+
+  border-radius: 50%;
+
+  animation:
+    fieldSpin 0.8s
+    linear infinite;
+}
+
+@keyframes fieldSpin {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   EMPTY BUTTON
+========================================================= */
+
+.field-list__empty button {
+  margin-top: 12px;
+
+  padding: 9px 18px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #16a34a;
+
+  color: #ffffff;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
