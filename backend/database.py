@@ -1,4 +1,6 @@
+import os
 import pyodbc
+from dotenv import load_dotenv
 
 def get_connection():
     try:
