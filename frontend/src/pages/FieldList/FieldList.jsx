@@ -1,78 +1,74 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 import Navbar from "../../components/Navbar/Navbar";
 import FieldCard from "../../components/FieldCard/FieldCard";
 
-import field1 from "../../assets/images/football-field.jpg";
+import fields from "../../data/fields";
+import { MIN_FIELD_PRICE } from "../../utils/pricing";
 
 import "./FieldList.css";
 
-const fields = [
-  {
-    id: 1,
-    name: "Sân bóng Sport Link ABC",
-    address: "Chu Văn An, Bình Thạnh, TP.HCM",
-    type: "Sân cỏ nhân tạo 7 người",
-    rating: 4.8,
-    price: 300000,
-    image: field1,
-  },
-  {
-    id: 2,
-    name: "Sân bóng B",
-    address: "Đào Duy Từ, Quận 10, TP.HCM",
-    type: "Sân tiêu chuẩn 11 người",
-    rating: 4.9,
-    price: 800000,
-    image: field1,
-  },
-  {
-    id: 3,
-    name: "Sân bóng PT",
-    address: "Lý Thường Kiệt, Quận 11, TP.HCM",
-    type: "Sân 7 người / 5 người",
-    rating: 4.7,
-    price: 350000,
-    image: field1,
-  },
-  {
-    id: 4,
-    name: "Sân bóng 789",
-    address: "Bình Quới, Bình Thạnh, TP.HCM",
-    type: "Sân 7 người ven sông",
-    rating: 4.5,
-    price: 280000,
-    image: field1,
-  },
-  {
-    id: 5,
-    name: "Sân bóng Club",
-    address: "Quốc Hương, Quận 2, TP.HCM",
-    type: "Sân 5 người cao cấp",
-    rating: 4.6,
-    price: 400000,
-    image: field1,
-  },
-  {
-    id: 6,
-    name: "Sân bóng Tân Bình Arena",
-    address: "Cộng Hòa, Tân Bình, TP.HCM",
-    type: "Sân 7 người mái che",
-    rating: 4.4,
-    price: 320000,
-    image: field1,
-  },
-];
-
 function FieldList() {
   const [keyword, setKeyword] = useState("");
+  const [status, setStatus] = useState("all");
+  const [type, setType] = useState("Sân 7 người");
 
-  const filteredFields = fields.filter((field) =>
-    field.name
-      .toLowerCase()
-      .includes(keyword.toLowerCase())
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchStatus, setSearchStatus] = useState("all");
+  const [searchType, setSearchType] =
+    useState("Sân 7 người");
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemsPerPage = 8;
+
+  const filteredFields = useMemo(() => {
+    return fields.filter((field) => {
+      const matchKeyword = field.name
+        .toLowerCase()
+        .includes(searchKeyword.toLowerCase());
+
+      const matchStatus =
+        searchStatus === "all" ||
+        field.status === searchStatus;
+
+      const matchType =
+        searchType === "all" ||
+        field.type === searchType;
+
+      return (
+        matchKeyword &&
+        matchStatus &&
+        matchType
+      );
+    });
+  }, [
+    searchKeyword,
+    searchStatus,
+    searchType,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(
+      filteredFields.length / itemsPerPage
+    )
   );
+
+  const displayedFields = filteredFields.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+
+    setSearchKeyword(keyword);
+    setSearchStatus(status);
+    setSearchType(type);
+    setCurrentPage(1);
+  };
 
   return (
     <>
@@ -80,17 +76,21 @@ function FieldList() {
 
       <main className="field-list-page">
         <section className="field-filter-section">
-          <div className="field-filter">
-
+          <form
+            className="field-filter"
+            onSubmit={handleSearch}
+          >
             <div className="field-filter__group field-filter__name">
-              <label>TÊN SÂN BÓNG</label>
+              <label>
+                SỐ/TÊN SÂN
+              </label>
 
               <div className="field-filter__input-wrapper">
-                <Search size={19} />
+                <Search size={18} />
 
                 <input
                   type="text"
-                  placeholder="Nhập tên sân (vd: Phú Thọ, Tân Bình...)"
+                  placeholder="Nhập số/tên sân (vd: Sân 01, Sân 02...)"
                   value={keyword}
                   onChange={(e) =>
                     setKeyword(e.target.value)
@@ -100,67 +100,185 @@ function FieldList() {
             </div>
 
             <div className="field-filter__group">
-              <label>KHU VỰC</label>
+              <label>
+                TRẠNG THÁI
+              </label>
 
-              <select>
-                <option>Tất cả quận huyện</option>
-                <option>Bình Thạnh</option>
-                <option>Tân Bình</option>
-                <option>Quận 10</option>
-                <option>Quận 11</option>
+              <select
+                value={status}
+                onChange={(e) =>
+                  setStatus(e.target.value)
+                }
+              >
+                <option value="all">
+                  Tất cả trạng thái
+                </option>
+
+                <option value="Còn sân">
+                  Còn sân
+                </option>
+
+                <option value="Đang sửa chữa">
+                  Đang sửa chữa
+                </option>
               </select>
             </div>
 
             <div className="field-filter__group">
-              <label>LOẠI SÂN</label>
+              <label>
+                LOẠI SÂN
+              </label>
 
-              <select>
-                <option>Sân 7 người</option>
-                <option>Sân 5 người</option>
-                <option>Sân 11 người</option>
+              <select
+                value={type}
+                onChange={(e) =>
+                  setType(e.target.value)
+                }
+              >
+                <option value="all">
+                  Tất cả loại sân
+                </option>
+
+                <option value="Sân 5 người">
+                  Sân 5 người
+                </option>
+
+                <option value="Sân 7 người">
+                  Sân 7 người
+                </option>
+
+                <option value="Sân 11 người">
+                  Sân 11 người
+                </option>
               </select>
             </div>
 
-            <button className="field-filter__submit">
+            <button
+              type="submit"
+              className="field-filter__submit"
+            >
               <Search size={18} />
               Tìm sân
             </button>
-
-          </div>
+          </form>
         </section>
 
         <section className="field-list-container">
-
           <div className="field-list__heading">
             <div>
-              <h1>DANH SÁCH SÂN BÓNG</h1>
+              <h1>
+                DANH SÁCH SÂN
+              </h1>
 
               <p>
-                Tìm và đặt sân nhanh chóng, tiện lợi,
-                đầy đủ dịch vụ tiện ích đi kèm
+                Tìm và đặt sân nhanh chóng,
+                tiện lợi, đầy đủ dịch vụ tiện
+                ích đi kèm
               </p>
             </div>
 
             <span className="field-list__result">
-              Tìm thấy {filteredFields.length} kết quả
+              Tổng cộng {filteredFields.length} sân
             </span>
           </div>
 
-          <div className="field-list__grid">
-            {filteredFields.map((field) => (
-              <FieldCard
-                key={field.id}
-                id={field.id}
-                image={field.image}
-                name={field.name}
-                address={field.address}
-                type={field.type}
-                rating={field.rating}
-                price={field.price}
-              />
-            ))}
-          </div>
+          {displayedFields.length > 0 ? (
+            <div className="field-list__grid">
+              {displayedFields.map(
+                (field) => (
+                  <FieldCard
+                    key={field.id}
+                    id={field.id}
+                    image={field.image}
+                    name={field.name}
+                    status={field.status}
+                    type={field.type}
+                    rating={field.rating}
+                    price={MIN_FIELD_PRICE}
+                  />
+                )
+              )}
+            </div>
+          ) : (
+            <div className="field-list__empty">
+              <Search size={42} />
 
+              <h2>
+                Không tìm thấy sân
+              </h2>
+
+              <p>
+                Hãy thử thay đổi tiêu chí
+                tìm kiếm.
+              </p>
+            </div>
+          )}
+
+          {filteredFields.length > 0 && (
+            <div className="field-pagination">
+              <button
+                type="button"
+                className="field-pagination__navigation"
+                disabled={currentPage === 1}
+                onClick={() =>
+                  setCurrentPage(
+                    Math.max(
+                      currentPage - 1,
+                      1
+                    )
+                  )
+                }
+              >
+                ‹
+                <span>
+                  Trang trước
+                </span>
+              </button>
+
+              {Array.from(
+                {
+                  length: totalPages,
+                },
+                (_, index) => index + 1
+              ).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage(page)
+                  }
+                  className={`field-pagination__page ${
+                    currentPage === page
+                      ? "field-pagination__page--active"
+                      : ""
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                className="field-pagination__navigation"
+                disabled={
+                  currentPage === totalPages
+                }
+                onClick={() =>
+                  setCurrentPage(
+                    Math.min(
+                      currentPage + 1,
+                      totalPages
+                    )
+                  )
+                }
+              >
+                <span>
+                  Trang sau
+                </span>
+                ›
+              </button>
+            </div>
+          )}
         </section>
       </main>
     </>

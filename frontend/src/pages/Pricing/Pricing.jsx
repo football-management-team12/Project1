@@ -10,40 +10,17 @@ import { Link } from "react-router-dom";
 
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
+
+import {
+  PRICE_SLOTS,
+  formatPrice,
+} from "../../utils/pricing";
+
 import "./Pricing.css";
 
 function Pricing() {
   const [fieldType, setFieldType] = useState("7");
   const [dayType, setDayType] = useState("weekday");
-
-  const prices = [
-    {
-      time: "06:00 - 09:00",
-      price: "350.000đ/giờ",
-      note: "Buổi sáng",
-    },
-    {
-      time: "09:00 - 16:00",
-      price: "280.000đ/giờ",
-      note: "Giờ thấp điểm",
-    },
-    {
-      time: "16:00 - 18:00",
-      price: "400.000đ/giờ",
-      note: "Buổi chiều",
-    },
-    {
-      time: "18:00 - 21:00",
-      price: "650.000đ/giờ",
-      note: "Giờ cao điểm",
-      highlight: true,
-    },
-    {
-      time: "21:00 - 23:00",
-      price: "450.000đ/giờ",
-      note: "Buổi tối",
-    },
-  ];
 
   const services = [
     {
@@ -80,7 +57,9 @@ function Pricing() {
         <section className="pricing-hero">
           <div className="pricing-container">
             <h1>BẢNG GIÁ THUÊ SÂN</h1>
-            <p>Bảng giá minh bạch theo loại sân và khung giờ</p>
+            <p>
+              Bảng giá minh bạch theo loại sân và khung giờ
+            </p>
           </div>
         </section>
 
@@ -89,14 +68,22 @@ function Pricing() {
             <div className="pricing-toolbar">
               <div className="pricing-tabs">
                 <button
-                  className={fieldType === "5" ? "tab-btn active" : "tab-btn"}
+                  className={
+                    fieldType === "5"
+                      ? "tab-btn active"
+                      : "tab-btn"
+                  }
                   onClick={() => setFieldType("5")}
                 >
                   Sân 5 người
                 </button>
 
                 <button
-                  className={fieldType === "7" ? "tab-btn active" : "tab-btn"}
+                  className={
+                    fieldType === "7"
+                      ? "tab-btn active"
+                      : "tab-btn"
+                  }
                   onClick={() => setFieldType("7")}
                 >
                   Sân 7 người
@@ -110,7 +97,9 @@ function Pricing() {
                       ? "day-btn active"
                       : "day-btn"
                   }
-                  onClick={() => setDayType("weekday")}
+                  onClick={() =>
+                    setDayType("weekday")
+                  }
                 >
                   Ngày thường
                 </button>
@@ -121,7 +110,9 @@ function Pricing() {
                       ? "day-btn active"
                       : "day-btn"
                   }
-                  onClick={() => setDayType("weekend")}
+                  onClick={() =>
+                    setDayType("weekend")
+                  }
                 >
                   Cuối tuần
                 </button>
@@ -136,12 +127,17 @@ function Pricing() {
                 <div>HÀNH ĐỘNG</div>
               </div>
 
-              {prices.map((item, index) => (
-                <div className="price-table-row" key={index}>
-                  <div className="time-col">{item.time}</div>
+              {PRICE_SLOTS.map((item, index) => (
+                <div
+                  className="price-table-row"
+                  key={index}
+                >
+                  <div className="time-col">
+                    {item.time}
+                  </div>
 
                   <div className="price-col">
-                    {item.price}
+                    {formatPrice(item.price)}đ/giờ
                   </div>
 
                   <div className="note-col">
@@ -155,7 +151,10 @@ function Pricing() {
                   </div>
 
                   <div className="action-col">
-                    <Link to="/booking" className="book-small-btn">
+                    <Link
+                      to="/booking"
+                      className="book-small-btn"
+                    >
                       Đặt sân
                     </Link>
                   </div>
@@ -166,6 +165,7 @@ function Pricing() {
             <section className="extra-services">
               <div className="section-title">
                 <h2>Dịch vụ bổ sung</h2>
+
                 <p>
                   Các dịch vụ tiện ích đi kèm giúp trận đấu của bạn trọn vẹn và
                   chuyên nghiệp hơn
@@ -174,7 +174,10 @@ function Pricing() {
 
               <div className="service-grid">
                 {services.map((service, index) => (
-                  <div className="service-card" key={index}>
+                  <div
+                    className="service-card"
+                    key={index}
+                  >
                     <div className="service-icon">
                       {service.icon}
                     </div>
@@ -183,7 +186,9 @@ function Pricing() {
 
                     <p>{service.desc}</p>
 
-                    <strong>{service.price}</strong>
+                    <strong>
+                      {service.price}
+                    </strong>
                   </div>
                 ))}
               </div>
@@ -195,22 +200,30 @@ function Pricing() {
               <div className="note-grid">
                 <div className="note-item">
                   <Check size={15} />
-                  <span>Giá có thể thay đổi vào ngày lễ.</span>
+                  <span>
+                    Giá có thể thay đổi vào ngày lễ.
+                  </span>
                 </div>
 
                 <div className="note-item">
                   <Check size={15} />
-                  <span>Hủy sân đúng thời hạn được hỗ trợ đổi lịch.</span>
+                  <span>
+                    Hủy sân đúng thời hạn được hỗ trợ đổi lịch.
+                  </span>
                 </div>
 
                 <div className="note-item">
                   <Check size={15} />
-                  <span>Khách hàng cần đặt cọc để giữ sân.</span>
+                  <span>
+                    Khách hàng cần đặt cọc để giữ sân.
+                  </span>
                 </div>
 
                 <div className="note-item">
                   <Check size={15} />
-                  <span>Liên hệ quản lý khi cần đặt sân dài hạn.</span>
+                  <span>
+                    Liên hệ quản lý khi cần đặt sân dài hạn.
+                  </span>
                 </div>
               </div>
             </section>
@@ -220,7 +233,10 @@ function Pricing() {
         <section className="pricing-cta">
           <div className="pricing-container cta-content">
             <div>
-              <h2>Bạn đã chọn được khung giờ phù hợp?</h2>
+              <h2>
+                Bạn đã chọn được khung giờ phù hợp?
+              </h2>
+
               <p>
                 Nhanh tay đặt lịch để chắc chắn sở hữu sân cỏ đẹp nhất vào khung
                 giờ vàng tuần này.
@@ -228,11 +244,17 @@ function Pricing() {
             </div>
 
             <div className="cta-buttons">
-              <Link to="/booking" className="cta-book-btn">
+              <Link
+                to="/booking"
+                className="cta-book-btn"
+              >
                 Đặt sân ngay
               </Link>
 
-              <a href="#contact" className="cta-contact-btn">
+              <a
+                href="#contact"
+                className="cta-contact-btn"
+              >
                 Liên hệ tư vấn
               </a>
             </div>
