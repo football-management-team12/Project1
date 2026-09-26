@@ -1,10 +1,10 @@
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL;
 
-
-export const getFields = async()=>{
+export const getFields = async () => {
 
     const response = await axios.get(
-        "http://127.0.0.1:5000/api/fields"
+        `${API_URL}/api/fields`
     );
 
 
@@ -13,32 +13,34 @@ export const getFields = async()=>{
 }
 
 
-export const updateFieldPrice = async(
+export const updateFieldPrice = async (
     fieldID,
     data
-)=>{
+) => {
 
 
-const response = await fetch(
-`http://127.0.0.1:5000/api/fields/price/${fieldID}`,
-{
+    const response = await fetch(
 
-method:"PUT",
+        `${API_URL}/api/fields/price/${fieldID}`,
 
-headers:{
-"Content-Type":"application/json"
-},
+        {
 
+            method: "PUT",
 
-body:JSON.stringify(data)
-
-
-}
-
-);
+            headers: {
+                "Content-Type": "application/json"
+            },
 
 
-return await response.json();
+            body: JSON.stringify(data)
+
+
+        }
+
+    );
+
+
+    return await response.json();
 
 
 }
