@@ -1950,64 +1950,35 @@ def get_all_fields_availability():
 
     try:
 
-        # ====================================================
-        # GET DATE
-        # ====================================================
-
         booking_date = request.args.get("date")
 
-
         if not booking_date:
-
             return jsonify({
-                "message":
-                    "Vui lòng truyền ngày cần kiểm tra",
-
-                "example":
-                    "?date=2026-09-26"
+                "message": "Vui lòng truyền ngày cần kiểm tra",
+                "example": "?date=2026-09-26"
             }), 400
 
-
-        # ====================================================
-        # VALIDATE DATE
-        # ====================================================
-
         try:
-
             date_object = datetime.strptime(
                 booking_date,
                 "%Y-%m-%d"
             ).date()
 
         except ValueError:
-
             return jsonify({
                 "message":
                     "Ngày không đúng định dạng YYYY-MM-DD"
             }), 400
 
-
-        # ====================================================
-        # DATABASE
-        # ====================================================
-
         conn = get_connection()
 
-
         if conn is None:
-
             return jsonify({
                 "message":
                     "Không thể kết nối database"
             }), 500
 
-
         cursor = conn.cursor()
-
-
-        # ====================================================
-        # GET ALL FIELDS
-        # ====================================================
 
         cursor.execute(
             """
@@ -2016,204 +1987,106 @@ def get_all_fields_availability():
                 FieldName,
                 FieldType,
                 Location,
-                Image,
                 Status
-
             FROM FootballFields
-
             ORDER BY FieldID
             """
         )
 
+        fields = cursor.fetchall()
 
-        field_rows = cursor.fetchall()
+        result = []
 
-
-        # ====================================================
-        # GET ALL PRICE SLOTS
-        # ====================================================
-
-        cursor.execute(
-            """
-            SELECT
-                PriceID,
-                FieldID,
-                StartTime,
-                EndTime,
-                Price
-
-            FROM FieldPrices
-
-            ORDER BY
-                FieldID,
-                StartTime
-            """
-        )
-
-
-        price_rows = cursor.fetchall()
-
-
-        # ====================================================
-        # GET BOOKINGS BY DATE
-        # ====================================================
-
-        cursor.execute(
-            """
-            SELECT
-                BookingID,
-                UserID,
-                FieldID,
-                BookingDate,
-                StartTime,
-                EndTime,
-                TotalAmount,
-                Status,
-                CreatedAt
-
-            FROM Bookings
-
-            WHERE CAST(BookingDate AS DATE) = ?
-
-            ORDER BY
-                FieldID,
-                StartTime
-            """,
-            date_object
-        )
-
-
-        booking_rows = cursor.fetchall()
-
-
-        # ====================================================
-        # GROUP PRICES BY FIELD
-        # ====================================================
-
-        prices_by_field = {}
-
-
-        for row in price_rows:
-
-            field_id = row.FieldID
-
-
-            if field_id not in prices_by_field:
-
-                prices_by_field[field_id] = []
-
-
-            prices_by_field[field_id].append({
-
-                "PriceID":
-                    row.PriceID,
-
-                "FieldID":
-                    row.FieldID,
-
-                "StartTime":
-                    row.StartTime,
-
-                "EndTime":
-                    row.EndTime,
-
-                "Price": (
-                    float(row.Price)
-                    if row.Price is not None
-                    else 0
-                )
-            })
-
-
-        # ====================================================
-        # GROUP BOOKINGS BY FIELD
-        # ====================================================
-
-        bookings_by_field = {}
-
-
-        for row in booking_rows:
-
-            field_id = row.FieldID
-
-
-            if field_id not in bookings_by_field:
-
-                bookings_by_field[field_id] = []
-
-
-            bookings_by_field[field_id].append({
-
-                "BookingID":
-                    row.BookingID,
-
-                "UserID":
-                    row.UserID,
-
-                "FieldID":
-                    row.FieldID,
-
-                "BookingDate": (
-                    str(row.BookingDate)
-                    if row.BookingDate is not None
-                    else None
-                ),
-
-                "StartTime":
-                    row.StartTime,
-
-                "EndTime":
-                    row.EndTime,
-
-                "TotalAmount": (
-                    float(row.TotalAmount)
-                    if row.TotalAmount is not None
-                    else 0
-                ),
-
-                "Status":
-                    row.Status,
-
-                "CreatedAt": (
-                    str(row.CreatedAt)
-                    if row.CreatedAt is not None
-                    else None
-                )
-            })
-
-
-        # ====================================================
-        # BUILD RESPONSE
-        # ====================================================
-
-        fields = []
-
-
-        for field in field_rows:
+        for field in fields:
 
             field_id = field.FieldID
 
-
-            price_slots = prices_by_field.get(
-                field_id,
-                []
+            cursor.execute(
+                """
+                SELECT
+                    PriceID,
+                    FieldID,
+                    StartTime,
+                    EndTime,
+                    Price
+                FROM FieldPrices
+                WHERE FieldID = ?
+                ORDER BY StartTime
+                """,
+                field_id
             )
 
+            price_rows = cursor.fetchall()
 
-            bookings = bookings_by_field.get(
+            price_slots = []
+
+            for row in price_rows:
+
+                price_slots.append({
+                    "PriceID": row.PriceID,
+                    "FieldID": row.FieldID,
+                    "StartTime": row.StartTime,
+                    "EndTime": row.EndTime,
+                    "Price": float(row.Price or 0)
+                })
+
+            cursor.execute(
+                """
+                SELECT
+                    BookingID,
+                    UserID,
+                    FieldID,
+                    BookingDate,
+                    StartTime,
+                    EndTime,
+                    TotalAmount,
+                    Status,
+                    CreatedAt
+                FROM Bookings
+                WHERE FieldID = ?
+                AND CAST(BookingDate AS DATE) = ?
+                ORDER BY StartTime
+                """,
                 field_id,
-                []
+                date_object
             )
 
+            booking_rows = cursor.fetchall()
+
+            bookings = []
+
+            for row in booking_rows:
+
+                bookings.append({
+                    "BookingID": row.BookingID,
+                    "UserID": row.UserID,
+                    "FieldID": row.FieldID,
+                    "BookingDate": (
+                        str(row.BookingDate)
+                        if row.BookingDate is not None
+                        else None
+                    ),
+                    "StartTime": row.StartTime,
+                    "EndTime": row.EndTime,
+                    "TotalAmount": (
+                        float(row.TotalAmount)
+                        if row.TotalAmount is not None
+                        else 0
+                    ),
+                    "Status": row.Status,
+                    "CreatedAt": (
+                        str(row.CreatedAt)
+                        if row.CreatedAt is not None
+                        else None
+                    )
+                })
 
             field_available = (
                 str(field.Status)
                 .strip()
                 .upper()
-                ==
-                "AVAILABLE"
+                == "AVAILABLE"
             )
-
 
             slots = build_availability_slots(
                 price_slots,
@@ -2221,114 +2094,43 @@ def get_all_fields_availability():
                 field_available
             )
 
-
             available_count = sum(
                 1
                 for slot in slots
                 if slot["available"]
             )
 
-
             unavailable_count = (
-                len(slots)
-                -
-                available_count
+                len(slots) - available_count
             )
 
-
-            fields.append({
-
-                "FieldID":
-                    field.FieldID,
-
-                "FieldName":
-                    field.FieldName,
-
-                "FieldType":
-                    field.FieldType,
-
-                "Location":
-                    field.Location,
-
-                "Image":
-                    field.Image,
-
-                "FieldStatus":
-                    field.Status,
-
-                "FieldAvailable":
-                    field_available,
-
-                "AvailableCount":
-                    available_count,
-
-                "UnavailableCount":
-                    unavailable_count,
-
-                "HasAvailableSlot":
-                    available_count > 0,
-
-                "Slots":
-                    slots
+            result.append({
+                "FieldID": field.FieldID,
+                "FieldName": field.FieldName,
+                "FieldType": field.FieldType,
+                "Location": field.Location,
+                "FieldStatus": field.Status,
+                "Date": booking_date,
+                "FieldAvailable": field_available,
+                "AvailableCount": available_count,
+                "UnavailableCount": unavailable_count,
+                "Slots": slots
             })
 
-
-        # ====================================================
-        # SUMMARY
-        # ====================================================
-
-        available_fields = sum(
-            1
-            for field in fields
-            if field["HasAvailableSlot"]
-        )
-
-
-        unavailable_fields = (
-            len(fields)
-            -
-            available_fields
-        )
-
-
-        # ====================================================
-        # RETURN
-        # ====================================================
-
-        return jsonify({
-
-            "Date":
-                booking_date,
-
-            "TotalFields":
-                len(fields),
-
-            "AvailableFields":
-                available_fields,
-
-            "UnavailableFields":
-                unavailable_fields,
-
-            "Fields":
-                fields
-
-        }), 200
-
+        return jsonify(result), 200
 
     except Exception as error:
 
         print(
-            "GET ALL FIELD AVAILABILITY ERROR:"
+            "GET ALL FIELDS AVAILABILITY ERROR:"
         )
 
         print(error)
 
-
         return jsonify({
             "message":
-                "Có lỗi xảy ra khi kiểm tra lịch sân"
+                "Có lỗi xảy ra khi kiểm tra lịch toàn bộ sân"
         }), 500
-
 
     finally:
 
