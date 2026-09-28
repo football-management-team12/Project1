@@ -1,11 +1,8 @@
-import {
-  useNavigate
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import {
-  CalendarDays,
   MapPin,
-  Users
+  Users,
 } from "lucide-react";
 
 import fieldImage
@@ -15,33 +12,24 @@ import "./FieldCard.css";
 
 
 function FieldCard({
-
   id,
   name,
   address,
   type,
   status,
-  selectedDate,
-  slots = []
-
+  slots = [],
 }) {
 
   const navigate =
     useNavigate();
 
 
-  /* =========================================================
-     CHECK USER LOGIN
-  ========================================================= */
-
   const getCurrentUser = () => {
 
     try {
 
       return JSON.parse(
-        localStorage.getItem(
-          "user"
-        )
+        localStorage.getItem("user")
       );
 
     } catch {
@@ -52,70 +40,49 @@ function FieldCard({
 
 
   /* =========================================================
-     AVAILABLE SLOT
-  ========================================================= */
-
-  const hasAvailableSlot =
-    slots.some(
-      slot =>
-        slot.available
-    );
-
-
-  /* =========================================================
      MIN PRICE
   ========================================================= */
 
   const prices =
     slots
       .map(
-        slot =>
-          Number(
-            slot.Price
-          )
+        (slot) =>
+          Number(slot.Price)
       )
       .filter(
-        price =>
-          !Number.isNaN(
-            price
-          )
+        (price) =>
+          !Number.isNaN(price)
       );
 
 
   const minPrice =
     prices.length > 0
-      ? Math.min(
-          ...prices
-        )
+      ? Math.min(...prices)
       : 0;
 
-
-  /* =========================================================
-     FIELD STATUS
-  ========================================================= */
 
   const fieldAvailable =
     status === "AVAILABLE";
 
 
   /* =========================================================
-     CHOOSE FIELD
+     OPEN BOOKING
   ========================================================= */
 
   const handleChooseField = () => {
 
-    const user =
-      getCurrentUser();
+    if (!fieldAvailable) {
+      return;
+    }
 
 
     const bookingUrl =
-      `/booking?fieldId=${id}&date=${selectedDate}`;
+      /booking?fieldId=${id};
 
 
-    /*
-      Chưa đăng nhập:
-      đưa sang Login và nhớ URL booking.
-    */
+    const user =
+      getCurrentUser();
+
 
     if (!user) {
 
@@ -128,11 +95,6 @@ function FieldCard({
       return;
     }
 
-
-    /*
-      Đã đăng nhập:
-      vào thẳng Booking.
-    */
 
     navigate(
       bookingUrl
@@ -153,17 +115,9 @@ function FieldCard({
       >
 
         <img
-
-          src={
-            fieldImage
-          }
-
-          alt={
-            name
-          }
-
+          src={fieldImage}
+          alt={name}
           className="field-image"
-
         />
 
 
@@ -192,26 +146,18 @@ function FieldCard({
         className="field-content"
       >
 
-        {/* TITLE */}
-
         <div
           className="field-title-row"
         >
 
-          <h3
-            title={
-              name
-            }
-          >
-
+          <h3 title={name}>
             {name}
-
           </h3>
 
         </div>
 
 
-        {/* INFORMATION */}
+        {/* FIELD INFO */}
 
         <div
           className="field-info"
@@ -221,9 +167,7 @@ function FieldCard({
             className="field-info-row"
           >
 
-            <MapPin
-              size={16}
-            />
+            <MapPin size={16} />
 
             <span>
               {address}
@@ -236,9 +180,7 @@ function FieldCard({
             className="field-info-row"
           >
 
-            <Users
-              size={16}
-            />
+            <Users size={16} />
 
             <span>
               {type}
@@ -246,25 +188,10 @@ function FieldCard({
 
           </div>
 
-
-          <div
-            className="field-info-row"
-          >
-
-            <CalendarDays
-              size={16}
-            />
-
-            <span>
-              {selectedDate}
-            </span>
-
-          </div>
-
         </div>
 
 
-        {/* SLOTS */}
+        {/* TIME SLOTS */}
 
         <div
           className="field-slots"
@@ -284,95 +211,39 @@ function FieldCard({
                 <div
                   className="field-no-slot"
                 >
-
-                  Chưa có bảng giá
-
+                  Chưa có khung giờ
                 </div>
 
               )
               : (
 
                 slots.map(
-                  slot => (
+                  (slot) => (
 
                     <div
-
-                      key={
-                        slot.PriceID
-                      }
-
-                      className={
-                        slot.available
-                          ? "field-slot available"
-                          : "field-slot booked"
-                      }
-
+                      key={slot.PriceID}
+                      className="field-slot"
                     >
 
-                      {/* TIME + PRICE */}
-
-                      <div
-                        className="field-slot-main"
-                      >
-
-                        <strong>
-
-                          {
-                            slot.StartTime
-                          }
-
-                          {" - "}
-
-                          {
-                            slot.EndTime
-                          }
-
-                        </strong>
-
-
-                        <span
-                          className="field-slot-price"
-                        >
-
-                          {
-                            Number(
-                              slot.Price || 0
-                            ).toLocaleString(
-                              "vi-VN"
-                            )
-                          }
-
-                          đ
-
-                        </span>
-
-                      </div>
-
-
-                      {/* STATUS */}
-
-                      <span
-                        className="field-slot-status"
-                      >
+                      <strong>
 
                         {
-                          slot.available
-                            ? "Trống"
-                            : (
-                              slot.reason
-                              ===
-                              "FIELD_UNAVAILABLE"
-                                ? "Bảo trì"
-                                : "Đã đặt"
-                            )
+                          slot.StartTime
                         }
 
-                      </span>
+                        {" - "}
+
+                        {
+                          slot.EndTime
+                        }
+
+                      </strong>
 
                     </div>
 
                   )
                 )
+
               )
           }
 
@@ -395,19 +266,16 @@ function FieldCard({
             <span
               className="price-label"
             >
-
               GIÁ THUÊ TỪ
-
             </span>
 
 
             <strong>
 
               {
-                minPrice
-                  .toLocaleString(
-                    "vi-VN"
-                  )
+                minPrice.toLocaleString(
+                  "vi-VN"
+                )
               }
 
               đ/h
@@ -417,54 +285,33 @@ function FieldCard({
           </div>
 
 
-          {
-            fieldAvailable
-            &&
-            hasAvailableSlot
-              ? (
+          <button
 
-                <button
+            type="button"
 
-                  type="button"
+            disabled={
+              !fieldAvailable
+            }
 
-                  className="field-detail-button"
+            className={
+              fieldAvailable
+                ? "field-detail-button"
+                : "field-detail-button field-disabled"
+            }
 
-                  onClick={
-                    handleChooseField
-                  }
+            onClick={
+              handleChooseField
+            }
 
-                >
+          >
 
-                  Chọn sân
+            {
+              fieldAvailable
+                ? "Xem lịch / Đặt sân"
+                : "Bảo trì"
+            }
 
-                </button>
-
-              )
-              : (
-
-                <button
-
-                  type="button"
-
-                  disabled
-
-                  className="
-                    field-detail-button
-                    field-disabled
-                  "
-
-                >
-
-                  {
-                    fieldAvailable
-                      ? "Hết lịch"
-                      : "Bảo trì"
-                  }
-
-                </button>
-
-              )
-          }
+          </button>
 
         </div>
 
