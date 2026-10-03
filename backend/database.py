@@ -1,5 +1,6 @@
 import pyodbc
 
+
 def get_connection():
     try:
         conn = pyodbc.connect(
@@ -10,8 +11,11 @@ def get_connection():
             "PWD=HuyPhu@999;"
             "TrustServerCertificate=yes;"
         )
+
         return conn
+
     except Exception as e:
         print("Database connection error:")
         print(e)
+
         return None
