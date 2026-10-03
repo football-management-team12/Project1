@@ -11,7 +11,6 @@ CORS(app)
 # import blueprint sau khi có app
 from routes.auth import auth_bp
 from routes.field import field_bp
-from routes.booking import booking_bp
 swagger = Swagger(app, template_file='swagger.yaml')
 
 
@@ -26,10 +25,7 @@ app.register_blueprint(
     url_prefix="/api/fields"
 )
 
-app.register_blueprint(
-    booking_bp,
-    url_prefix="/api/bookings"
-)
+
 
 @app.route("/")
 def home():

@@ -1,3111 +1,861 @@
+import { useEffect, useState } from "react";
 import {
-  useEffect,
-  useMemo,
-  useState
-} from "react";
-
-import {
-  getFields,
-  updateFieldPrice,
-  createField
+    getFields,
+    updateFieldPrice
 } from "../../services/field_service";
-
-import {
-  getAllBookings,
-  updateBookingStatus
-} from "../../services/booking_service";
 
 import "./Admin.css";
 
 
-/* =========================================================
-   DEFAULT FIELD
-========================================================= */
+function Admin(){
 
-const EMPTY_FIELD = {
-  FieldName: "",
-  FieldType: "5 player",
-  Location: "",
-  Image: "",
-  Status: "AVAILABLE",
-  StartTime: "06:00",
-  EndTime: "16:00",
-  Price: ""
+
+const [user,setUser]=useState(null);
+
+const [fields,setFields]=useState([]);
+
+const [editField,setEditField]=useState(null);
+
+
+
+useEffect(()=>{
+
+
+const userData=localStorage.getItem("user");
+
+
+if(userData){
+
+setUser(
+JSON.parse(userData)
+);
+
+}
+
+
+loadFields();
+
+
+},[]);
+
+
+
+
+
+const loadFields=async()=>{
+
+
+try{
+
+
+const data=await getFields();
+
+setFields(data);
+
+
+}
+catch(err){
+
+console.log(err);
+
+}
+
+
 };
 
 
-/* =========================================================
-   BOOKING STATUS
-========================================================= */
 
-const BOOKING_STATUS = {
 
-  PENDING: {
-    label: "Chờ xác nhận",
-    background: "#fef3c7",
-    color: "#b45309"
-  },
 
-  CONFIRMED: {
-    label: "Đã xác nhận",
-    background: "#dcfce7",
-    color: "#15803d"
-  },
+// đếm sân không trùng
 
-  CANCELLED: {
-    label: "Đã hủy",
-    background: "#fee2e2",
-    color: "#dc2626"
-  },
+const totalFields=
+new Set(
+fields.map(
+f=>f.FieldID
+)
+).size;
 
-  COMPLETED: {
-    label: "Hoàn thành",
-    background: "#dbeafe",
-    color: "#1d4ed8"
-  }
 
-};
 
+const activeFields=
+new Set(
+fields
+.filter(
+f=>f.Status==="AVAILABLE"
+)
+.map(
+f=>f.FieldID
+)
+).size;
 
-function Admin() {
 
-  /* =========================================================
-     USER
-  ========================================================= */
 
-  const [user, setUser] =
-    useState(null);
+const maintenanceFields=
+new Set(
+fields
+.filter(
+f=>f.Status!=="AVAILABLE"
+)
+.map(
+f=>f.FieldID
+)
+).size;
 
 
-  /* =========================================================
-     SECTION
-  ========================================================= */
 
-  const [
-    activeSection,
-    setActiveSection
-  ] = useState("fields");
 
 
-  /* =========================================================
-     FIELD STATE
-  ========================================================= */
+return (
 
-  const [fields, setFields] =
-    useState([]);
 
-  const [editField, setEditField] =
-    useState(null);
+<div className="admin-container">
 
-  const [
-    showAddModal,
-    setShowAddModal
-  ] = useState(false);
 
-  const [newField, setNewField] =
-    useState(EMPTY_FIELD);
 
-  const [searchText, setSearchText] =
-    useState("");
+{/* SIDEBAR */}
 
-  const [fieldType, setFieldType] =
-    useState("");
+<aside className="sidebar">
 
-  const [status, setStatus] =
-    useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+<h2>
+⚽ SÂN BÓNG
+</h2>
 
-  const [saving, setSaving] =
-    useState(false);
 
-  const [adding, setAdding] =
-    useState(false);
 
-  const [
-    deletingFieldID,
-    setDeletingFieldID
-  ] = useState(null);
+<ul>
 
 
-  /* =========================================================
-     BOOKING STATE
-  ========================================================= */
+<li>
+Tổng quan
+</li>
 
-  const [
-    bookings,
-    setBookings
-  ] = useState([]);
 
-  const [
-    bookingLoading,
-    setBookingLoading
-  ] = useState(false);
+<li className="active">
+Quản lý sân bóng
+</li>
 
-  const [
-    bookingSearch,
-    setBookingSearch
-  ] = useState("");
 
-  const [
-    bookingStatus,
-    setBookingStatus
-  ] = useState("");
+<li>
+Quản lý đặt sân
+</li>
 
-  const [
-    updatingBookingID,
-    setUpdatingBookingID
-  ] = useState(null);
 
+<li>
+Quản lý khách hàng
+</li>
 
-  /* =========================================================
-     LOAD FIELDS
-  ========================================================= */
 
-  const loadFields = async () => {
+<li>
+Quản lý nhân viên
+</li>
 
-    try {
 
-      setLoading(true);
+<li>
+Hóa đơn & thanh toán
+</li>
 
-      const data =
-        await getFields();
 
-      setFields(
-        Array.isArray(data)
-          ? data
-          : []
-      );
+<li>
+Thống kê & báo cáo
+</li>
 
-    } catch (error) {
 
-      console.error(
-        "LOAD FIELDS ERROR:",
-        error
-      );
+<li>
+Cài đặt
+</li>
 
-      alert(
-        error.message ||
-        "Không thể tải danh sách sân"
-      );
 
-    } finally {
+</ul>
 
-      setLoading(false);
-    }
-  };
 
 
-  /* =========================================================
-     LOAD BOOKINGS
-  ========================================================= */
+<div className="logout">
 
-  const loadBookings = async (
-    adminUserID
-  ) => {
+↪ Đăng xuất
 
-    if (!adminUserID) {
-      return;
-    }
+</div>
 
-    try {
 
-      setBookingLoading(true);
+</aside>
 
-      const result =
-        await getAllBookings(
-          adminUserID
-        );
 
-      setBookings(
-        Array.isArray(
-          result.Bookings
-        )
-          ? result.Bookings
-          : []
-      );
 
-    } catch (error) {
 
-      console.error(
-        "LOAD BOOKINGS ERROR:",
-        error
-      );
 
-      alert(
-        error.message ||
-        "Không thể tải danh sách đặt sân"
-      );
 
-    } finally {
+{/* MAIN */}
 
-      setBookingLoading(false);
-    }
-  };
 
+<main className="admin-content">
 
-  /* =========================================================
-     INITIAL DATA
-  ========================================================= */
 
-  useEffect(() => {
 
-    const storedUser =
-      localStorage.getItem(
-        "user"
-      );
 
-    if (storedUser) {
 
-      try {
+{/* HEADER */}
 
-        const parsedUser =
-          JSON.parse(
-            storedUser
-          );
+<div className="top-header">
 
-        setUser(
-          parsedUser
-        );
 
-      } catch {
+<input
+placeholder="🔍 Tìm kiếm nhanh..."
+/>
 
-        localStorage.removeItem(
-          "user"
-        );
-      }
-    }
 
-    loadFields();
 
-  }, []);
+<div className="admin-user">
 
 
-  /* =========================================================
-     LOAD BOOKING AFTER USER
-  ========================================================= */
+<span>
+🔔
+</span>
 
-  useEffect(() => {
 
-    if (
-      user?.UserID
-      &&
-      String(
-        user.Role || ""
-      ).toUpperCase()
-      ===
-      "ADMIN"
-    ) {
+<div>
 
-      loadBookings(
-        user.UserID
-      );
-    }
+<b>
+{
+user?.FullName || "Admin sân bóng"
+}
+</b>
 
-  }, [
-    user?.UserID,
-    user?.Role
-  ]);
 
+<small>
+Quản trị viên
+</small>
 
-  /* =========================================================
-     FIELD STATISTICS
-  ========================================================= */
 
-  const stats =
-    useMemo(() => {
+</div>
 
-      const uniqueFields = [
-        ...new Map(
-          fields.map(
-            field => [
-              field.FieldID,
-              field
-            ]
-          )
-        ).values()
-      ];
 
+</div>
 
-      return {
 
-        total:
-          uniqueFields.length,
+</div>
 
-        available:
-          uniqueFields.filter(
-            field =>
-              field.Status
-              ===
-              "AVAILABLE"
-          ).length,
 
-        maintenance:
-          uniqueFields.filter(
-            field =>
-              field.Status
-              !==
-              "AVAILABLE"
-          ).length,
 
-        priceSlots:
-          fields.filter(
-            field =>
-              field.PriceID
-          ).length
 
-      };
 
-    }, [fields]);
 
 
-  /* =========================================================
-     BOOKING STATISTICS
-  ========================================================= */
+<div className="title-row">
 
-  const bookingStats =
-    useMemo(() => {
 
-      return {
+<h1>
+QUẢN LÝ SÂN BÓNG
+</h1>
 
-        total:
-          bookings.length,
 
-        pending:
-          bookings.filter(
-            booking =>
-              booking.Status
-              ===
-              "PENDING"
-          ).length,
 
-        confirmed:
-          bookings.filter(
-            booking =>
-              booking.Status
-              ===
-              "CONFIRMED"
-          ).length,
+<button className="add-btn">
 
-        completed:
-          bookings.filter(
-            booking =>
-              booking.Status
-              ===
-              "COMPLETED"
-          ).length
++ Thêm sân mới
 
-      };
+</button>
 
-    }, [bookings]);
 
 
-  /* =========================================================
-     FIELD TYPES
-  ========================================================= */
+</div>
 
-  const fieldTypes =
-    useMemo(
-      () => [
-
-        ...new Set(
-          fields
-            .map(
-              field =>
-                field.FieldType
-            )
-            .filter(Boolean)
-        )
-
-      ],
-      [fields]
-    );
-
 
-  /* =========================================================
-     FILTER FIELDS
-  ========================================================= */
-
-  const filteredFields =
-    useMemo(() => {
-
-      return fields.filter(
-        field => {
-
-          const matchName =
-            String(
-              field.FieldName || ""
-            )
-              .toLowerCase()
-              .includes(
-                searchText
-                  .trim()
-                  .toLowerCase()
-              );
-
-
-          const matchType =
-            !fieldType
-            ||
-            field.FieldType
-            ===
-            fieldType;
-
-
-          const matchStatus =
-            !status
-            ||
-            field.Status
-            ===
-            status;
-
-
-          return (
-            matchName
-            &&
-            matchType
-            &&
-            matchStatus
-          );
-        }
-      );
-
-    }, [
-      fields,
-      searchText,
-      fieldType,
-      status
-    ]);
 
 
-  /* =========================================================
-     FILTER BOOKINGS
-  ========================================================= */
 
-  const filteredBookings =
-    useMemo(() => {
 
-      const keyword =
-        bookingSearch
-          .trim()
-          .toLowerCase();
 
 
-      return bookings.filter(
-        booking => {
 
-          const searchable =
-            [
-              booking.BookingID,
-              booking.CustomerName,
-              booking.Phone,
-              booking.Email,
-              booking.FieldName,
-              booking.BookingDate
-            ]
-              .filter(
-                value =>
-                  value !== null
-                  &&
-                  value !== undefined
-              )
-              .join(" ")
-              .toLowerCase();
+{/* CARD */}
 
 
-          const matchKeyword =
-            !keyword
-            ||
-            searchable.includes(
-              keyword
-            );
+<div className="cards">
 
 
-          const matchStatus =
-            !bookingStatus
-            ||
-            booking.Status
-            ===
-            bookingStatus;
+<div className="card">
 
+<p>
+Tổng số sân
+</p>
 
-          return (
-            matchKeyword
-            &&
-            matchStatus
-          );
-        }
-      );
 
-    }, [
-      bookings,
-      bookingSearch,
-      bookingStatus
-    ]);
+<h2>
+{totalFields}
+</h2>
 
 
-  /* =========================================================
-     HELPERS
-  ========================================================= */
+</div>
 
-  const formatPrice = price =>
 
-    Number(
-      price || 0
-    ).toLocaleString(
-      "vi-VN"
-    );
 
+<div className="card">
 
-  const isValidTime = (
-    startTime,
-    endTime
-  ) => {
+<p>
+Đang hoạt động
+</p>
 
-    if (
-      !startTime
-      ||
-      !endTime
-    ) {
 
-      alert(
-        "Vui lòng nhập đầy đủ khung giờ"
-      );
+<h2>
+{activeFields}
+</h2>
 
-      return false;
-    }
 
+</div>
 
-    if (
-      startTime >= endTime
-    ) {
 
-      alert(
-        "Giờ kết thúc phải lớn hơn giờ bắt đầu"
-      );
 
-      return false;
-    }
+<div className="card">
 
+<p>
+Đang bảo trì
+</p>
 
-    return true;
-  };
 
+<h2>
+{maintenanceFields}
+</h2>
 
-  const updateNewField = (
-    key,
-    value
-  ) => {
 
-    setNewField(
-      prev => ({
-        ...prev,
-        [key]: value
-      })
-    );
-  };
+</div>
 
 
-  const updateEditField = (
-    key,
-    value
-  ) => {
 
-    setEditField(
-      prev => ({
-        ...prev,
-        [key]: value
-      })
-    );
-  };
 
+<div className="card">
 
-  /* =========================================================
-     ADD FIELD
-  ========================================================= */
+<p>
+Đã đặt hôm nay
+</p>
 
-  const handleAddField =
-    async () => {
 
-      if (
-        !newField
-          .FieldName
-          .trim()
-      ) {
+<h2>
+0
+</h2>
 
-        alert(
-          "Vui lòng nhập tên sân"
-        );
 
-        return;
-      }
+</div>
 
 
-      if (
-        !newField
-          .Location
-          .trim()
-      ) {
 
-        alert(
-          "Vui lòng nhập địa điểm"
-        );
+</div>
 
-        return;
-      }
 
 
-      if (
-        !isValidTime(
-          newField.StartTime,
-          newField.EndTime
-        )
-      ) {
 
-        return;
-      }
 
 
-      const price =
-        Number(
-          newField.Price
-        );
 
 
-      if (
-        Number.isNaN(
-          price
-        )
-        ||
-        price < 0
-      ) {
 
-        alert(
-          "Giá sân không hợp lệ"
-        );
+{/* FILTER */}
 
-        return;
-      }
+<div className="filter">
 
 
-      try {
+<input
+placeholder="🔍 Tìm kiếm tên sân..."
+/>
 
-        setAdding(true);
 
+<select>
 
-        await createField({
+<option>
+Loại sân
+</option>
 
-          ...newField,
+<option>
+5 player
+</option>
 
-          FieldName:
-            newField
-              .FieldName
-              .trim(),
+<option>
+7 player
+</option>
 
-          Location:
-            newField
-              .Location
-              .trim(),
 
-          Price:
-            price
+<option>
+11 player
+</option>
 
-        });
+</select>
 
 
-        setShowAddModal(
-          false
-        );
 
 
-        setNewField(
-          EMPTY_FIELD
-        );
+<select>
 
+<option>
+Trạng thái
+</option>
 
-        await loadFields();
 
+<option>
+AVAILABLE
+</option>
 
-        alert(
-          "Thêm sân thành công"
-        );
 
+<option>
+MAINTENANCE
+</option>
 
-      } catch (error) {
 
-        console.error(
-          error
-        );
+</select>
 
 
-        alert(
-          error.message ||
-          "Không thể thêm sân"
-        );
+</div>
 
 
-      } finally {
 
-        setAdding(false);
-      }
-    };
 
 
-  /* =========================================================
-     OPEN EDIT PRICE
-  ========================================================= */
 
-  const openEdit =
-    field => {
 
-      if (
-        !field.PriceID
-      ) {
 
-        alert(
-          "Sân này chưa có bảng giá"
-        );
 
-        return;
-      }
+{/* TABLE */}
 
 
-      setEditField({
+<div className="table-box">
 
-        ...field,
 
-        StartTime:
-          field.StartTime
-            ?.slice(
-              0,
-              5
-            )
-          ||
-          "",
+<table>
 
-        EndTime:
-          field.EndTime
-            ?.slice(
-              0,
-              5
-            )
-          ||
-          ""
 
-      });
-    };
+<thead>
 
 
-  /* =========================================================
-     SAVE PRICE
-  ========================================================= */
+<tr>
 
-  const handleSaveEdit =
-    async () => {
 
-      if (
-        !editField?.PriceID
-      ) {
+<th>
+Tên sân
+</th>
 
-        return;
-      }
 
+<th>
+Loại sân
+</th>
 
-      if (
-        !isValidTime(
-          editField.StartTime,
-          editField.EndTime
-        )
-      ) {
 
-        return;
-      }
+<th>
+Địa điểm
+</th>
 
 
-      const price =
-        Number(
-          editField.Price
-        );
+<th>
+Khung giờ
+</th>
 
 
-      if (
-        Number.isNaN(
-          price
-        )
-        ||
-        price < 0
-      ) {
+<th>
+Giá / giờ
+</th>
 
-        alert(
-          "Giá sân không hợp lệ"
-        );
 
-        return;
-      }
+<th>
+Trạng thái
+</th>
 
 
-      try {
+<th>
+Thao tác
+</th>
 
-        setSaving(true);
 
+</tr>
 
-        await updateFieldPrice(
-          editField.PriceID,
-          {
 
-            StartTime:
-              editField.StartTime,
+</thead>
 
-            EndTime:
-              editField.EndTime,
 
-            Price:
-              price
 
-          }
-        );
 
 
-        setEditField(
-          null
-        );
 
+<tbody>
 
-        await loadFields();
 
+{
 
-        alert(
-          "Cập nhật giá thành công"
-        );
+fields.map(
+(field)=>(
 
 
-      } catch (error) {
+<tr
+key={
+field.FieldID+"-"+field.StartTime
+}
+>
 
-        console.error(
-          error
-        );
 
 
-        alert(
-          error.message ||
-          "Không thể cập nhật"
-        );
+<td>
+{field.FieldName}
+</td>
 
 
-      } finally {
 
-        setSaving(false);
-      }
-    };
+<td>
+{field.FieldType}
+</td>
 
 
-  /* =========================================================
-     DELETE FIELD
-  ========================================================= */
 
-  const handleDeleteField =
-    async field => {
+<td>
+{field.Location}
+</td>
 
-      const confirmDelete =
-        window.confirm(
 
-          `Bạn có chắc muốn xóa "${field.FieldName}"?\n\n`
-          +
-          "Toàn bộ bảng giá của sân cũng sẽ bị xóa."
 
-        );
 
 
-      if (
-        !confirmDelete
-      ) {
+<td>
 
-        return;
-      }
 
+<div className="time">
 
-      try {
 
-        setDeletingFieldID(
-          field.FieldID
-        );
+{field.StartTime}
 
+-
 
-        const response =
-          await fetch(
+{field.EndTime}
 
-            `http://127.0.0.1:5000/api/fields/${field.FieldID}`,
 
-            {
-              method: "DELETE"
-            }
+</div>
 
-          );
 
 
-        const result =
-          await response.json();
+</td>
 
 
-        if (
-          !response.ok
-        ) {
 
-          throw new Error(
 
-            result.message
-            ||
-            "Không thể xóa sân"
 
-          );
-        }
 
+<td>
 
-        await loadFields();
 
+<strong>
 
-        alert(
-          result.message
-          ||
-          "Xóa sân thành công"
-        );
+{
+field.Price
+?
+field.Price.toLocaleString()
+:
+0
+}
 
+đ
 
-      } catch (error) {
+</strong>
 
-        console.error(
-          error
-        );
 
 
-        alert(
-          error.message
-          ||
-          "Không thể xóa sân"
-        );
+</td>
 
 
-      } finally {
 
-        setDeletingFieldID(
-          null
-        );
-      }
-    };
 
 
-  /* =========================================================
-     CHANGE BOOKING STATUS
-  ========================================================= */
 
-  const handleBookingStatus =
-    async (
-      booking,
-      newStatus
-    ) => {
+<td>
 
-      if (
-        !user?.UserID
-      ) {
 
-        alert(
-          "Không xác định được tài khoản admin"
-        );
+<span
 
-        return;
-      }
+className={
+field.Status==="AVAILABLE"
+?
+"status available"
+:
+"status maintenance"
+}
 
+>
 
-      const statusMeta =
-        BOOKING_STATUS[
-          newStatus
-        ];
+{field.Status}
 
 
-      const label =
-        statusMeta?.label
-        ||
-        newStatus;
+</span>
 
 
-      const confirmed =
-        window.confirm(
+</td>
 
-          `Bạn có chắc muốn chuyển đơn #${booking.BookingID} sang "${label}"?`
 
-        );
 
 
-      if (
-        !confirmed
-      ) {
 
-        return;
-      }
 
+<td>
 
-      try {
 
-        setUpdatingBookingID(
-          booking.BookingID
-        );
+<button
 
+className="edit-btn"
 
-        await updateBookingStatus(
+onClick={()=>setEditField(field)}
 
-          booking.BookingID,
+>
 
-          newStatus,
+Sửa
 
-          user.UserID
+</button>
 
-        );
 
 
-        await loadBookings(
-          user.UserID
-        );
+</td>
 
 
-        alert(
-          "Cập nhật trạng thái đơn thành công"
-        );
 
 
-      } catch (error) {
 
-        console.error(
-          error
-        );
 
+</tr>
 
-        alert(
-          error.message
-          ||
-          "Không thể cập nhật trạng thái đơn"
-        );
 
+)
 
-      } finally {
+)
 
-        setUpdatingBookingID(
-          null
-        );
-      }
-    };
 
+}
 
-  /* =========================================================
-     BOOKING STATUS BADGE
-  ========================================================= */
 
-  const renderBookingStatus =
-    statusValue => {
 
-      const normalized =
-        String(
-          statusValue || ""
-        )
-          .trim()
-          .toUpperCase();
+</tbody>
 
 
-      const meta =
-        BOOKING_STATUS[
-          normalized
-        ]
-        ||
-        {
-          label:
-            normalized
-            ||
-            "Không xác định",
 
-          background:
-            "#e2e8f0",
+</table>
 
-          color:
-            "#475569"
-        };
 
 
-      return (
+</div>
 
-        <span
 
-          style={{
-            display: "inline-block",
-            padding: "5px 10px",
-            borderRadius: "999px",
-            fontSize: "12px",
-            fontWeight: 700,
-            background: meta.background,
-            color: meta.color
-          }}
 
-        >
 
-          {
-            meta.label
-          }
 
-        </span>
 
-      );
-    };
 
 
-  /* =========================================================
-     BOOKING ACTIONS
-  ========================================================= */
 
-  const renderBookingActions =
-    booking => {
+</main>
 
-      const busy =
-        updatingBookingID
-        ===
-        booking.BookingID;
 
 
-      if (
-        booking.Status
-        ===
-        "PENDING"
-      ) {
 
-        return (
 
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              flexWrap: "wrap"
-            }}
-          >
 
-            <button
 
-              type="button"
 
-              className="save-btn"
 
-              disabled={
-                busy
-              }
+{/* POPUP EDIT */}
 
-              onClick={
-                () =>
-                  handleBookingStatus(
-                    booking,
-                    "CONFIRMED"
-                  )
-              }
 
-            >
 
-              {
-                busy
-                  ? "Đang xử lý..."
-                  : "Xác nhận"
-              }
+{
 
-            </button>
+editField &&
 
 
-            <button
+<div className="modal">
 
-              type="button"
 
-              className="delete-btn"
+<div className="modal-content">
 
-              disabled={
-                busy
-              }
 
-              onClick={
-                () =>
-                  handleBookingStatus(
-                    booking,
-                    "CANCELLED"
-                  )
-              }
+<h2>
+Sửa giá sân
+</h2>
 
-            >
 
-              Hủy đơn
 
-            </button>
+<label>
+Giờ bắt đầu
+</label>
 
-          </div>
 
-        );
-      }
+<input
 
+type="time"
 
-      if (
-        booking.Status
-        ===
-        "CONFIRMED"
-      ) {
+value={
+editField.StartTime
+}
 
-        return (
 
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              flexWrap: "wrap"
-            }}
-          >
+onChange={
+e=>
 
-            <button
+setEditField({
 
-              type="button"
+...editField,
 
-              className="save-btn"
+StartTime:e.target.value
 
-              disabled={
-                busy
-              }
+})
 
-              onClick={
-                () =>
-                  handleBookingStatus(
-                    booking,
-                    "COMPLETED"
-                  )
-              }
+}
 
-            >
 
-              {
-                busy
-                  ? "Đang xử lý..."
-                  : "Hoàn thành"
-              }
+/>
 
-            </button>
 
 
-            <button
 
-              type="button"
 
-              className="delete-btn"
 
-              disabled={
-                busy
-              }
+<label>
+Giờ kết thúc
+</label>
 
-              onClick={
-                () =>
-                  handleBookingStatus(
-                    booking,
-                    "CANCELLED"
-                  )
-              }
 
-            >
+<input
 
-              Hủy đơn
+type="time"
 
-            </button>
+value={
+editField.EndTime
+}
 
-          </div>
 
-        );
-      }
+onChange={
+e=>
 
+setEditField({
 
-      return (
+...editField,
 
-        <span
-          style={{
-            color: "#94a3b8",
-            fontSize: "13px"
-          }}
-        >
+EndTime:e.target.value
 
-          Không có thao tác
+})
 
-        </span>
+}
 
-      );
-    };
 
+/>
 
-  /* =========================================================
-     MENU
-  ========================================================= */
 
-  const handleSectionChange =
-    section => {
 
-      setActiveSection(
-        section
-      );
 
 
-      if (
-        section === "bookings"
-        &&
-        user?.UserID
-      ) {
+<label>
+Giá tiền
+</label>
 
-        loadBookings(
-          user.UserID
-        );
-      }
-    };
 
 
-  /* =========================================================
-     LOGOUT
-  ========================================================= */
+<input
 
-  const handleLogout = () => {
+type="number"
 
-    const confirmed =
-      window.confirm(
-        "Bạn có muốn đăng xuất?"
-      );
+value={
+editField.Price
+}
 
 
-    if (
-      !confirmed
-    ) {
+onChange={
+e=>
 
-      return;
-    }
+setEditField({
 
+...editField,
 
-    localStorage.removeItem(
-      "user"
-    );
+Price:e.target.value
 
+})
 
-    localStorage.removeItem(
-      "bookingDraft"
-    );
+}
 
 
-    window.dispatchEvent(
-      new Event(
-        "auth-changed"
-      )
-    );
+/>
 
 
-    window.location.href =
-      "/login";
-  };
 
 
-  /* =========================================================
-     UI
-  ========================================================= */
 
-  return (
+<button
 
-    <div
-      className="admin-container"
-    >
+className="save-btn"
 
-      {/* =====================================================
-          SIDEBAR
-      ====================================================== */}
 
-      <aside
-        className="sidebar"
-      >
+onClick={async()=>{
 
-        <h2>
-          ⚽ SÂN BÓNG
-        </h2>
 
+await updateFieldPrice(
 
-        <ul
-          className="sidebar-menu"
-        >
+editField.FieldID,
 
-          <li>
-            Tổng quan
-          </li>
+{
 
+StartTime:editField.StartTime,
 
-          <li
+EndTime:editField.EndTime,
 
-            className={
-              activeSection
-              ===
-              "fields"
+Price:Number(editField.Price)
 
-                ? "active"
+}
 
-                : ""
-            }
+);
 
-            style={{
-              cursor:
-                "pointer"
-            }}
 
-            onClick={
-              () =>
-                handleSectionChange(
-                  "fields"
-                )
-            }
 
-          >
+setEditField(null);
 
-            Quản lý sân bóng
 
-          </li>
+loadFields();
 
 
-          <li
+}}
 
-            className={
-              activeSection
-              ===
-              "bookings"
 
-                ? "active"
+>
 
-                : ""
-            }
+Lưu thay đổi
 
-            style={{
-              cursor:
-                "pointer"
-            }}
+</button>
 
-            onClick={
-              () =>
-                handleSectionChange(
-                  "bookings"
-                )
-            }
 
-          >
 
-            Quản lý đặt sân
 
-          </li>
 
+<button
 
-          <li>
-            Quản lý khách hàng
-          </li>
+className="cancel-btn"
 
-          <li>
-            Quản lý nhân viên
-          </li>
+onClick={
+()=>setEditField(null)
+}
 
-          <li>
-            Hóa đơn & thanh toán
-          </li>
+>
 
-          <li>
-            Thống kê & báo cáo
-          </li>
+Hủy
 
-          <li>
-            Cài đặt
-          </li>
+</button>
 
-        </ul>
 
 
-        <button
 
-          type="button"
 
-          className="logout"
+</div>
 
-          onClick={
-            handleLogout
-          }
 
-        >
+</div>
 
-          ↪ Đăng xuất
 
-        </button>
+}
 
-      </aside>
 
 
-      {/* =====================================================
-          MAIN
-      ====================================================== */}
+</div>
 
-      <main
-        className="admin-content"
-      >
 
-        {/* HEADER */}
+)
 
-        <div
-          className="top-header"
-        >
 
-          <input
-
-            placeholder={
-              activeSection
-              ===
-              "fields"
-
-                ? "🔍 Tìm kiếm tên sân..."
-
-                : "🔍 Tìm mã đơn, khách hàng, sân..."
-            }
-
-            value={
-              activeSection
-              ===
-              "fields"
-
-                ? searchText
-
-                : bookingSearch
-            }
-
-            onChange={
-              event => {
-
-                if (
-                  activeSection
-                  ===
-                  "fields"
-                ) {
-
-                  setSearchText(
-                    event.target.value
-                  );
-
-                } else {
-
-                  setBookingSearch(
-                    event.target.value
-                  );
-                }
-              }
-            }
-
-          />
-
-
-          <div
-            className="admin-user"
-          >
-
-            <span>
-              🔔
-            </span>
-
-
-            <div>
-
-              <b>
-
-                {
-                  user?.FullName
-                  ||
-                  "Admin sân bóng"
-                }
-
-              </b>
-
-
-              <small>
-                Quản trị viên
-              </small>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* =================================================
-            FIELD MANAGEMENT
-        ================================================= */}
-
-        {
-          activeSection
-          ===
-          "fields"
-          &&
-          (
-
-            <>
-
-              {/* TITLE */}
-
-              <div
-                className="title-row"
-              >
-
-                <h1>
-                  QUẢN LÝ SÂN BÓNG
-                </h1>
-
-
-                <button
-
-                  type="button"
-
-                  className="add-btn"
-
-                  onClick={
-                    () =>
-                      setShowAddModal(
-                        true
-                      )
-                  }
-
-                >
-
-                  + Thêm sân mới
-
-                </button>
-
-              </div>
-
-
-              {/* STATISTICS */}
-
-              <div
-                className="cards"
-              >
-
-                <div
-                  className="card"
-                >
-
-                  <p>
-                    Tổng số sân
-                  </p>
-
-                  <h2>
-                    {
-                      stats.total
-                    }
-                  </h2>
-
-                </div>
-
-
-                <div
-                  className="card"
-                >
-
-                  <p>
-                    Đang hoạt động
-                  </p>
-
-                  <h2>
-                    {
-                      stats.available
-                    }
-                  </h2>
-
-                </div>
-
-
-                <div
-                  className="card"
-                >
-
-                  <p>
-                    Đang bảo trì
-                  </p>
-
-                  <h2>
-                    {
-                      stats.maintenance
-                    }
-                  </h2>
-
-                </div>
-
-
-                <div
-                  className="card"
-                >
-
-                  <p>
-                    Khung bảng giá
-                  </p>
-
-                  <h2>
-                    {
-                      stats.priceSlots
-                    }
-                  </h2>
-
-                </div>
-
-              </div>
-
-
-              {/* FILTER */}
-
-              <div
-                className="filter"
-              >
-
-                <input
-
-                  placeholder="🔍 Tìm kiếm tên sân..."
-
-                  value={
-                    searchText
-                  }
-
-                  onChange={
-                    event =>
-                      setSearchText(
-                        event.target.value
-                      )
-                  }
-
-                />
-
-
-                <select
-
-                  value={
-                    fieldType
-                  }
-
-                  onChange={
-                    event =>
-                      setFieldType(
-                        event.target.value
-                      )
-                  }
-
-                >
-
-                  <option value="">
-                    Loại sân
-                  </option>
-
-
-                  {
-                    fieldTypes.map(
-                      type => (
-
-                        <option
-                          key={
-                            type
-                          }
-                          value={
-                            type
-                          }
-                        >
-
-                          {type}
-
-                        </option>
-
-                      )
-                    )
-                  }
-
-                </select>
-
-
-                <select
-
-                  value={
-                    status
-                  }
-
-                  onChange={
-                    event =>
-                      setStatus(
-                        event.target.value
-                      )
-                  }
-
-                >
-
-                  <option value="">
-                    Trạng thái
-                  </option>
-
-                  <option value="AVAILABLE">
-                    AVAILABLE
-                  </option>
-
-                  <option value="MAINTENANCE">
-                    MAINTENANCE
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              {/* FIELD TABLE */}
-
-              <div
-                className="table-box"
-              >
-
-                <table>
-
-                  <thead>
-
-                    <tr>
-
-                      <th>
-                        Tên sân
-                      </th>
-
-                      <th>
-                        Loại sân
-                      </th>
-
-                      <th>
-                        Địa điểm
-                      </th>
-
-                      <th>
-                        Khung giờ
-                      </th>
-
-                      <th>
-                        Giá / giờ
-                      </th>
-
-                      <th>
-                        Trạng thái
-                      </th>
-
-                      <th>
-                        Thao tác
-                      </th>
-
-                    </tr>
-
-                  </thead>
-
-
-                  <tbody>
-
-                    {
-                      loading
-                        ? (
-
-                          <tr>
-
-                            <td
-                              colSpan="7"
-                              style={{
-                                textAlign:
-                                  "center"
-                              }}
-                            >
-
-                              Đang tải...
-
-                            </td>
-
-                          </tr>
-
-                        )
-
-                        : filteredFields.length
-                          ===
-                          0
-
-                          ? (
-
-                            <tr>
-
-                              <td
-                                colSpan="7"
-                                style={{
-                                  textAlign:
-                                    "center"
-                                }}
-                              >
-
-                                Không có dữ liệu
-
-                              </td>
-
-                            </tr>
-
-                          )
-
-                          : (
-
-                            filteredFields.map(
-                              (
-                                field,
-                                index
-                              ) => {
-
-                                const firstRow =
-                                  index === 0
-                                  ||
-                                  filteredFields[
-                                    index - 1
-                                  ].FieldID
-                                  !==
-                                  field.FieldID;
-
-
-                                return (
-
-                                  <tr
-
-                                    key={
-                                      field.PriceID
-                                        ? `price-${field.PriceID}`
-                                        : `field-${field.FieldID}`
-                                    }
-
-                                  >
-
-                                    <td>
-                                      {
-                                        field.FieldName
-                                      }
-                                    </td>
-
-
-                                    <td>
-                                      {
-                                        field.FieldType
-                                      }
-                                    </td>
-
-
-                                    <td>
-                                      {
-                                        field.Location
-                                      }
-                                    </td>
-
-
-                                    <td>
-
-                                      {
-                                        field.StartTime
-                                          ?.slice(
-                                            0,
-                                            5
-                                          )
-                                        ||
-                                        "--"
-                                      }
-
-                                      {" - "}
-
-                                      {
-                                        field.EndTime
-                                          ?.slice(
-                                            0,
-                                            5
-                                          )
-                                        ||
-                                        "--"
-                                      }
-
-                                    </td>
-
-
-                                    <td>
-
-                                      <strong>
-
-                                        {
-                                          formatPrice(
-                                            field.Price
-                                          )
-                                        }
-
-                                        đ
-
-                                      </strong>
-
-                                    </td>
-
-
-                                    <td>
-
-                                      <span
-
-                                        className={
-                                          field.Status
-                                          ===
-                                          "AVAILABLE"
-
-                                            ? "status available"
-
-                                            : "status maintenance"
-                                        }
-
-                                      >
-
-                                        {
-                                          field.Status
-                                        }
-
-                                      </span>
-
-                                    </td>
-
-
-                                    <td>
-
-                                      <div
-                                        style={{
-                                          display:
-                                            "flex",
-
-                                          gap:
-                                            "8px",
-
-                                          flexWrap:
-                                            "wrap"
-                                        }}
-                                      >
-
-                                        <button
-
-                                          type="button"
-
-                                          className="edit-btn"
-
-                                          disabled={
-                                            !field.PriceID
-                                          }
-
-                                          onClick={
-                                            () =>
-                                              openEdit(
-                                                field
-                                              )
-                                          }
-
-                                        >
-
-                                          Sửa
-
-                                        </button>
-
-
-                                        {
-                                          firstRow
-                                          &&
-                                          (
-
-                                            <button
-
-                                              type="button"
-
-                                              className="delete-btn"
-
-                                              disabled={
-                                                deletingFieldID
-                                                ===
-                                                field.FieldID
-                                              }
-
-                                              onClick={
-                                                () =>
-                                                  handleDeleteField(
-                                                    field
-                                                  )
-                                              }
-
-                                            >
-
-                                              {
-                                                deletingFieldID
-                                                ===
-                                                field.FieldID
-
-                                                  ? "Đang xóa..."
-
-                                                  : "Xóa sân"
-                                              }
-
-                                            </button>
-
-                                          )
-                                        }
-
-                                      </div>
-
-                                    </td>
-
-                                  </tr>
-
-                                );
-                              }
-                            )
-                          )
-                    }
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            </>
-
-          )
-        }
-
-
-        {/* =================================================
-            BOOKING MANAGEMENT
-        ================================================= */}
-
-        {
-          activeSection
-          ===
-          "bookings"
-          &&
-          (
-
-            <>
-
-              {/* TITLE */}
-
-              <div
-                className="title-row"
-              >
-
-                <h1>
-                  QUẢN LÝ ĐẶT SÂN
-                </h1>
-
-
-                <button
-
-                  type="button"
-
-                  className="add-btn"
-
-                  disabled={
-                    bookingLoading
-                  }
-
-                  onClick={
-                    () =>
-                      loadBookings(
-                        user?.UserID
-                      )
-                  }
-
-                >
-
-                  {
-                    bookingLoading
-                      ? "Đang tải..."
-                      : "↻ Làm mới"
-                  }
-
-                </button>
-
-              </div>
-
-
-              {/* BOOKING STATS */}
-
-              <div
-                className="cards"
-              >
-
-                <div
-                  className="card"
-                >
-
-                  <p>
-                    Tổng số đơn
-                  </p>
-
-                  <h2>
-                    {
-                      bookingStats.total
-                    }
-                  </h2>
-
-                </div>
-
-
-                <div
-                  className="card"
-                >
-
-                  <p>
-                    Chờ xác nhận
-                  </p>
-
-                  <h2>
-                    {
-                      bookingStats.pending
-                    }
-                  </h2>
-
-                </div>
-
-
-                <div
-                  className="card"
-                >
-
-                  <p>
-                    Đã xác nhận
-                  </p>
-
-                  <h2>
-                    {
-                      bookingStats.confirmed
-                    }
-                  </h2>
-
-                </div>
-
-
-                <div
-                  className="card"
-                >
-
-                  <p>
-                    Hoàn thành
-                  </p>
-
-                  <h2>
-                    {
-                      bookingStats.completed
-                    }
-                  </h2>
-
-                </div>
-
-              </div>
-
-
-              {/* FILTER */}
-
-              <div
-                className="filter"
-              >
-
-                <input
-
-                  placeholder="🔍 Mã đơn, tên khách hàng, sân, SĐT..."
-
-                  value={
-                    bookingSearch
-                  }
-
-                  onChange={
-                    event =>
-                      setBookingSearch(
-                        event.target.value
-                      )
-                  }
-
-                />
-
-
-                <select
-
-                  value={
-                    bookingStatus
-                  }
-
-                  onChange={
-                    event =>
-                      setBookingStatus(
-                        event.target.value
-                      )
-                  }
-
-                >
-
-                  <option value="">
-                    Tất cả trạng thái
-                  </option>
-
-                  <option value="PENDING">
-                    Chờ xác nhận
-                  </option>
-
-                  <option value="CONFIRMED">
-                    Đã xác nhận
-                  </option>
-
-                  <option value="CANCELLED">
-                    Đã hủy
-                  </option>
-
-                  <option value="COMPLETED">
-                    Hoàn thành
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              {/* BOOKING TABLE */}
-
-              <div
-                className="table-box"
-              >
-
-                <table>
-
-                  <thead>
-
-                    <tr>
-
-                      <th>
-                        Mã đơn
-                      </th>
-
-                      <th>
-                        Khách hàng
-                      </th>
-
-                      <th>
-                        Sân
-                      </th>
-
-                      <th>
-                        Ngày
-                      </th>
-
-                      <th>
-                        Khung giờ
-                      </th>
-
-                      <th>
-                        Tổng tiền
-                      </th>
-
-                      <th>
-                        Trạng thái
-                      </th>
-
-                      <th>
-                        Thao tác
-                      </th>
-
-                    </tr>
-
-                  </thead>
-
-
-                  <tbody>
-
-                    {
-                      bookingLoading
-                        ? (
-
-                          <tr>
-
-                            <td
-                              colSpan="8"
-                              style={{
-                                textAlign:
-                                  "center"
-                              }}
-                            >
-
-                              Đang tải danh sách booking...
-
-                            </td>
-
-                          </tr>
-
-                        )
-
-                        : filteredBookings.length
-                          ===
-                          0
-
-                          ? (
-
-                            <tr>
-
-                              <td
-                                colSpan="8"
-                                style={{
-                                  textAlign:
-                                    "center"
-                                }}
-                              >
-
-                                Không có booking
-
-                              </td>
-
-                            </tr>
-
-                          )
-
-                          : (
-
-                            filteredBookings.map(
-                              booking => (
-
-                                <tr
-                                  key={
-                                    booking.BookingID
-                                  }
-                                >
-
-                                  <td>
-
-                                    <strong>
-
-                                      #
-                                      {
-                                        booking.BookingID
-                                      }
-
-                                    </strong>
-
-                                  </td>
-
-
-                                  <td>
-
-                                    <strong>
-                                      {
-                                        booking.CustomerName
-                                        ||
-                                        `User #${booking.UserID}`
-                                      }
-                                    </strong>
-
-
-                                    {
-                                      booking.Phone
-                                      &&
-                                      (
-                                        <>
-                                          <br />
-
-                                          <small>
-                                            {
-                                              booking.Phone
-                                            }
-                                          </small>
-                                        </>
-                                      )
-                                    }
-
-
-                                    {
-                                      !booking.Phone
-                                      &&
-                                      booking.Email
-                                      &&
-                                      (
-                                        <>
-                                          <br />
-
-                                          <small>
-                                            {
-                                              booking.Email
-                                            }
-                                          </small>
-                                        </>
-                                      )
-                                    }
-
-                                  </td>
-
-
-                                  <td>
-
-                                    {
-                                      booking.FieldName
-                                    }
-
-                                    {
-                                      booking.FieldType
-                                      &&
-                                      (
-                                        <>
-                                          <br />
-
-                                          <small>
-                                            {
-                                              booking.FieldType
-                                            }
-                                          </small>
-                                        </>
-                                      )
-                                    }
-
-                                  </td>
-
-
-                                  <td>
-
-                                    {
-                                      booking.BookingDate
-                                    }
-
-                                  </td>
-
-
-                                  <td>
-
-                                    {
-                                      booking.StartTime
-                                    }
-
-                                    {" - "}
-
-                                    {
-                                      booking.EndTime
-                                    }
-
-                                  </td>
-
-
-                                  <td>
-
-                                    <strong>
-
-                                      {
-                                        formatPrice(
-                                          booking.TotalAmount
-                                        )
-                                      }
-
-                                      đ
-
-                                    </strong>
-
-                                  </td>
-
-
-                                  <td>
-
-                                    {
-                                      renderBookingStatus(
-                                        booking.Status
-                                      )
-                                    }
-
-                                  </td>
-
-
-                                  <td>
-
-                                    {
-                                      renderBookingActions(
-                                        booking
-                                      )
-                                    }
-
-                                  </td>
-
-                                </tr>
-
-                              )
-                            )
-
-                          )
-                    }
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            </>
-
-          )
-        }
-
-      </main>
-
-
-      {/* =====================================================
-          ADD FIELD MODAL
-      ====================================================== */}
-
-      {
-        showAddModal
-        &&
-        (
-
-          <div
-            className="modal"
-          >
-
-            <div
-              className="modal-content"
-            >
-
-              <h2>
-                Thêm sân mới
-              </h2>
-
-
-              <label>
-                Tên sân
-              </label>
-
-              <input
-
-                placeholder="Ví dụ: Sân 3"
-
-                value={
-                  newField.FieldName
-                }
-
-                onChange={
-                  event =>
-                    updateNewField(
-                      "FieldName",
-                      event.target.value
-                    )
-                }
-
-              />
-
-
-              <label>
-                Loại sân
-              </label>
-
-              <select
-
-                value={
-                  newField.FieldType
-                }
-
-                onChange={
-                  event =>
-                    updateNewField(
-                      "FieldType",
-                      event.target.value
-                    )
-                }
-
-              >
-
-                <option value="5 player">
-                  5 player
-                </option>
-
-                <option value="7 player">
-                  7 player
-                </option>
-
-                <option value="11 player">
-                  11 player
-                </option>
-
-              </select>
-
-
-              <label>
-                Địa điểm
-              </label>
-
-              <input
-
-                placeholder="Ví dụ: Hà Nội"
-
-                value={
-                  newField.Location
-                }
-
-                onChange={
-                  event =>
-                    updateNewField(
-                      "Location",
-                      event.target.value
-                    )
-                }
-
-              />
-
-
-              <label>
-                URL hình ảnh
-              </label>
-
-              <input
-
-                placeholder="Không bắt buộc"
-
-                value={
-                  newField.Image
-                }
-
-                onChange={
-                  event =>
-                    updateNewField(
-                      "Image",
-                      event.target.value
-                    )
-                }
-
-              />
-
-
-              <label>
-                Trạng thái
-              </label>
-
-              <select
-
-                value={
-                  newField.Status
-                }
-
-                onChange={
-                  event =>
-                    updateNewField(
-                      "Status",
-                      event.target.value
-                    )
-                }
-
-              >
-
-                <option value="AVAILABLE">
-                  AVAILABLE
-                </option>
-
-                <option value="MAINTENANCE">
-                  MAINTENANCE
-                </option>
-
-              </select>
-
-
-              <label>
-                Giờ bắt đầu
-              </label>
-
-              <input
-
-                type="time"
-
-                value={
-                  newField.StartTime
-                }
-
-                onChange={
-                  event =>
-                    updateNewField(
-                      "StartTime",
-                      event.target.value
-                    )
-                }
-
-              />
-
-
-              <label>
-                Giờ kết thúc
-              </label>
-
-              <input
-
-                type="time"
-
-                value={
-                  newField.EndTime
-                }
-
-                onChange={
-                  event =>
-                    updateNewField(
-                      "EndTime",
-                      event.target.value
-                    )
-                }
-
-              />
-
-
-              <label>
-                Giá / giờ
-              </label>
-
-              <input
-
-                type="number"
-
-                min="0"
-
-                step="1000"
-
-                placeholder="Ví dụ: 350000"
-
-                value={
-                  newField.Price
-                }
-
-                onChange={
-                  event =>
-                    updateNewField(
-                      "Price",
-                      event.target.value
-                    )
-                }
-
-              />
-
-
-              <button
-
-                type="button"
-
-                className="save-btn"
-
-                disabled={
-                  adding
-                }
-
-                onClick={
-                  handleAddField
-                }
-
-              >
-
-                {
-                  adding
-                    ? "Đang thêm..."
-                    : "Thêm sân"
-                }
-
-              </button>
-
-
-              <button
-
-                type="button"
-
-                className="cancel-btn"
-
-                disabled={
-                  adding
-                }
-
-                onClick={
-                  () => {
-
-                    setShowAddModal(
-                      false
-                    );
-
-                    setNewField(
-                      EMPTY_FIELD
-                    );
-
-                  }
-                }
-
-              >
-
-                Hủy
-
-              </button>
-
-            </div>
-
-          </div>
-
-        )
-      }
-
-
-      {/* =====================================================
-          EDIT PRICE MODAL
-      ====================================================== */}
-
-      {
-        editField
-        &&
-        (
-
-          <div
-            className="modal"
-          >
-
-            <div
-              className="modal-content"
-            >
-
-              <h2>
-                Sửa giá sân
-              </h2>
-
-
-              <p>
-
-                <b>
-                  {
-                    editField.FieldName
-                  }
-                </b>
-
-              </p>
-
-
-              <label>
-                Giờ bắt đầu
-              </label>
-
-              <input
-
-                type="time"
-
-                value={
-                  editField.StartTime
-                }
-
-                onChange={
-                  event =>
-                    updateEditField(
-                      "StartTime",
-                      event.target.value
-                    )
-                }
-
-              />
-
-
-              <label>
-                Giờ kết thúc
-              </label>
-
-              <input
-
-                type="time"
-
-                value={
-                  editField.EndTime
-                }
-
-                onChange={
-                  event =>
-                    updateEditField(
-                      "EndTime",
-                      event.target.value
-                    )
-                }
-
-              />
-
-
-              <label>
-                Giá tiền
-              </label>
-
-              <input
-
-                type="number"
-
-                min="0"
-
-                step="1000"
-
-                value={
-                  editField.Price
-                  ??
-                  ""
-                }
-
-                onChange={
-                  event =>
-                    updateEditField(
-                      "Price",
-                      event.target.value
-                    )
-                }
-
-              />
-
-
-              <button
-
-                type="button"
-
-                className="save-btn"
-
-                disabled={
-                  saving
-                }
-
-                onClick={
-                  handleSaveEdit
-                }
-
-              >
-
-                {
-                  saving
-                    ? "Đang lưu..."
-                    : "Lưu thay đổi"
-                }
-
-              </button>
-
-
-              <button
-
-                type="button"
-
-                className="cancel-btn"
-
-                disabled={
-                  saving
-                }
-
-                onClick={
-                  () =>
-                    setEditField(
-                      null
-                    )
-                }
-
-              >
-
-                Hủy
-
-              </button>
-
-            </div>
-
-          </div>
-
-        )
-      }
-
-    </div>
-  );
 }
 
 
