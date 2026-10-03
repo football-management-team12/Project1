@@ -1,4 +1,7 @@
-import { Routes, Route } from "react-router-dom";
+import {
+  Routes,
+  Route,
+} from "react-router-dom";
 
 import Home from "../pages/Home/Home";
 import Login from "../pages/Login/Login";
@@ -7,29 +10,62 @@ import FieldList from "../pages/FieldList/FieldList";
 import Admin from "../pages/Admin/Admin";
 import About from "../pages/About/About";
 import Booking from "../pages/Booking/Booking";
+import BookingConfirm from "../pages/BookingConfirm/BookingConfirm";
 import Pricing from "../pages/Pricing/Pricing";
 
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
 
-      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={<Home />}
+      />
 
-      <Route path="/register" element={<Register />} />
+      <Route
+        path="/login"
+        element={<Login />}
+      />
 
-      <Route path="/fields" element={<FieldList />} />
+      <Route
+        path="/register"
+        element={<Register />}
+      />
 
-      <Route path="/booking" element={<Booking />} />
+      <Route
+        path="/fields"
+        element={<FieldList />}
+      />
 
-      <Route path="/pricing" element={<Pricing />} />
+      <Route
+        path="/booking"
+        element={<Booking />}
+      />
 
-      <Route path="/about" element={<About />} />
+      <Route
+        path="/booking/confirm"
+        element={<BookingConfirm />}
+      />
 
-      <Route path="/admin" element={<Admin />} />
+      <Route
+        path="/pricing"
+        element={<Pricing />}
+      />
+
+      <Route
+        path="/about"
+        element={<About />}
+      />
+
+      <Route
+        path="/admin"
+        element={<Admin />}
+      />
+
     </Routes>
   );
 }
+
 
 export default AppRoutes;
