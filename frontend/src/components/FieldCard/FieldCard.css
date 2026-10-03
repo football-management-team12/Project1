@@ -1,204 +1,197 @@
 .field-card {
-  background: #ffffff;
-  border: 1px solid #dfe6ee;
-  border-radius: 16px;
   overflow: hidden;
 
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+
+  background: #fff;
+
+  box-shadow:
+    0 8px 24px
+    rgba(0, 0, 0, 0.06);
 }
 
-.field-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
-}
-
-/* ======================
-   IMAGE
-====================== */
-
-.field-image-wrapper {
-  width: 100%;
-  height: 190px;
-  overflow: hidden;
-}
-
-.field-image {
-  width: 100%;
-  height: 100%;
-
-  display: block;
-  object-fit: cover;
-
-  transition: transform 0.35s ease;
-}
-
-.field-card:hover .field-image {
-  transform: scale(1.04);
-}
-
-/* ======================
-   CONTENT
-====================== */
-
-.field-content {
-  padding: 15px 16px 16px;
-}
-
-.field-title-row {
+.field-card-cover {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
 
-  margin-bottom: 10px;
-}
+  min-height: 150px;
 
-.field-title-row h3 {
-  margin: 0;
-
-  min-width: 0;
-
-  color: #111827;
-
-  font-size: 17px;
-  line-height: 1.4;
-  font-weight: 700;
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ======================
-   RATING
-====================== */
-
-.field-rating {
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  color: #111827;
-
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.field-rating svg {
-  color: #f59e0b;
-}
-
-/* ======================
-   INFORMATION
-====================== */
-
-.field-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.field-info-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-
-  color: #64748b;
-
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.field-info-row svg {
-  flex-shrink: 0;
-  color: #64748b;
-}
-
-.field-info-row span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ======================
-   DIVIDER
-====================== */
-
-.field-divider {
-  width: 100%;
-  height: 1px;
-
-  margin: 13px 0 11px;
-
-  background: #e2e8f0;
-}
-
-/* ======================
-   BOTTOM
-====================== */
-
-.field-bottom {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.price-label {
-  display: block;
-
-  margin-bottom: 2px;
-
-  color: #94a3b8;
-
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.field-bottom strong {
-  display: block;
-
-  color: #16a34a;
-
-  font-size: 17px;
-  line-height: 1.2;
-  font-weight: 700;
-}
-
-/* ======================
-   DETAIL BUTTON
-====================== */
-
-.field-detail-button {
-  display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  min-width: 76px;
+  background:
+    linear-gradient(
+      135deg,
+      #14532d,
+      #16a34a
+    );
 
-  padding: 8px 14px;
+  color: #fff;
 
-  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 900;
 
-  background: #dcfce7;
-
-  color: #16a34a;
-
-  font-size: 13px;
-  font-weight: 600;
-
-  text-decoration: none;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
+  letter-spacing: 0.18em;
 }
 
-.field-detail-button:hover {
-  background: #16a34a;
-  color: #ffffff;
+.field-card-body {
+  padding: 18px;
+}
+
+.field-card-title-row {
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 12px;
+}
+
+.field-card-title-row h2 {
+  margin: 0;
+
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.field-card-type,
+.field-card-address,
+.field-card-price,
+.field-card-hint,
+.field-card-error {
+  margin: 6px 0 0;
+
+  line-height: 1.5;
+}
+
+.field-card-type,
+.field-card-address,
+.field-card-hint {
+  color: #6b7280;
+}
+
+.field-card-address {
+  min-height: 24px;
+}
+
+.field-card-price {
+  margin-top: 12px;
+}
+
+.field-status {
+  flex: 0 0 auto;
+
+  padding: 5px 9px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.field-status-maintenance {
+  background: #fef2f2;
+
+  color: #b91c1c;
+}
+
+.field-card-availability {
+  margin-top: 16px;
+}
+
+.field-card-error {
+  color: #b91c1c;
+}
+
+.field-slot-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.field-slot {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding: 10px 11px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.field-slot > div {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+.field-slot > div span {
+  color: #6b7280;
+
+  font-size: 13px;
+}
+
+.field-slot-state {
+  flex: 0 0 auto;
+
+  padding: 4px 8px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.field-slot-available
+.field-slot-state {
+  background: #ecfdf5;
+
+  color: #047857;
+}
+
+.field-slot-unavailable {
+  opacity: 0.72;
+}
+
+.field-slot-unavailable
+.field-slot-state {
+  background: #f3f4f6;
+
+  color: #4b5563;
+}
+
+.field-card-booking-button {
+  width: 100%;
+
+  min-height: 44px;
+
+  margin-top: 18px;
+
+  border: 0;
+  border-radius: 11px;
+
+  background: #111827;
+
+  color: #fff;
+
+  font: inherit;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.field-card-booking-button:disabled {
+  background: #d1d5db;
+
+  color: #6b7280;
+
+  cursor: not-allowed;
 }
