@@ -1,257 +1,101 @@
-const API_URL = "http://127.0.0.1:5000/api/fields";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:5000"
+).replace(/\/$/, "");
+
+const FIELDS_API = `${API_BASE_URL}/api/fields`;
 
 
-/* =========================================================
-   GET ALL FIELDS
-========================================================= */
+const requestJson = async (url, options = {}) => {
+  const response = await fetch(url, options);
+
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+      data?.error ||
+      `Request failed (${response.status})`
+    );
+  }
+
+  return data;
+};
+
+
+// ============================================================
+// BE-03
+// GET ALL FIELDS
+// ============================================================
 
 export const getFields = async () => {
-
-  const response = await fetch(
-    `${API_URL}/`
+  return requestJson(
+    `${FIELDS_API}/`
   );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-
-    throw new Error(
-      result.message ||
-      "Không thể lấy danh sách sân"
-    );
-  }
-
-  return result;
 };
 
 
-/* =========================================================
-   GET ONE FIELD
-========================================================= */
-
-export const getFieldById = async (
-  fieldID
-) => {
-
-  const response = await fetch(
-    `${API_URL}/${fieldID}`
-  );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-
-    throw new Error(
-      result.message ||
-      "Không thể lấy thông tin sân"
-    );
-  }
-
-  return result;
-};
-
-
-/* =========================================================
-   GET FIELD AVAILABILITY
-   BE-05
-========================================================= */
+// ============================================================
+// BE-05
+// GET AVAILABILITY OF ONE FIELD
+// ============================================================
 
 export const getFieldAvailability = async (
   fieldID,
   date
 ) => {
+  const params = new URLSearchParams({
+    date,
+  });
 
-  const response = await fetch(
-    `${API_URL}/${fieldID}/availability?date=${date}`
+  return requestJson(
+    `${FIELDS_API}/${fieldID}/availability?${params.toString()}`
   );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-
-    throw new Error(
-      result.message ||
-      "Không thể kiểm tra lịch sân"
-    );
-  }
-
-  return result;
 };
 
 
-/* =========================================================
-   CREATE FIELD
-========================================================= */
+// ============================================================
+// BE-05.1
+// GET AVAILABILITY OF ALL FIELDS
+// ============================================================
 
-export const createField = async (
-  data
+export const getAllFieldsAvailability = async (
+  date
 ) => {
+  const params = new URLSearchParams({
+    date,
+  });
 
-  const response = await fetch(
-    `${API_URL}/`,
-    {
-      method: "POST",
-
-      headers: {
-        "Content-Type":
-          "application/json"
-      },
-
-      body: JSON.stringify(data)
-    }
+  return requestJson(
+    `${FIELDS_API}/availability?${params.toString()}`
   );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-
-    throw new Error(
-      result.message ||
-      "Không thể thêm sân"
-    );
-  }
-
-  return result;
 };
 
 
-/* =========================================================
-   UPDATE FIELD
-========================================================= */
-
-export const updateField = async (
-  fieldID,
-  data
-) => {
-
-  const response = await fetch(
-    `${API_URL}/${fieldID}`,
-    {
-      method: "PUT",
-
-      headers: {
-        "Content-Type":
-          "application/json"
-      },
-
-      body: JSON.stringify(data)
-    }
-  );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-
-    throw new Error(
-      result.message ||
-      "Không thể cập nhật sân"
-    );
-  }
-
-  return result;
-};
-
-
-/* =========================================================
-   UPDATE FIELD STATUS
-========================================================= */
-
-export const updateFieldStatus = async (
-  fieldID,
-  status
-) => {
-
-  const response = await fetch(
-    `${API_URL}/${fieldID}/status`,
-    {
-      method: "PATCH",
-
-      headers: {
-        "Content-Type":
-          "application/json"
-      },
-
-      body: JSON.stringify({
-        Status: status
-      })
-    }
-  );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-
-    throw new Error(
-      result.message ||
-      "Không thể cập nhật trạng thái sân"
-    );
-  }
-
-  return result;
-};
-
-
-/* =========================================================
-   UPDATE PRICE
-========================================================= */
+// ============================================================
+// UPDATE FIELD PRICE
+// Giữ lại để không phá chức năng cũ
+// ============================================================
 
 export const updateFieldPrice = async (
-  priceID,
+  fieldID,
   data
 ) => {
-
-  const response = await fetch(
-    `${API_URL}/price/${priceID}`,
+  return requestJson(
+    `${FIELDS_API}/price/${fieldID}`,
     {
       method: "PUT",
 
       headers: {
-        "Content-Type":
-          "application/json"
+        "Content-Type": "application/json",
       },
 
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     }
   );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-
-    throw new Error(
-      result.message ||
-      "Không thể cập nhật giá"
-    );
-  }
-
-  return result;
-};
-
-
-/* =========================================================
-   DELETE FIELD
-========================================================= */
-
-export const deleteField = async (
-  fieldID
-) => {
-
-  const response = await fetch(
-    `${API_URL}/${fieldID}`,
-    {
-      method: "DELETE"
-    }
-  );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-
-    throw new Error(
-      result.message ||
-      "Không thể xóa sân"
-    );
-  }
-
-  return result;
 };

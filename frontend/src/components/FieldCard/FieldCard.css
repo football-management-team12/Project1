@@ -1,548 +1,197 @@
-/* =========================================================
-   FIELD CARD
-========================================================= */
-
 .field-card {
+  overflow: hidden;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+
+  background: #fff;
+
+  box-shadow:
+    0 8px 24px
+    rgba(0, 0, 0, 0.06);
+}
+
+.field-card-cover {
   display: flex;
-  flex-direction: column;
 
-  height: 100%;
+  min-height: 150px;
 
-  background: #ffffff;
+  align-items: center;
+  justify-content: center;
 
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  background:
+    linear-gradient(
+      135deg,
+      #14532d,
+      #16a34a
+    );
 
-  overflow: hidden;
+  color: #fff;
 
-  box-shadow:
-    0 2px 8px
-    rgba(15, 23, 42, 0.04);
+  font-size: 14px;
+  font-weight: 900;
 
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
+  letter-spacing: 0.18em;
 }
 
-.field-card:hover {
-  transform: translateY(-5px);
-
-  border-color: #bbf7d0;
-
-  box-shadow:
-    0 14px 32px
-    rgba(15, 23, 42, 0.1);
+.field-card-body {
+  padding: 18px;
 }
 
+.field-card-title-row {
+  display: flex;
 
-/* =========================================================
-   IMAGE
-========================================================= */
+  align-items: flex-start;
+  justify-content: space-between;
 
-.field-image-wrapper {
-  position: relative;
-
-  width: 100%;
-  height: 180px;
-
-  overflow: hidden;
-
-  background: #f1f5f9;
+  gap: 12px;
 }
 
-.field-image {
-  display: block;
+.field-card-title-row h2 {
+  margin: 0;
 
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-
-  transition:
-    transform 0.35s ease;
+  font-size: 20px;
+  line-height: 1.3;
 }
 
-.field-card:hover
-.field-image {
-  transform: scale(1.04);
+.field-card-type,
+.field-card-address,
+.field-card-price,
+.field-card-hint,
+.field-card-error {
+  margin: 6px 0 0;
+
+  line-height: 1.5;
 }
 
+.field-card-type,
+.field-card-address,
+.field-card-hint {
+  color: #6b7280;
+}
 
-/* =========================================================
-   FIELD STATUS
-========================================================= */
+.field-card-address {
+  min-height: 24px;
+}
+
+.field-card-price {
+  margin-top: 12px;
+}
 
 .field-status {
-  position: absolute;
-
-  top: 12px;
-  right: 12px;
+  flex: 0 0 auto;
 
   padding: 5px 9px;
 
   border-radius: 999px;
 
-  font-size: 10px;
-  font-weight: 700;
-
-  backdrop-filter: blur(4px);
+  font-size: 12px;
+  font-weight: 800;
 }
 
-.field-status--available {
-  background:
-    rgba(
-      220,
-      252,
-      231,
-      0.95
-    );
+.field-status-maintenance {
+  background: #fef2f2;
 
-  color: #15803d;
+  color: #b91c1c;
 }
 
-.field-status--maintenance {
-  background:
-    rgba(
-      254,
-      226,
-      226,
-      0.95
-    );
-
-  color: #dc2626;
+.field-card-availability {
+  margin-top: 16px;
 }
 
-
-/* =========================================================
-   CONTENT
-========================================================= */
-
-.field-content {
-  display: flex;
-  flex-direction: column;
-
-  flex: 1;
-
-  padding: 16px;
+.field-card-error {
+  color: #b91c1c;
 }
 
-
-/* =========================================================
-   TITLE
-========================================================= */
-
-.field-title-row {
+.field-slot-list {
   display: flex;
 
-  align-items: center;
-
-  justify-content:
-    space-between;
-
-  gap: 10px;
-
-  margin-bottom: 9px;
-}
-
-.field-title-row h3 {
-  margin: 0;
-
-  min-width: 0;
-
-  color: #0f172a;
-
-  font-size: 17px;
-  font-weight: 700;
-
-  line-height: 1.35;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
-  text-overflow:
-    ellipsis;
-}
-
-
-/* =========================================================
-   INFO
-========================================================= */
-
-.field-info {
-  display: flex;
-  flex-direction: column;
-
-  gap: 6px;
-
-  margin-bottom: 14px;
-}
-
-.field-info-row {
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  min-width: 0;
-
-  color: #64748b;
-
-  font-size: 13px;
-
-  line-height: 1.4;
-}
-
-.field-info-row svg {
-  flex-shrink: 0;
-
-  color: #64748b;
-}
-
-.field-info-row span {
-  min-width: 0;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
-  text-overflow:
-    ellipsis;
-}
-
-
-/* =========================================================
-   SLOT AREA
-========================================================= */
-
-.field-slots {
-  display: flex;
   flex-direction: column;
 
   gap: 8px;
 }
 
-.field-slots-title {
-  margin-bottom: 2px;
-
-  color: #475569;
-
-  font-size: 11px;
-  font-weight: 700;
-
-  letter-spacing: 0.5px;
-}
-
-
-/* =========================================================
-   SLOT
-========================================================= */
-
 .field-slot {
   display: flex;
 
   align-items: center;
-
-  justify-content:
-    space-between;
+  justify-content: space-between;
 
   gap: 10px;
 
-  min-height: 52px;
+  padding: 10px 11px;
 
-  padding: 9px 10px;
-
-  border: 1px solid;
-
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
-
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease;
 }
 
-.field-slot-main {
+.field-slot > div {
   display: flex;
 
   flex-direction: column;
 
-  gap: 3px;
-
-  min-width: 0;
+  gap: 2px;
 }
 
-.field-slot-main strong {
+.field-slot > div span {
+  color: #6b7280;
+
   font-size: 13px;
-  font-weight: 700;
-
-  white-space: nowrap;
 }
 
-.field-slot-price {
-  font-size: 12px;
-  font-weight: 600;
+.field-slot-state {
+  flex: 0 0 auto;
 
-  white-space: nowrap;
-}
-
-
-/* =========================================================
-   SLOT STATUS
-========================================================= */
-
-.field-slot-status {
-  flex-shrink: 0;
-
-  min-width: 58px;
-
-  padding: 5px 8px;
+  padding: 4px 8px;
 
   border-radius: 999px;
 
-  font-size: 10px;
-  font-weight: 700;
-
-  text-align: center;
-}
-
-
-/* =========================================================
-   AVAILABLE
-========================================================= */
-
-.field-slot.available {
-  background: #f0fdf4;
-
-  border-color: #bbf7d0;
-
-  color: #15803d;
-}
-
-.field-slot.available:hover {
-  transform:
-    translateX(2px);
-
-  background: #dcfce7;
-}
-
-.field-slot.available
-.field-slot-status {
-  background: #dcfce7;
-
-  color: #15803d;
-}
-
-
-/* =========================================================
-   BOOKED
-========================================================= */
-
-.field-slot.booked {
-  background: #fef2f2;
-
-  border-color: #fecaca;
-
-  color: #b91c1c;
-}
-
-.field-slot.booked
-.field-slot-status {
-  background: #fee2e2;
-
-  color: #dc2626;
-}
-
-
-/* =========================================================
-   NO SLOT
-========================================================= */
-
-.field-no-slot {
-  padding: 12px;
-
-  border:
-    1px dashed
-    #cbd5e1;
-
-  border-radius: 9px;
-
-  background: #f8fafc;
-
-  color: #64748b;
-
   font-size: 12px;
-
-  text-align: center;
+  font-weight: 800;
 }
 
+.field-slot-available
+.field-slot-state {
+  background: #ecfdf5;
 
-/* =========================================================
-   DIVIDER
-========================================================= */
+  color: #047857;
+}
 
-.field-divider {
+.field-slot-unavailable {
+  opacity: 0.72;
+}
+
+.field-slot-unavailable
+.field-slot-state {
+  background: #f3f4f6;
+
+  color: #4b5563;
+}
+
+.field-card-booking-button {
   width: 100%;
-  height: 1px;
 
-  margin: 15px 0 12px;
+  min-height: 44px;
 
-  background: #e2e8f0;
-}
+  margin-top: 18px;
 
+  border: 0;
+  border-radius: 11px;
 
-/* =========================================================
-   BOTTOM
-========================================================= */
+  background: #111827;
 
-.field-bottom {
-  display: flex;
+  color: #fff;
 
-  align-items: flex-end;
-
-  justify-content:
-    space-between;
-
-  gap: 12px;
-
-  margin-top: auto;
-}
-
-.field-bottom > div {
-  min-width: 0;
-}
-
-
-/* =========================================================
-   PRICE
-========================================================= */
-
-.price-label {
-  display: block;
-
-  margin-bottom: 3px;
-
-  color: #94a3b8;
-
-  font-size: 10px;
-  font-weight: 600;
-
-  letter-spacing: 0.4px;
-}
-
-.field-bottom strong {
-  display: block;
-
-  color: #16a34a;
-
-  font-size: 17px;
-  font-weight: 700;
-
-  line-height: 1.2;
-
-  white-space: nowrap;
-}
-
-
-/* =========================================================
-   BUTTON
-========================================================= */
-
-.field-detail-button {
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  min-width: 86px;
-  height: 36px;
-
-  padding: 0 14px;
-
-  border:
-    1px solid
-    #bbf7d0;
-
-  border-radius: 9px;
-
-  background: #dcfce7;
-
-  color: #15803d;
-
-  font-size: 12px;
-  font-weight: 700;
-
-  text-decoration: none;
+  font: inherit;
+  font-weight: 800;
 
   cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease,
-    border-color 0.2s ease;
 }
 
-.field-detail-button:hover {
-  transform:
-    translateY(-1px);
+.field-card-booking-button:disabled {
+  background: #d1d5db;
 
-  background: #16a34a;
-
-  border-color: #16a34a;
-
-  color: #ffffff;
-}
-
-
-/* =========================================================
-   DISABLED BUTTON
-========================================================= */
-
-.field-detail-button.field-disabled {
-  background: #f1f5f9;
-
-  border-color: #e2e8f0;
-
-  color: #94a3b8;
+  color: #6b7280;
 
   cursor: not-allowed;
-
-  opacity: 1;
-}
-
-.field-detail-button.field-disabled:hover {
-  transform: none;
-
-  background: #f1f5f9;
-
-  border-color: #e2e8f0;
-
-  color: #94a3b8;
-}
-
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (
-  max-width: 768px
-) {
-
-  .field-image-wrapper {
-    height: 165px;
-  }
-
-  .field-content {
-    padding: 14px;
-  }
-
-  .field-slot {
-    min-height: 48px;
-  }
 }

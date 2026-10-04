@@ -1,7 +1,5 @@
 from datetime import datetime
 
-import pyodbc
-
 from flask import (
     Blueprint,
     jsonify,
@@ -15,10 +13,6 @@ from services.availability_service import (
 )
 
 
-# ============================================================
-# BLUEPRINT
-# ============================================================
-
 field_bp = Blueprint(
     "field",
     __name__
@@ -26,1369 +20,167 @@ field_bp = Blueprint(
 
 
 # ============================================================
-# FIELD STATUS
-# ============================================================
-
-ALLOWED_STATUS = [
-    "AVAILABLE",
-    "MAINTENANCE"
-]
-
-
-# ============================================================
-# HELPER - VALIDATE TIME
-# ============================================================
-
-def validate_time(
-    start_time,
-    end_time
-):
-
-    if not start_time:
-
-        return (
-            "Giờ bắt đầu không được để trống"
-        )
-
-
-    if not end_time:
-
-        return (
-            "Giờ kết thúc không được để trống"
-        )
-
-
-    try:
-
-        start_object = datetime.strptime(
-            str(start_time)[:5],
-            "%H:%M"
-        )
-
-        end_object = datetime.strptime(
-            str(end_time)[:5],
-            "%H:%M"
-        )
-
-
-    except ValueError:
-
-        return (
-            "Định dạng giờ không hợp lệ"
-        )
-
-
-    if start_object >= end_object:
-
-        return (
-            "Giờ kết thúc phải lớn hơn "
-            "giờ bắt đầu"
-        )
-
-
-    return None
-
-
-# ============================================================
-# HELPER - VALIDATE PRICE
-# ============================================================
-
-def validate_price(price):
-
-    if price is None:
-
-        return (
-            None,
-            "Giá sân không được để trống"
-        )
-
-
-    try:
-
-        price = float(price)
-
-
-    except (TypeError, ValueError):
-
-        return (
-            None,
-            "Giá sân không hợp lệ"
-        )
-
-
-    if price < 0:
-
-        return (
-            None,
-            "Giá sân không được nhỏ hơn 0"
-        )
-
-
-    return (
-        price,
-        None
-    )
-
-
-# ============================================================
 # GET ALL FIELDS
+#
+# BE-03
 #
 # GET /api/fields/
 # ============================================================
 
-@field_bp.route(
-    "/",
-    methods=["GET"]
-)
+@field_bp.route("/")
 def get_fields():
 
-    conn = None
-    cursor = None
+    conn = get_connection()
 
+    cursor = conn.cursor()
 
-    try:
 
-        conn = get_connection()
+    sql = """
 
+    SELECT
+        F.FieldID,
+        F.FieldName,
+        F.FieldType,
+        F.Location,
+        F.Image,
+        F.Status,
 
-        if conn is None:
+        P.StartTime,
+        P.EndTime,
+        P.Price
 
-            return jsonify({
+    FROM FootballFields F
 
-                "message":
-                    "Không thể kết nối database"
+    LEFT JOIN FieldPrices P
 
-            }), 500
+    ON F.FieldID = P.FieldID
 
+    ORDER BY F.FieldID, P.StartTime
 
-        cursor = conn.cursor()
+    """
 
 
-        cursor.execute(
-            """
-            SELECT
-                F.FieldID,
-                F.FieldName,
-                F.FieldType,
-                F.Location,
-                F.Image,
-                F.Status,
+    cursor.execute(sql)
 
-                P.PriceID,
-                P.StartTime,
-                P.EndTime,
-                P.Price
 
-            FROM FootballFields F
+    rows = cursor.fetchall()
 
-            LEFT JOIN FieldPrices P
-                ON F.FieldID = P.FieldID
 
-            ORDER BY
-                F.FieldID,
-                P.StartTime
-            """
-        )
+    fields = []
 
 
-        rows = cursor.fetchall()
+    for row in rows:
 
-
-        fields = []
-
-
-        for row in rows:
-
-            fields.append({
-
-                "FieldID":
-                    row.FieldID,
-
-                "FieldName":
-                    row.FieldName,
-
-                "FieldType":
-                    row.FieldType,
-
-                "Location":
-                    row.Location,
-
-                "Image":
-                    row.Image,
-
-                "Status":
-                    row.Status,
-
-                "PriceID":
-                    row.PriceID,
-
-                "StartTime": (
-                    str(row.StartTime)
-                    if row.StartTime is not None
-                    else None
-                ),
-
-                "EndTime": (
-                    str(row.EndTime)
-                    if row.EndTime is not None
-                    else None
-                ),
-
-                "Price": (
-                    float(row.Price)
-                    if row.Price is not None
-                    else 0
-                )
-            })
-
-
-        return jsonify(
-            fields
-        ), 200
-
-
-    except Exception as error:
-
-        print(
-            "GET FIELDS ERROR:"
-        )
-
-        print(error)
-
-
-        return jsonify({
-
-            "message":
-                "Không thể lấy danh sách sân bóng"
-
-        }), 500
-
-
-    finally:
-
-        if cursor is not None:
-            cursor.close()
-
-        if conn is not None:
-            conn.close()
-
-
-# ============================================================
-# GET ONE FIELD
-#
-# GET /api/fields/<field_id>
-# ============================================================
-
-@field_bp.route(
-    "/<int:field_id>",
-    methods=["GET"]
-)
-def get_field_detail(field_id):
-
-    conn = None
-    cursor = None
-
-
-    try:
-
-        conn = get_connection()
-
-
-        if conn is None:
-
-            return jsonify({
-
-                "message":
-                    "Không thể kết nối database"
-
-            }), 500
-
-
-        cursor = conn.cursor()
-
-
-        cursor.execute(
-            """
-            SELECT
-                F.FieldID,
-                F.FieldName,
-                F.FieldType,
-                F.Location,
-                F.Image,
-                F.Status,
-
-                P.PriceID,
-                P.StartTime,
-                P.EndTime,
-                P.Price
-
-            FROM FootballFields F
-
-            LEFT JOIN FieldPrices P
-                ON F.FieldID = P.FieldID
-
-            WHERE F.FieldID = ?
-
-            ORDER BY
-                P.StartTime
-            """,
-            field_id
-        )
-
-
-        rows = cursor.fetchall()
-
-
-        if not rows:
-
-            return jsonify({
-
-                "message":
-                    "Không tìm thấy sân bóng"
-
-            }), 404
-
-
-        first_row = rows[0]
-
-
-        prices = []
-
-
-        for row in rows:
-
-            if row.PriceID is not None:
-
-                prices.append({
-
-                    "PriceID":
-                        row.PriceID,
-
-                    "StartTime": (
-                        str(row.StartTime)
-                        if row.StartTime is not None
-                        else None
-                    ),
-
-                    "EndTime": (
-                        str(row.EndTime)
-                        if row.EndTime is not None
-                        else None
-                    ),
-
-                    "Price": (
-                        float(row.Price)
-                        if row.Price is not None
-                        else 0
-                    )
-                })
-
-
-        result = {
+        fields.append({
 
             "FieldID":
-                first_row.FieldID,
+                row.FieldID,
 
             "FieldName":
-                first_row.FieldName,
+                row.FieldName,
 
             "FieldType":
-                first_row.FieldType,
+                row.FieldType,
 
             "Location":
-                first_row.Location,
+                row.Location,
 
             "Image":
-                first_row.Image,
+                row.Image,
 
             "Status":
-                first_row.Status,
-
-            "Prices":
-                prices
-        }
-
-
-        return jsonify(
-            result
-        ), 200
-
-
-    except Exception as error:
-
-        print(
-            "GET FIELD DETAIL ERROR:"
-        )
-
-        print(error)
-
-
-        return jsonify({
-
-            "message":
-                "Có lỗi xảy ra khi lấy thông tin sân"
-
-        }), 500
-
-
-    finally:
-
-        if cursor is not None:
-            cursor.close()
-
-        if conn is not None:
-            conn.close()
-
-
-# ============================================================
-# CREATE NEW FIELD
-#
-# POST /api/fields/
-# ============================================================
-
-@field_bp.route(
-    "/",
-    methods=["POST"]
-)
-def create_field():
-
-    conn = None
-    cursor = None
-
-
-    try:
-
-        data = request.get_json(
-            silent=True
-        )
-
-
-        if not data:
-
-            return jsonify({
-
-                "message":
-                    "Dữ liệu gửi lên không hợp lệ"
-
-            }), 400
-
-
-        field_name = data.get(
-            "FieldName"
-        )
-
-        field_type = data.get(
-            "FieldType"
-        )
-
-        location = data.get(
-            "Location"
-        )
-
-        image = data.get(
-            "Image"
-        )
-
-        status = data.get(
-            "Status",
-            "AVAILABLE"
-        )
-
-        start_time = data.get(
-            "StartTime"
-        )
-
-        end_time = data.get(
-            "EndTime"
-        )
-
-        price = data.get(
-            "Price"
-        )
-
-
-        # ====================================================
-        # VALIDATE FIELD NAME
-        # ====================================================
-
-        if (
-            not field_name
-            or
-            not field_name.strip()
-        ):
-
-            return jsonify({
-
-                "message":
-                    "Tên sân không được để trống"
-
-            }), 400
-
-
-        # ====================================================
-        # VALIDATE TYPE
-        # ====================================================
-
-        if not field_type:
-
-            return jsonify({
-
-                "message":
-                    "Loại sân không được để trống"
-
-            }), 400
-
-
-        # ====================================================
-        # VALIDATE LOCATION
-        # ====================================================
-
-        if (
-            not location
-            or
-            not location.strip()
-        ):
-
-            return jsonify({
-
-                "message":
-                    "Địa điểm không được để trống"
-
-            }), 400
-
-
-        # ====================================================
-        # VALIDATE STATUS
-        # ====================================================
-
-        if status not in ALLOWED_STATUS:
-
-            return jsonify({
-
-                "message":
-                    "Trạng thái sân không hợp lệ"
-
-            }), 400
-
-
-        # ====================================================
-        # VALIDATE TIME
-        # ====================================================
-
-        time_error = validate_time(
-            start_time,
-            end_time
-        )
-
-
-        if time_error:
-
-            return jsonify({
-
-                "message":
-                    time_error
-
-            }), 400
-
-
-        # ====================================================
-        # VALIDATE PRICE
-        # ====================================================
-
-        price, price_error = (
-            validate_price(price)
-        )
-
-
-        if price_error:
-
-            return jsonify({
-
-                "message":
-                    price_error
-
-            }), 400
-
-
-        # ====================================================
-        # DATABASE
-        # ====================================================
-
-        conn = get_connection()
-
-
-        if conn is None:
-
-            return jsonify({
-
-                "message":
-                    "Không thể kết nối database"
-
-            }), 500
-
-
-        cursor = conn.cursor()
-
-
-        # ====================================================
-        # CHECK DUPLICATE FIELD NAME
-        # ====================================================
-
-        cursor.execute(
-            """
-            SELECT FieldID
-
-            FROM FootballFields
-
-            WHERE LOWER(FieldName)
-                =
-                LOWER(?)
-            """,
-            field_name.strip()
-        )
-
-
-        existed_field = (
-            cursor.fetchone()
-        )
-
-
-        if existed_field is not None:
-
-            return jsonify({
-
-                "message":
-                    "Tên sân đã tồn tại"
-
-            }), 409
-
-
-        # ====================================================
-        # INSERT FIELD
-        # ====================================================
-
-        cursor.execute(
-            """
-            INSERT INTO FootballFields
-            (
-                FieldName,
-                FieldType,
-                Location,
-                Image,
-                Status
-            )
-
-            OUTPUT INSERTED.FieldID
-
-            VALUES
-            (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?
-            )
-            """,
-
-            field_name.strip(),
-            field_type,
-            location.strip(),
-            image,
-            status
-        )
-
-
-        new_field_id = (
-            cursor.fetchone()[0]
-        )
-
-
-        # ====================================================
-        # INSERT INITIAL PRICE
-        # ====================================================
-
-        cursor.execute(
-            """
-            INSERT INTO FieldPrices
-            (
-                FieldID,
-                StartTime,
-                EndTime,
-                Price
-            )
-
-            VALUES
-            (
-                ?,
-                ?,
-                ?,
-                ?
-            )
-            """,
-
-            new_field_id,
-            start_time,
-            end_time,
-            price
-        )
-
-
-        conn.commit()
-
-
-        return jsonify({
-
-            "message":
-                "Thêm sân mới thành công",
-
-            "FieldID":
-                new_field_id
-
-        }), 201
-
-
-    except Exception as error:
-
-        print(
-            "CREATE FIELD ERROR:"
-        )
-
-        print(error)
-
-
-        if conn is not None:
-            conn.rollback()
-
-
-        return jsonify({
-
-            "message":
-                "Có lỗi xảy ra khi thêm sân"
-
-        }), 500
-
-
-    finally:
-
-        if cursor is not None:
-            cursor.close()
-
-        if conn is not None:
-            conn.close()
-
-
-# ============================================================
-# UPDATE FIELD INFORMATION
-#
-# PUT /api/fields/<field_id>
-# ============================================================
-
-@field_bp.route(
-    "/<int:field_id>",
-    methods=["PUT"]
-)
-def update_field(field_id):
-
-    conn = None
-    cursor = None
-
-
-    try:
-
-        data = request.get_json(
-            silent=True
-        )
-
-
-        if not data:
-
-            return jsonify({
-
-                "message":
-                    "Dữ liệu gửi lên không hợp lệ"
-
-            }), 400
-
-
-        field_name = data.get(
-            "FieldName"
-        )
-
-        field_type = data.get(
-            "FieldType"
-        )
-
-        location = data.get(
-            "Location"
-        )
-
-        image = data.get(
-            "Image"
-        )
-
-
-        # ====================================================
-        # VALIDATE
-        # ====================================================
-
-        if (
-            not field_name
-            or
-            not field_name.strip()
-        ):
-
-            return jsonify({
-
-                "message":
-                    "Tên sân không được để trống"
-
-            }), 400
-
-
-        if not field_type:
-
-            return jsonify({
-
-                "message":
-                    "Loại sân không được để trống"
-
-            }), 400
-
-
-        if (
-            not location
-            or
-            not location.strip()
-        ):
-
-            return jsonify({
-
-                "message":
-                    "Địa điểm không được để trống"
-
-            }), 400
-
-
-        # ====================================================
-        # DATABASE
-        # ====================================================
-
-        conn = get_connection()
-
-
-        if conn is None:
-
-            return jsonify({
-
-                "message":
-                    "Không thể kết nối database"
-
-            }), 500
-
-
-        cursor = conn.cursor()
-
-
-        # ====================================================
-        # CHECK FIELD EXISTS
-        # ====================================================
-
-        cursor.execute(
-            """
-            SELECT FieldID
-
-            FROM FootballFields
-
-            WHERE FieldID = ?
-            """,
-            field_id
-        )
-
-
-        if cursor.fetchone() is None:
-
-            return jsonify({
-
-                "message":
-                    "Không tìm thấy sân bóng"
-
-            }), 404
-
-
-        # ====================================================
-        # CHECK DUPLICATE NAME
-        # ====================================================
-
-        cursor.execute(
-            """
-            SELECT FieldID
-
-            FROM FootballFields
-
-            WHERE LOWER(FieldName)
-                =
-                LOWER(?)
-
-            AND FieldID <> ?
-            """,
-
-            field_name.strip(),
-            field_id
-        )
-
-
-        if cursor.fetchone() is not None:
-
-            return jsonify({
-
-                "message":
-                    "Tên sân đã tồn tại"
-
-            }), 409
-
-
-        # ====================================================
-        # UPDATE FIELD
-        # ====================================================
-
-        cursor.execute(
-            """
-            UPDATE FootballFields
-
-            SET
-                FieldName = ?,
-                FieldType = ?,
-                Location = ?,
-                Image = ?
-
-            WHERE FieldID = ?
-            """,
-
-            field_name.strip(),
-            field_type,
-            location.strip(),
-            image,
-            field_id
-        )
-
-
-        conn.commit()
-
-
-        return jsonify({
-
-            "message":
-                "Cập nhật thông tin sân thành công",
-
-            "FieldID":
-                field_id
-
-        }), 200
-
-
-    except Exception as error:
-
-        print(
-            "UPDATE FIELD ERROR:"
-        )
-
-        print(error)
-
-
-        if conn is not None:
-            conn.rollback()
-
-
-        return jsonify({
-
-            "message":
-                "Có lỗi xảy ra khi cập nhật sân"
-
-        }), 500
-
-
-    finally:
-
-        if cursor is not None:
-            cursor.close()
-
-        if conn is not None:
-            conn.close()
-
-
-# ============================================================
-# UPDATE FIELD STATUS
-#
-# PATCH /api/fields/<field_id>/status
-# ============================================================
-
-@field_bp.route(
-    "/<int:field_id>/status",
-    methods=["PATCH"]
-)
-def update_field_status(field_id):
-
-    conn = None
-    cursor = None
-
-
-    try:
-
-        data = request.get_json(
-            silent=True
-        )
-
-
-        if not data:
-
-            return jsonify({
-
-                "message":
-                    "Dữ liệu gửi lên không hợp lệ"
-
-            }), 400
-
-
-        status = data.get(
-            "Status"
-        )
-
-
-        if status not in ALLOWED_STATUS:
-
-            return jsonify({
-
-                "message":
-                    "Trạng thái sân không hợp lệ"
-
-            }), 400
-
-
-        conn = get_connection()
-
-
-        if conn is None:
-
-            return jsonify({
-
-                "message":
-                    "Không thể kết nối database"
-
-            }), 500
-
-
-        cursor = conn.cursor()
-
-
-        # ====================================================
-        # CHECK FIELD
-        # ====================================================
-
-        cursor.execute(
-            """
-            SELECT FieldID
-
-            FROM FootballFields
-
-            WHERE FieldID = ?
-            """,
-            field_id
-        )
-
-
-        if cursor.fetchone() is None:
-
-            return jsonify({
-
-                "message":
-                    "Không tìm thấy sân bóng"
-
-            }), 404
-
-
-        # ====================================================
-        # UPDATE STATUS
-        # ====================================================
-
-        cursor.execute(
-            """
-            UPDATE FootballFields
-
-            SET Status = ?
-
-            WHERE FieldID = ?
-            """,
-
-            status,
-            field_id
-        )
-
-
-        conn.commit()
-
-
-        return jsonify({
-
-            "message":
-                "Cập nhật trạng thái sân thành công",
-
-            "FieldID":
-                field_id,
-
-            "Status":
-                status
-
-        }), 200
-
-
-    except Exception as error:
-
-        print(
-            "UPDATE FIELD STATUS ERROR:"
-        )
-
-        print(error)
-
-
-        if conn is not None:
-            conn.rollback()
-
-
-        return jsonify({
-
-            "message":
-                "Có lỗi xảy ra khi cập nhật "
-                "trạng thái sân"
-
-        }), 500
-
-
-    finally:
-
-        if cursor is not None:
-            cursor.close()
-
-        if conn is not None:
-            conn.close()
-
-
-# ============================================================
-# UPDATE ONE PRICE SLOT
-#
-# PUT /api/fields/price/<price_id>
-# ============================================================
-
-@field_bp.route(
-    "/price/<int:price_id>",
-    methods=["PUT"]
-)
-def update_field_price(price_id):
-
-    conn = None
-    cursor = None
-
-
-    try:
-
-        data = request.get_json(
-            silent=True
-        )
-
-
-        if not data:
-
-            return jsonify({
-
-                "message":
-                    "Dữ liệu gửi lên không hợp lệ"
-
-            }), 400
-
-
-        start_time = data.get(
-            "StartTime"
-        )
-
-        end_time = data.get(
-            "EndTime"
-        )
-
-        price = data.get(
-            "Price"
-        )
-
-
-        # ====================================================
-        # VALIDATE TIME
-        # ====================================================
-
-        time_error = validate_time(
-            start_time,
-            end_time
-        )
-
-
-        if time_error:
-
-            return jsonify({
-
-                "message":
-                    time_error
-
-            }), 400
-
-
-        # ====================================================
-        # VALIDATE PRICE
-        # ====================================================
-
-        price, price_error = (
-            validate_price(price)
-        )
-
-
-        if price_error:
-
-            return jsonify({
-
-                "message":
-                    price_error
-
-            }), 400
-
-
-        conn = get_connection()
-
-
-        if conn is None:
-
-            return jsonify({
-
-                "message":
-                    "Không thể kết nối database"
-
-            }), 500
-
-
-        cursor = conn.cursor()
-
-
-        # ====================================================
-        # CHECK PRICE EXISTS
-        # ====================================================
-
-        cursor.execute(
-            """
-            SELECT
-                PriceID,
-                FieldID
-
-            FROM FieldPrices
-
-            WHERE PriceID = ?
-            """,
-            price_id
-        )
-
-
-        price_row = (
-            cursor.fetchone()
-        )
-
-
-        if price_row is None:
-
-            return jsonify({
-
-                "message":
-                    "Không tìm thấy khung giá"
-
-            }), 404
-
-
-        # ====================================================
-        # UPDATE
-        # ====================================================
-
-        cursor.execute(
-            """
-            UPDATE FieldPrices
-
-            SET
-                StartTime = ?,
-                EndTime = ?,
-                Price = ?
-
-            WHERE PriceID = ?
-            """,
-
-            start_time,
-            end_time,
-            price,
-            price_id
-        )
-
-
-        conn.commit()
-
-
-        return jsonify({
-
-            "message":
-                "Cập nhật giá sân thành công",
-
-            "PriceID":
-                price_id,
-
-            "FieldID":
-                price_row.FieldID,
+                row.Status,
 
             "StartTime":
-                start_time,
+                str(row.StartTime),
 
             "EndTime":
-                end_time,
+                str(row.EndTime),
 
             "Price":
-                price
+                row.Price
 
-        }), 200
-
-
-    except Exception as error:
-
-        print(
-            "UPDATE PRICE ERROR:"
-        )
-
-        print(error)
+        })
 
 
-        if conn is not None:
-            conn.rollback()
+    return jsonify(fields)
 
 
-        return jsonify({
+# ============================================================
+# UPDATE FIELD PRICE
+#
+# Code đã có trước BE-05
+#
+# PUT /api/fields/price/<field_id>
+# ============================================================
 
-            "message":
-                "Có lỗi xảy ra khi cập nhật giá sân"
+@field_bp.route(
+    "/price/<int:field_id>",
+    methods=["PUT"]
+)
+def update_field_price(
+    field_id
+):
 
-        }), 500
+    data = request.json
 
 
-    finally:
+    start_time = data.get(
+        "StartTime"
+    )
 
-        if cursor is not None:
-            cursor.close()
+    end_time = data.get(
+        "EndTime"
+    )
 
-        if conn is not None:
-            conn.close()
+    price = data.get(
+        "Price"
+    )
+
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+
+    sql = """
+
+    UPDATE FieldPrices
+
+    SET
+        StartTime = ?,
+        EndTime = ?,
+        Price = ?
+
+    WHERE FieldID = ?
+
+    """
+
+
+    cursor.execute(
+        sql,
+        start_time,
+        end_time,
+        price,
+        field_id
+    )
+
+
+    conn.commit()
+
+
+    return jsonify({
+
+        "message":
+            "Update price successfully"
+
+    })
 
 
 # ============================================================
 # GET FIELD AVAILABILITY
 #
-# BE-05
+# T123-59 - BE-05
 #
 # GET:
 # /api/fields/<field_id>/availability?date=YYYY-MM-DD
@@ -1401,7 +193,9 @@ def update_field_price(price_id):
     "/<int:field_id>/availability",
     methods=["GET"]
 )
-def get_field_availability(field_id):
+def get_field_availability(
+    field_id
+):
 
     conn = None
     cursor = None
@@ -1563,17 +357,6 @@ def get_field_availability(field_id):
 
         # ====================================================
         # GET BOOKINGS
-        #
-        # Schema:
-        # BookingID
-        # UserID
-        # FieldID
-        # BookingDate
-        # StartTime
-        # EndTime
-        # TotalAmount
-        # Status
-        # CreatedAt
         # ====================================================
 
         cursor.execute(
@@ -1765,178 +548,18 @@ def get_field_availability(field_id):
         if conn is not None:
             conn.close()
 
-
-# ============================================================
-# DELETE FIELD
-#
-# DELETE /api/fields/<field_id>
-# ============================================================
-
-@field_bp.route(
-    "/<int:field_id>",
-    methods=["DELETE"]
-)
-def delete_field(field_id):
-
-    conn = None
-    cursor = None
-
-
-    try:
-
-        conn = get_connection()
-
-
-        if conn is None:
-
-            return jsonify({
-
-                "message":
-                    "Không thể kết nối database"
-
-            }), 500
-
-
-        cursor = conn.cursor()
-
-
-        # ====================================================
-        # CHECK FIELD EXISTS
-        # ====================================================
-
-        cursor.execute(
-            """
-            SELECT
-                FieldID,
-                FieldName
-
-            FROM FootballFields
-
-            WHERE FieldID = ?
-            """,
-            field_id
-        )
-
-
-        field = (
-            cursor.fetchone()
-        )
-
-
-        if field is None:
-
-            return jsonify({
-
-                "message":
-                    "Không tìm thấy sân bóng"
-
-            }), 404
-
-
-        field_name = (
-            field.FieldName
-        )
-
-
-        # ====================================================
-        # DELETE FIELD PRICES
-        # ====================================================
-
-        cursor.execute(
-            """
-            DELETE FROM FieldPrices
-
-            WHERE FieldID = ?
-            """,
-            field_id
-        )
-
-
-        # ====================================================
-        # DELETE FIELD
-        # ====================================================
-
-        cursor.execute(
-            """
-            DELETE FROM FootballFields
-
-            WHERE FieldID = ?
-            """,
-            field_id
-        )
-
-
-        conn.commit()
-
-
-        return jsonify({
-
-            "message":
-                f"Đã xóa {field_name} thành công",
-
-            "FieldID":
-                field_id
-
-        }), 200
-
-
-    except pyodbc.IntegrityError as error:
-
-        print(
-            "DELETE FIELD INTEGRITY ERROR:"
-        )
-
-        print(error)
-
-
-        if conn is not None:
-            conn.rollback()
-
-
-        return jsonify({
-
-            "message":
-                "Không thể xóa sân này vì sân "
-                "đang được sử dụng trong booking "
-                "hoặc dữ liệu liên quan."
-
-        }), 409
-
-
-    except Exception as error:
-
-        print(
-            "DELETE FIELD ERROR:"
-        )
-
-        print(error)
-
-
-        if conn is not None:
-            conn.rollback()
-
-
-        return jsonify({
-
-            "message":
-                "Có lỗi xảy ra khi xóa sân bóng"
-
-        }), 500
-
-
-    finally:
-
-        if cursor is not None:
-            cursor.close()
-
-        if conn is not None:
-            conn.close()
-
 # ============================================================
 # BE-05.1 - GET AVAILABILITY OF ALL FIELDS
 #
 # GET:
 # /api/fields/availability?date=YYYY-MM-DD
+#
+# Mục đích:
+# - Lấy toàn bộ sân
+# - Lấy toàn bộ bảng giá
+# - Lấy booking trong ngày
+# - Chỉ dùng 3 query chính
+# - Gom dữ liệu theo FieldID ở Python
 # ============================================================
 
 @field_bp.route(
@@ -1954,17 +577,21 @@ def get_all_fields_availability():
         # GET DATE
         # ====================================================
 
-        booking_date = request.args.get("date")
+        booking_date = request.args.get(
+            "date"
+        )
 
 
         if not booking_date:
 
             return jsonify({
+
                 "message":
                     "Vui lòng truyền ngày cần kiểm tra",
 
                 "example":
-                    "?date=2026-09-26"
+                    "?date=2026-10-04"
+
             }), 400
 
 
@@ -1982,13 +609,15 @@ def get_all_fields_availability():
         except ValueError:
 
             return jsonify({
+
                 "message":
                     "Ngày không đúng định dạng YYYY-MM-DD"
+
             }), 400
 
 
         # ====================================================
-        # DATABASE
+        # CONNECT DATABASE
         # ====================================================
 
         conn = get_connection()
@@ -1997,8 +626,10 @@ def get_all_fields_availability():
         if conn is None:
 
             return jsonify({
+
                 "message":
                     "Không thể kết nối database"
+
             }), 500
 
 
@@ -2006,6 +637,7 @@ def get_all_fields_availability():
 
 
         # ====================================================
+        # QUERY 1
         # GET ALL FIELDS
         # ====================================================
 
@@ -2016,7 +648,6 @@ def get_all_fields_availability():
                 FieldName,
                 FieldType,
                 Location,
-                Image,
                 Status
 
             FROM FootballFields
@@ -2030,7 +661,8 @@ def get_all_fields_availability():
 
 
         # ====================================================
-        # GET ALL PRICE SLOTS
+        # QUERY 2
+        # GET ALL FIELD PRICE SLOTS
         # ====================================================
 
         cursor.execute(
@@ -2055,7 +687,8 @@ def get_all_fields_availability():
 
 
         # ====================================================
-        # GET BOOKINGS BY DATE
+        # QUERY 3
+        # GET ALL BOOKINGS OF SELECTED DATE
         # ====================================================
 
         cursor.execute(
@@ -2073,12 +706,15 @@ def get_all_fields_availability():
 
             FROM Bookings
 
-            WHERE CAST(BookingDate AS DATE) = ?
+            WHERE CAST(
+                BookingDate AS DATE
+            ) = ?
 
             ORDER BY
                 FieldID,
                 StartTime
             """,
+
             date_object
         )
 
@@ -2087,7 +723,12 @@ def get_all_fields_availability():
 
 
         # ====================================================
-        # GROUP PRICES BY FIELD
+        # GROUP FIELD PRICES BY FieldID
+        #
+        # {
+        #     1001: [...],
+        #     1002: [...]
+        # }
         # ====================================================
 
         prices_by_field = {}
@@ -2100,10 +741,14 @@ def get_all_fields_availability():
 
             if field_id not in prices_by_field:
 
-                prices_by_field[field_id] = []
+                prices_by_field[
+                    field_id
+                ] = []
 
 
-            prices_by_field[field_id].append({
+            prices_by_field[
+                field_id
+            ].append({
 
                 "PriceID":
                     row.PriceID,
@@ -2117,16 +762,16 @@ def get_all_fields_availability():
                 "EndTime":
                     row.EndTime,
 
-                "Price": (
-                    float(row.Price)
-                    if row.Price is not None
-                    else 0
-                )
+                "Price":
+                    float(
+                        row.Price or 0
+                    )
+
             })
 
 
         # ====================================================
-        # GROUP BOOKINGS BY FIELD
+        # GROUP BOOKINGS BY FieldID
         # ====================================================
 
         bookings_by_field = {}
@@ -2139,10 +784,14 @@ def get_all_fields_availability():
 
             if field_id not in bookings_by_field:
 
-                bookings_by_field[field_id] = []
+                bookings_by_field[
+                    field_id
+                ] = []
 
 
-            bookings_by_field[field_id].append({
+            bookings_by_field[
+                field_id
+            ].append({
 
                 "BookingID":
                     row.BookingID,
@@ -2179,20 +828,45 @@ def get_all_fields_availability():
                     if row.CreatedAt is not None
                     else None
                 )
+
             })
 
 
         # ====================================================
-        # BUILD RESPONSE
+        # BUILD WEBSITE-READY RESPONSE
         # ====================================================
 
-        fields = []
+        fields_result = []
+
+        available_fields = 0
+
+        unavailable_fields = 0
 
 
         for field in field_rows:
 
             field_id = field.FieldID
 
+
+            # =================================================
+            # FIELD STATUS
+            # =================================================
+
+            field_available = (
+
+                str(field.Status)
+                .strip()
+                .upper()
+
+                ==
+
+                "AVAILABLE"
+            )
+
+
+            # =================================================
+            # GET DATA OF CURRENT FIELD
+            # =================================================
 
             price_slots = prices_by_field.get(
                 field_id,
@@ -2206,14 +880,9 @@ def get_all_fields_availability():
             )
 
 
-            field_available = (
-                str(field.Status)
-                .strip()
-                .upper()
-                ==
-                "AVAILABLE"
-            )
-
+            # =================================================
+            # REUSE BE-05 SERVICE
+            # =================================================
 
             slots = build_availability_slots(
                 price_slots,
@@ -2222,21 +891,60 @@ def get_all_fields_availability():
             )
 
 
+            # =================================================
+            # COUNT AVAILABLE / UNAVAILABLE SLOTS
+            # =================================================
+
             available_count = sum(
+
                 1
+
                 for slot in slots
+
                 if slot["available"]
+
             )
 
 
             unavailable_count = (
+
                 len(slots)
                 -
                 available_count
+
             )
 
 
-            fields.append({
+            # =================================================
+            # FIELD HAS AT LEAST ONE AVAILABLE SLOT
+            # =================================================
+
+            has_available_slot = (
+
+                field_available
+                and
+                available_count > 0
+            )
+
+
+            # =================================================
+            # COUNT AVAILABLE FIELDS
+            # =================================================
+
+            if has_available_slot:
+
+                available_fields += 1
+
+            else:
+
+                unavailable_fields += 1
+
+
+            # =================================================
+            # ADD FIELD TO RESPONSE
+            # =================================================
+
+            fields_result.append({
 
                 "FieldID":
                     field.FieldID,
@@ -2249,9 +957,6 @@ def get_all_fields_availability():
 
                 "Location":
                     field.Location,
-
-                "Image":
-                    field.Image,
 
                 "FieldStatus":
                     field.Status,
@@ -2266,33 +971,16 @@ def get_all_fields_availability():
                     unavailable_count,
 
                 "HasAvailableSlot":
-                    available_count > 0,
+                    has_available_slot,
 
                 "Slots":
                     slots
+
             })
 
 
         # ====================================================
-        # SUMMARY
-        # ====================================================
-
-        available_fields = sum(
-            1
-            for field in fields
-            if field["HasAvailableSlot"]
-        )
-
-
-        unavailable_fields = (
-            len(fields)
-            -
-            available_fields
-        )
-
-
-        # ====================================================
-        # RETURN
+        # FINAL RESPONSE
         # ====================================================
 
         return jsonify({
@@ -2301,7 +989,7 @@ def get_all_fields_availability():
                 booking_date,
 
             "TotalFields":
-                len(fields),
+                len(fields_result),
 
             "AvailableFields":
                 available_fields,
@@ -2310,7 +998,7 @@ def get_all_fields_availability():
                 unavailable_fields,
 
             "Fields":
-                fields
+                fields_result
 
         }), 200
 
@@ -2318,22 +1006,27 @@ def get_all_fields_availability():
     except Exception as error:
 
         print(
-            "GET ALL FIELD AVAILABILITY ERROR:"
+            "GET ALL FIELDS AVAILABILITY ERROR:"
         )
 
         print(error)
 
 
         return jsonify({
+
             "message":
-                "Có lỗi xảy ra khi kiểm tra lịch sân"
+                "Có lỗi xảy ra khi kiểm tra lịch toàn bộ sân"
+
         }), 500
 
 
     finally:
 
         if cursor is not None:
+
             cursor.close()
 
+
         if conn is not None:
+
             conn.close()

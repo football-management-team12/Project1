@@ -74,8 +74,6 @@ def time_to_minutes(value):
 #
 # => overlap
 #
-# Công thức:
-#
 # booking_start < slot_end
 # AND
 # booking_end > slot_start

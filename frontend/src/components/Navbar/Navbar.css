@@ -1,25 +1,35 @@
 .navbar {
   width: 100%;
   height: 64px;
+
   background: #ffffff;
+
   border-bottom: 1px solid #eeeeee;
 
   display: flex;
   align-items: center;
 
   position: sticky;
+
   top: 0;
+
   z-index: 1000;
 }
 
+
 .navbar-container {
   width: 100%;
+
   max-width: 1200px;
+
   margin: 0 auto;
+
   padding: 0 24px;
 
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
 }
 
@@ -30,22 +40,30 @@
 
 .navbar-brand {
   display: flex;
+
   align-items: center;
+
   gap: 9px;
 
   text-decoration: none;
+
   color: #0b9b4b;
 
   font-size: 18px;
+
   font-weight: 700;
 
   white-space: nowrap;
 }
 
+
 .navbar-logo-image {
   width: 30px;
+
   height: 30px;
+
   object-fit: contain;
+
   display: block;
 }
 
@@ -56,17 +74,22 @@
 
 .navbar-menu {
   display: flex;
+
   align-items: center;
+
   gap: 28px;
 }
+
 
 .navbar-link {
   position: relative;
 
   color: #4b5563;
+
   text-decoration: none;
 
   font-size: 14px;
+
   font-weight: 500;
 
   padding: 23px 0 19px;
@@ -74,22 +97,28 @@
   transition: color 0.2s ease;
 }
 
+
 .navbar-link:hover {
   color: #0ba34a;
 }
+
 
 .navbar-link.active {
   color: #0ba34a;
 }
 
+
 .navbar-link.active::after {
   content: "";
 
   position: absolute;
+
   left: 0;
+
   bottom: 14px;
 
   width: 100%;
+
   height: 2px;
 
   background: #0ba34a;
@@ -97,43 +126,54 @@
 
 
 /* =========================
-   LOGIN / REGISTER
+   GUEST
 ========================= */
 
 .navbar-auth {
   display: flex;
+
   align-items: center;
+
   gap: 18px;
 
   white-space: nowrap;
 }
 
+
 .login-link {
   color: #111827;
+
   text-decoration: none;
 
   font-size: 14px;
+
   font-weight: 600;
 }
+
 
 .login-link:hover {
   color: #0ba34a;
 }
 
+
 .register-btn {
   background: #0ba34a;
+
   color: #ffffff;
 
   text-decoration: none;
 
   padding: 9px 14px;
+
   border-radius: 7px;
 
   font-size: 14px;
+
   font-weight: 600;
 
   transition: background 0.2s ease;
 }
+
 
 .register-btn:hover {
   background: #078d3e;
@@ -141,25 +181,171 @@
 
 
 /* =========================
+   LOGGED IN USER
+========================= */
+
+.navbar-user-area {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  white-space: nowrap;
+}
+
+
+.navbar-user-info {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 6px 10px;
+
+  border-radius: 9px;
+
+  background: #f0fdf4;
+}
+
+
+.navbar-user-avatar {
+  width: 30px;
+
+  height: 30px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #dcfce7;
+
+  color: #15803d;
+}
+
+
+.navbar-user-content {
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  min-width: 0;
+}
+
+
+.navbar-user-label {
+  color: #64748b;
+
+  font-size: 10px;
+
+  font-weight: 500;
+
+  line-height: 1.1;
+}
+
+
+.navbar-user-name {
+  max-width: 150px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  color: #0f172a;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  line-height: 1.35;
+}
+
+
+.navbar-logout-button {
+  display: flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 8px 10px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #64748b;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+
+.navbar-logout-button:hover {
+  background: #fef2f2;
+
+  color: #dc2626;
+}
+
+
+/* =========================
    RESPONSIVE
 ========================= */
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
+
   .navbar-menu {
     gap: 14px;
   }
+
 
   .navbar-brand {
     font-size: 16px;
   }
 
+
   .navbar-link {
     font-size: 13px;
   }
+
+
+  .navbar-user-name {
+    max-width: 100px;
+  }
 }
 
+
 @media (max-width: 768px) {
+
   .navbar-menu {
     display: none;
+  }
+
+
+  .navbar-user-label {
+    display: none;
+  }
+
+
+  .navbar-user-name {
+    max-width: 120px;
   }
 }

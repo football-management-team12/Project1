@@ -1,478 +1,833 @@
-import { useMemo, useState } from "react";
 import {
-  Search,
-  CalendarDays,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  ArrowLeft,
   ArrowRight,
+  CalendarDays,
+  RefreshCw,
 } from "lucide-react";
+
+import {
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 
 import Navbar from "../../components/Navbar/Navbar";
 
-import fields from "../../data/fields";
-
 import {
-  MIN_FIELD_PRICE,
-  calculateBookingPrice,
-  formatPrice,
-} from "../../utils/pricing";
+  getFieldAvailability,
+} from "../../services/field_service";
 
 import "./Booking.css";
 
-const timeSlots = [
-  {
-    id: 1,
-    label: "06:00 - 07:30",
-    start: "06:00",
-    end: "07:30",
-    status: "available",
-  },
-  {
-    id: 2,
-    label: "07:30 - 09:00",
-    start: "07:30",
-    end: "09:00",
-    status: "available",
-  },
-  {
-    id: 3,
-    label: "16:00 - 17:30",
-    start: "16:00",
-    end: "17:30",
-    status: "booked",
-  },
-  {
-    id: 4,
-    label: "17:30 - 19:00",
-    start: "17:30",
-    end: "19:00",
-    status: "available",
-  },
-  {
-    id: 5,
-    label: "19:00 - 20:30",
-    start: "19:00",
-    end: "20:30",
-    status: "available",
-  },
-  {
-    id: 6,
-    label: "20:30 - 22:00",
-    start: "20:30",
-    end: "22:00",
-    status: "available",
-  },
-];
+
+const formatTime = (value) => {
+  if (!value) {
+    return "--:--";
+  }
+
+  const text = String(value);
+
+  const match = text.match(
+    /(\d{1,2}):(\d{2})/
+  );
+
+  if (!match) {
+    return text;
+  }
+
+  return `${match[1].padStart(2, "0")}:${match[2]}`;
+};
+
+
+const formatPrice = (value) => {
+  const amount = Number(value || 0);
+
+  return new Intl.NumberFormat(
+    "vi-VN"
+  ).format(amount);
+};
+
+
+const getLocalDateString = () => {
+  const now = new Date();
+
+  const year = now.getFullYear();
+
+  const month = String(
+    now.getMonth() + 1
+  ).padStart(2, "0");
+
+  const day = String(
+    now.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
 
 function Booking() {
-  const [selectedField, setSelectedField] = useState(
-    fields[0]?.id || null
-  );
+  const navigate = useNavigate();
 
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const location = useLocation();
 
-  const [keyword, setKeyword] = useState("");
-  const [status, setStatus] = useState("all");
-  const [type, setType] = useState("all");
+  const [
+    searchParams,
+    setSearchParams,
+  ] = useSearchParams();
 
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [searchStatus, setSearchStatus] = useState("all");
-  const [searchType, setSearchType] = useState("all");
+  const fieldId =
+    searchParams.get("fieldId") || "";
 
-  const [bookingDate, setBookingDate] =
-    useState("2026-03-20");
+  const dateFromUrl =
+    searchParams.get("date") || "";
 
-  const filteredFields = useMemo(() => {
-    return fields.filter((field) => {
-      const matchKeyword = field.name
-        .toLowerCase()
-        .includes(searchKeyword.toLowerCase());
+  const [
+    selectedDate,
+    setSelectedDate,
+  ] = useState(dateFromUrl);
 
-      const matchStatus =
-        searchStatus === "all" ||
-        field.status === searchStatus;
+  const [
+    availability,
+    setAvailability,
+  ] = useState(null);
 
-      const matchType =
-        searchType === "all" ||
-        field.type === searchType;
+  const [
+    selectedSlot,
+    setSelectedSlot,
+  ] = useState(null);
 
-      return (
-        matchKeyword &&
-        matchStatus &&
-        matchType
-      );
-    });
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+
+  // =========================================================
+  // SYNC DATE FROM URL
+  // =========================================================
+
+  useEffect(() => {
+    setSelectedDate(
+      dateFromUrl
+    );
+
+    setSelectedSlot(null);
   }, [
-    searchKeyword,
-    searchStatus,
-    searchType,
+    dateFromUrl,
+    fieldId,
   ]);
 
-  const currentField = fields.find(
-    (field) => field.id === selectedField
-  );
 
-  const selectedPrice = selectedSlot
-    ? calculateBookingPrice(
-        selectedSlot.start,
-        selectedSlot.end
-      )
-    : 0;
+  // =========================================================
+  // LOAD AVAILABILITY
+  // =========================================================
 
-  const handleSearch = (event) => {
-    event.preventDefault();
+  useEffect(() => {
+    if (
+      !fieldId ||
+      !selectedDate
+    ) {
+      setAvailability(null);
+      setSelectedSlot(null);
+      setError("");
 
-    setSearchKeyword(keyword);
-    setSearchStatus(status);
-    setSearchType(type);
-
-    const firstMatchedField = fields.find((field) => {
-      const matchKeyword = field.name
-        .toLowerCase()
-        .includes(keyword.toLowerCase());
-
-      const matchStatus =
-        status === "all" ||
-        field.status === status;
-
-      const matchType =
-        type === "all" ||
-        field.type === type;
-
-      return (
-        matchKeyword &&
-        matchStatus &&
-        matchType
-      );
-    });
-
-    if (firstMatchedField) {
-      setSelectedField(firstMatchedField.id);
+      return;
     }
 
+    let active = true;
+
+
+    const loadAvailability =
+      async () => {
+        try {
+          setLoading(true);
+          setError("");
+          setSelectedSlot(null);
+
+          const data =
+            await getFieldAvailability(
+              fieldId,
+              selectedDate
+            );
+
+          if (!active) {
+            return;
+          }
+
+          setAvailability(data);
+        } catch (requestError) {
+          if (!active) {
+            return;
+          }
+
+          setAvailability(null);
+
+          setError(
+            requestError.message ||
+            "Không thể tải lịch sân."
+          );
+        } finally {
+          if (active) {
+            setLoading(false);
+          }
+        }
+      };
+
+
+    loadAvailability();
+
+
+    return () => {
+      active = false;
+    };
+  }, [
+    fieldId,
+    selectedDate,
+  ]);
+
+
+  // =========================================================
+  // NORMALIZE SLOTS
+  // =========================================================
+
+  const slots = useMemo(
+    () => {
+      const source =
+        availability?.Slots || [];
+
+      return source.map(
+        (slot, index) => ({
+          ...slot,
+
+          key:
+            slot.PriceID ??
+            `${slot.StartTime}-${slot.EndTime}-${index}`,
+
+          StartTime:
+            formatTime(
+              slot.StartTime
+            ),
+
+          EndTime:
+            formatTime(
+              slot.EndTime
+            ),
+
+          Price:
+            Number(
+              slot.Price || 0
+            ),
+
+          available:
+            slot.available === true,
+        })
+      );
+    },
+    [availability]
+  );
+
+
+  // =========================================================
+  // DATE CHANGE
+  // =========================================================
+
+  const handleDateChange = (
+    event
+  ) => {
+    const nextDate =
+      event.target.value;
+
+    setSelectedDate(
+      nextDate
+    );
+
     setSelectedSlot(null);
+
+    const nextParams =
+      new URLSearchParams(
+        searchParams
+      );
+
+    if (nextDate) {
+      nextParams.set(
+        "date",
+        nextDate
+      );
+    } else {
+      nextParams.delete(
+        "date"
+      );
+    }
+
+    setSearchParams(
+      nextParams,
+      {
+        replace: true,
+      }
+    );
   };
 
-  const handleSelectField = (fieldId) => {
-    setSelectedField(fieldId);
-    setSelectedSlot(null);
-  };
 
-  const handleSelectSlot = (slot) => {
-    if (slot.status === "booked") {
+  // =========================================================
+  // SELECT SLOT
+  // =========================================================
+
+  const handleSelectSlot = (
+    slot
+  ) => {
+    if (!slot.available) {
       return;
     }
 
     setSelectedSlot(slot);
   };
 
+
+  // =========================================================
+  // CONTINUE TO CONFIRM
+  // =========================================================
+
+  const handleContinue = () => {
+    if (
+      !availability ||
+      !selectedSlot ||
+      !selectedDate
+    ) {
+      return;
+    }
+
+    const bookingDraft = {
+      FieldID:
+        Number(
+          availability.FieldID
+        ),
+
+      FieldName:
+        availability.FieldName,
+
+      FieldType:
+        availability.FieldType,
+
+      Location:
+        availability.Location,
+
+      BookingDate:
+        selectedDate,
+
+      PriceID:
+        selectedSlot.PriceID,
+
+      StartTime:
+        selectedSlot.StartTime,
+
+      EndTime:
+        selectedSlot.EndTime,
+
+      Price:
+        selectedSlot.Price,
+    };
+
+
+    sessionStorage.setItem(
+      "bookingDraft",
+      JSON.stringify(
+        bookingDraft
+      )
+    );
+
+
+    navigate(
+      "/booking/confirm"
+    );
+  };
+
+
+  // =========================================================
+  // NO FIELD SELECTED
+  // =========================================================
+
+  if (!fieldId) {
+    return (
+      <>
+        <Navbar />
+
+        <main className="booking-page">
+          <div className="booking-container">
+
+            <div className="booking-empty-card">
+
+              <h1>
+                Chưa chọn sân
+              </h1>
+
+              <p>
+                Vui lòng chọn sân từ
+                trang danh sách sân
+                trước khi đặt lịch.
+              </p>
+
+              <button
+                type="button"
+                className="booking-primary-button"
+                onClick={() =>
+                  navigate(
+                    "/fields"
+                  )
+                }
+              >
+                <ArrowLeft size={18} />
+
+                Chọn sân
+              </button>
+
+            </div>
+
+          </div>
+        </main>
+      </>
+    );
+  }
+
+
   return (
     <>
       <Navbar />
 
       <main className="booking-page">
-        {/* FILTER */}
-        <section className="booking-filter">
-          <form
-            className="booking-container filter-grid"
-            onSubmit={handleSearch}
-          >
-            <div className="filter-group search-group">
-              <label>
-                SỐ/TÊN SÂN
-              </label>
 
-              <div className="search-input">
-                <Search size={18} />
+        <div className="booking-container">
 
-                <input
-                  type="text"
-                  placeholder="Nhập số/tên sân (vd: Sân 01, Sân 02...)"
-                  value={keyword}
-                  onChange={(e) =>
-                    setKeyword(e.target.value)
-                  }
-                />
-              </div>
-            </div>
+          {/* ===============================================
+              HEADER
+          =============================================== */}
 
-            <div className="filter-group">
-              <label>
-                TRẠNG THÁI
-              </label>
-
-              <select
-                value={status}
-                onChange={(e) =>
-                  setStatus(e.target.value)
-                }
-              >
-                <option value="all">
-                  Tất cả trạng thái
-                </option>
-
-                <option value="Còn sân">
-                  Còn sân
-                </option>
-
-                <option value="Đang sửa chữa">
-                  Đang sửa chữa
-                </option>
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>
-                LOẠI SÂN
-              </label>
-
-              <select
-                value={type}
-                onChange={(e) =>
-                  setType(e.target.value)
-                }
-              >
-                <option value="all">
-                  Tất cả loại sân
-                </option>
-
-                <option value="Sân 5 người">
-                  Sân 5 người
-                </option>
-
-                <option value="Sân 7 người">
-                  Sân 7 người
-                </option>
-
-                <option value="Sân 11 người">
-                  Sân 11 người
-                </option>
-              </select>
-            </div>
+          <div className="booking-top-row">
 
             <button
-              type="submit"
-              className="search-btn"
+              type="button"
+              className="booking-back-button"
+              onClick={() =>
+                navigate(
+                  "/fields"
+                )
+              }
             >
-              <Search size={18} />
-              Tìm sân
+              <ArrowLeft size={18} />
+
+              Danh sách sân
             </button>
-          </form>
-        </section>
 
-        {/* CONTENT */}
-        <section className="booking-content">
-          <div className="booking-container booking-layout">
+          </div>
 
-            {/* LEFT */}
-            <aside className="field-sidebar">
-              <h3>
-                CHỌN SÂN
-              </h3>
 
-              <div className="field-list">
-                {filteredFields.length > 0 ? (
-                  filteredFields.map((field) => (
-                    <button
-                      key={field.id}
-                      type="button"
-                      className={
-                        selectedField === field.id
-                          ? "field-item active"
-                          : "field-item"
+          <section className="booking-header-card">
+
+            <div>
+
+              <p className="booking-eyebrow">
+                ĐẶT SÂN
+              </p>
+
+              <h1>
+                {
+                  availability
+                    ?.FieldName ||
+                  `Sân ${fieldId}`
+                }
+              </h1>
+
+              {
+                availability && (
+                  <div className="booking-meta">
+
+                    <span>
+                      {
+                        availability
+                          .FieldType ||
+                        "Chưa cập nhật loại sân"
                       }
-                      onClick={() =>
-                        handleSelectField(field.id)
+                    </span>
+
+                    <span>
+                      {
+                        availability
+                          .Location ||
+                        "Chưa cập nhật địa điểm"
                       }
-                    >
-                      <img
-                        src={field.image}
-                        alt={field.name}
-                      />
+                    </span>
 
-                      <div>
-                        <strong>
-                          {field.name}
-                        </strong>
+                  </div>
+                )
+              }
 
-                        <span>
-                          {field.type}
-                        </span>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <p>
-                    Không tìm thấy sân phù hợp.
-                  </p>
-                )}
+            </div>
+
+
+            <div className="booking-date-control">
+
+              <label htmlFor="booking-date">
+                <CalendarDays
+                  size={18}
+                />
+
+                Ngày đặt sân
+              </label>
+
+              <input
+                id="booking-date"
+                type="date"
+
+                min={
+                  getLocalDateString()
+                }
+
+                value={
+                  selectedDate
+                }
+
+                onChange={
+                  handleDateChange
+                }
+              />
+
+            </div>
+
+          </section>
+
+
+          {/* ===============================================
+              CONFLICT MESSAGE
+          =============================================== */}
+
+          {
+            location.state
+              ?.bookingConflict && (
+
+              <div className="booking-alert booking-alert-warning">
+
+                Khung giờ vừa được
+                người khác đặt.
+                Lịch sân đã được
+                tải lại, vui lòng
+                chọn một khung giờ khác.
+
               </div>
-            </aside>
+            )
+          }
 
-            {/* RIGHT */}
-            <div className="booking-main">
-              {currentField ? (
-                <>
-                  <div className="booking-header-card">
-                    <div>
-                      <h1>
-                        LỊCH ĐẶT SÂN
-                      </h1>
 
-                      <div className="booking-meta">
-                        <span>
-                          Sân:
-                          <strong>
-                            {" "}
-                            {currentField.name}
-                          </strong>
-                        </span>
+          {/* ===============================================
+              SELECT DATE
+          =============================================== */}
 
-                        <span>
-                          Giá từ:
-                          <strong>
-                            {" "}
-                            {formatPrice(
-                              MIN_FIELD_PRICE
-                            )}
-                            đ/h
-                          </strong>
-                        </span>
+          {
+            !selectedDate && (
 
-                        <span>
-                          Loại:
-                          <b>
-                            {" "}
-                            {currentField.type}
-                          </b>
-                        </span>
-                      </div>
-                    </div>
+              <div className="booking-state-card">
 
-                    <label className="date-btn">
-                      <CalendarDays size={18} />
+                Hãy chọn ngày để
+                kiểm tra lịch trống
+                của sân.
 
-                      <span>
-                        Ngày đặt:
-                      </span>
+              </div>
+            )
+          }
 
-                      <input
-                        type="date"
-                        value={bookingDate}
-                        onChange={(e) => {
-                          setBookingDate(
-                            e.target.value
-                          );
 
-                          setSelectedSlot(null);
-                        }}
-                      />
-                    </label>
+          {/* ===============================================
+              LOADING
+          =============================================== */}
+
+          {
+            selectedDate &&
+            loading && (
+
+              <div className="booking-state-card">
+
+                <RefreshCw
+                  size={20}
+                  className="booking-spin"
+                />
+
+                Đang kiểm tra
+                lịch sân...
+
+              </div>
+            )
+          }
+
+
+          {/* ===============================================
+              ERROR
+          =============================================== */}
+
+          {
+            selectedDate &&
+            !loading &&
+            error && (
+
+              <div className="booking-alert booking-alert-error">
+
+                {error}
+
+              </div>
+            )
+          }
+
+
+          {/* ===============================================
+              FIELD UNAVAILABLE
+          =============================================== */}
+
+          {
+            selectedDate &&
+            !loading &&
+            !error &&
+            availability &&
+            availability
+              .FieldAvailable ===
+              false && (
+
+              <div className="booking-alert booking-alert-error">
+
+                Sân hiện không hoạt
+                động hoặc đang bảo trì
+                và không thể đặt.
+
+              </div>
+            )
+          }
+
+
+          {/* ===============================================
+              SLOTS
+          =============================================== */}
+
+          {
+            selectedDate &&
+            !loading &&
+            !error &&
+            availability &&
+            availability
+              .FieldAvailable !==
+              false && (
+
+              <section className="booking-schedule">
+
+                <div className="booking-schedule-header">
+
+                  <div>
+                    KHUNG GIỜ
                   </div>
 
-                  <div className="schedule-card">
-                    <div className="schedule-head">
-                      <div>GIỜ</div>
-                      <div>TRẠNG THÁI</div>
+                  <div>
+                    GIÁ
+                  </div>
+
+                  <div>
+                    TRẠNG THÁI
+                  </div>
+
+                </div>
+
+
+                {
+                  slots.length === 0 ? (
+
+                    <div className="booking-no-slot">
+
+                      Sân chưa có
+                      khung giờ để đặt.
+
                     </div>
 
-                    {timeSlots.map((slot) => {
-                      const isSelected =
-                        selectedSlot?.id ===
-                        slot.id;
+                  ) : (
 
-                      const isBooked =
-                        slot.status === "booked";
+                    slots.map(
+                      (slot) => {
 
-                      return (
-                        <button
-                          type="button"
-                          className={`schedule-row ${
-                            isSelected
-                              ? "selected"
-                              : ""
-                          } ${
-                            isBooked
-                              ? "disabled"
-                              : ""
-                          }`}
-                          key={slot.id}
-                          disabled={isBooked}
-                          onClick={() =>
-                            handleSelectSlot(slot)
-                          }
-                        >
-                          <div className="time-cell">
-                            {slot.label}
-                          </div>
+                        const selected =
+                          selectedSlot
+                            ?.key ===
+                          slot.key;
 
-                          <div
+
+                        return (
+
+                          <button
+                            type="button"
+
+                            key={
+                              slot.key
+                            }
+
+                            disabled={
+                              !slot.available
+                            }
+
                             className={
-                              isBooked
-                                ? "status-cell booked"
-                                : "status-cell available"
+                              [
+                                "booking-slot-row",
+
+                                slot.available
+                                  ? "available"
+                                  : "booked",
+
+                                selected
+                                  ? "selected"
+                                  : "",
+                              ]
+                                .filter(
+                                  Boolean
+                                )
+                                .join(" ")
+                            }
+
+                            onClick={() =>
+                              handleSelectSlot(
+                                slot
+                              )
                             }
                           >
-                            {isBooked
-                              ? "Đã đặt"
-                              : "Trống"}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
 
-                  <div className="booking-bottom">
-                    <div className="booking-legend">
-                      <div>
-                        <span className="legend-dot green" />
-                        Trống (Có thể chọn)
-                      </div>
+                            <div className="booking-slot-time">
 
-                      <div>
-                        <span className="legend-dot red" />
-                        Đã đặt (Không thể chọn)
-                      </div>
-                    </div>
+                              {
+                                slot.StartTime
+                              }
 
-                    <div className="booking-summary">
-                      {selectedSlot && (
-                        <div className="booking-price">
-                          <span>
-                            Tạm tính:
-                          </span>
+                              {" - "}
 
-                          <strong>
-                            {formatPrice(
-                              selectedPrice
-                            )}
-                            đ
-                          </strong>
-                        </div>
-                      )}
+                              {
+                                slot.EndTime
+                              }
 
-                      <button
-                        type="button"
-                        className="continue-btn"
-                        disabled={!selectedSlot}
-                      >
-                        Tiếp tục đặt sân
-                        <ArrowRight size={19} />
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="booking-header-card">
-                  <h2>
-                    Không tìm thấy thông tin sân.
-                  </h2>
+                            </div>
+
+
+                            <div className="booking-slot-price">
+
+                              {
+                                formatPrice(
+                                  slot.Price
+                                )
+                              }
+                              đ
+
+                            </div>
+
+
+                            <div className="booking-slot-status">
+
+                              {
+                                slot.available
+                                  ? selected
+                                    ? "Đã chọn"
+                                    : "Trống"
+                                  : "Đã đặt"
+                              }
+
+                            </div>
+
+                          </button>
+                        );
+                      }
+                    )
+                  )
+                }
+
+              </section>
+            )
+          }
+
+
+          {/* ===============================================
+              SELECTED SLOT
+          =============================================== */}
+
+          {
+            selectedSlot && (
+
+              <section className="booking-selected-summary">
+
+                <div>
+
+                  <span>
+                    Khung giờ đã chọn
+                  </span>
+
+                  <strong>
+                    {
+                      selectedSlot
+                        .StartTime
+                    }
+
+                    {" - "}
+
+                    {
+                      selectedSlot
+                        .EndTime
+                    }
+                  </strong>
+
                 </div>
-              )}
-            </div>
-          </div>
-        </section>
+
+
+                <div>
+
+                  <span>
+                    Giá
+                  </span>
+
+                  <strong>
+                    {
+                      formatPrice(
+                        selectedSlot
+                          .Price
+                      )
+                    }
+                    đ
+                  </strong>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  className="booking-primary-button"
+
+                  onClick={
+                    handleContinue
+                  }
+                >
+                  Tiếp tục xác nhận
+
+                  <ArrowRight
+                    size={18}
+                  />
+                </button>
+
+              </section>
+            )
+          }
+
+        </div>
+
       </main>
     </>
   );
 }
+
 
 export default Booking;
