@@ -1,66 +1,47 @@
-import {
-  useMemo,
-} from "react";
-
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 import "./FieldCard.css";
 
 
 const formatTime = (value) => {
-
   if (!value) {
     return "--:--";
   }
 
-
   const text =
     String(value);
-
 
   const match =
     text.match(
       /(\d{1,2}):(\d{2})/
     );
 
-
   if (!match) {
     return text;
   }
 
-
-  return (
-    `${match[1].padStart(2, "0")}:${match[2]}`
-  );
+  return `${match[1].padStart(
+    2,
+    "0"
+  )}:${match[2]}`;
 };
 
 
 const formatPrice = (value) => {
-
   const amount =
-    Number(
-      value || 0
-    );
+    Number(value || 0);
 
-
-  return (
-    new Intl.NumberFormat(
-      "vi-VN"
-    ).format(amount)
-  );
+  return new Intl.NumberFormat(
+    "vi-VN"
+  ).format(amount);
 };
 
 
-const normalizeStatus = (status) => {
-
-  return String(
-    status || ""
-  )
+const normalizeStatus = (status) =>
+  String(status || "")
     .trim()
     .toUpperCase();
-};
 
 
 const FieldCard = ({
@@ -96,51 +77,36 @@ const FieldCard = ({
   // =========================================================
 
   const minPrice =
-    useMemo(
-      () => {
+    useMemo(() => {
 
-        const prices =
-          slots
-            .map(
-              (slot) =>
-                Number(
-                  slot.Price ??
-                  slot.price ??
-                  0
-                )
-            )
-            .filter(
-              (price) =>
-                Number.isFinite(
-                  price
-                ) &&
-                price > 0
-            );
-
-
-        return (
-          prices.length > 0
-
-            ? Math.min(
-                ...prices
+      const prices =
+        slots
+          .map(
+            (slot) =>
+              Number(
+                slot.Price ??
+                slot.price ??
+                0
               )
+          )
+          .filter(
+            (price) =>
+              Number.isFinite(
+                price
+              ) &&
+              price > 0
+          );
 
-            : null
-        );
 
-      },
-      [slots]
-    );
+      return prices.length > 0
+        ? Math.min(...prices)
+        : null;
 
+    }, [slots]);
 
-  // =========================================================
-  // CHECK AVAILABLE SLOT
-  // =========================================================
 
   const availableSlotExists =
-
     hasAvailableSlot ||
-
     slots.some(
       (slot) =>
         slot.available === true
@@ -148,16 +114,35 @@ const FieldCard = ({
 
 
   const canBook =
-
-    Boolean(
-      selectedDate
-    ) &&
-
+    Boolean(selectedDate) &&
     availabilityLoaded &&
-
     !fieldUnavailable &&
-
     availableSlotExists;
+
+
+  // =========================================================
+  // CURRENT USER
+  // =========================================================
+
+  const getCurrentUser = () => {
+    try {
+      const rawUser =
+        localStorage.getItem(
+          "user"
+        );
+
+      if (!rawUser) {
+        return null;
+      }
+
+      return JSON.parse(
+        rawUser
+      );
+
+    } catch {
+      return null;
+    }
+  };
 
 
   // =========================================================
@@ -173,7 +158,6 @@ const FieldCard = ({
 
     const params =
       new URLSearchParams({
-
         fieldId:
           String(id),
 
@@ -182,342 +166,247 @@ const FieldCard = ({
       });
 
 
+    const bookingUrl =
+      `/booking?${params.toString()}`;
+
+
+    const user =
+      getCurrentUser();
+
+
+    // =======================================================
+    // NOT LOGGED IN
+    // =======================================================
+
+    if (!user?.UserID) {
+
+      navigate(
+        `/login?redirect=${encodeURIComponent(
+          bookingUrl
+        )}`
+      );
+
+      return;
+    }
+
+
+    // =======================================================
+    // LOGGED IN
+    // =======================================================
+
     navigate(
-      `/booking?${params.toString()}`
+      bookingUrl
     );
   };
 
 
   return (
-
     <article className="field-card">
-
-      {/* =====================================================
-          COVER
-      ===================================================== */}
 
       <div
         className="field-card-cover"
         aria-hidden="true"
       >
-
         <span>
           SÂN BÓNG
         </span>
-
       </div>
 
-
-      {/* =====================================================
-          BODY
-      ===================================================== */}
 
       <div className="field-card-body">
 
         <div className="field-card-title-row">
 
           <div>
-
             <h2>
-              {
-                name ||
-                `Sân ${id}`
-              }
+              {name || `Sân ${id}`}
             </h2>
 
-
             <p className="field-card-type">
-
-              {
-                type ||
-                "Sân bóng"
-              }
-
+              {type || "Sân bóng"}
             </p>
-
           </div>
 
 
-          {
-            fieldUnavailable && (
-
-              <span
-                className="
-                  field-status
-                  field-status-maintenance
-                "
-              >
-                Bảo trì
-              </span>
-            )
-          }
+          {fieldUnavailable && (
+            <span className="field-status field-status-maintenance">
+              Bảo trì
+            </span>
+          )}
 
         </div>
 
 
         <p className="field-card-address">
-
-          {
-            address ||
-            "Chưa cập nhật địa chỉ"
-          }
-
+          {address ||
+            "Chưa cập nhật địa chỉ"}
         </p>
 
 
-        {
-          minPrice !== null && (
+        {minPrice !== null && (
+          <p className="field-card-price">
 
-            <p className="field-card-price">
+            Từ{" "}
 
-              Từ{" "}
+            <strong>
+              {formatPrice(
+                minPrice
+              )}
+              đ
+            </strong>
 
-              <strong>
-                {
-                  formatPrice(
-                    minPrice
-                  )
-                }
-                đ
-              </strong>
+            {" "}/ khung giờ
 
-              {" "}
-              / khung giờ
+          </p>
+        )}
 
-            </p>
-          )
-        }
-
-
-        {/* ===================================================
-            AVAILABILITY
-        =================================================== */}
 
         <div className="field-card-availability">
 
-          {
-            !selectedDate && (
+          {!selectedDate && (
+            <p className="field-card-hint">
+              Chọn ngày ở phía trên để kiểm tra lịch trống.
+            </p>
+          )}
 
+
+          {selectedDate &&
+            availabilityLoading && (
               <p className="field-card-hint">
-
-                Chọn ngày ở phía trên để kiểm tra lịch trống.
-
+                Đang kiểm tra lịch...
               </p>
-            )
-          }
+            )}
 
 
-          {
-            selectedDate &&
-              availabilityLoading && (
-
-                <p className="field-card-hint">
-
-                  Đang kiểm tra lịch...
-
-                </p>
-              )
-          }
+          {selectedDate &&
+            !availabilityLoading &&
+            availabilityError && (
+              <p className="field-card-error">
+                {availabilityError}
+              </p>
+            )}
 
 
-          {
-            selectedDate &&
-              !availabilityLoading &&
-              availabilityError && (
-
-                <p className="field-card-error">
-
-                  {availabilityError}
-
-                </p>
-              )
-          }
+          {selectedDate &&
+            !availabilityLoading &&
+            !availabilityError &&
+            fieldUnavailable && (
+              <p className="field-card-error">
+                Sân đang bảo trì và không thể đặt trong thời gian này.
+              </p>
+            )}
 
 
-          {
-            selectedDate &&
-              !availabilityLoading &&
-              !availabilityError &&
-              fieldUnavailable && (
-
-                <p className="field-card-error">
-
-                  Sân đang bảo trì và không thể đặt trong thời gian này.
-
-                </p>
-              )
-          }
+          {selectedDate &&
+            !availabilityLoading &&
+            !availabilityError &&
+            !fieldUnavailable &&
+            availabilityLoaded &&
+            slots.length === 0 && (
+              <p className="field-card-hint">
+                Sân chưa có khung giá để đặt.
+              </p>
+            )}
 
 
-          {
-            selectedDate &&
-              !availabilityLoading &&
-              !availabilityError &&
-              !fieldUnavailable &&
-              availabilityLoaded &&
-              slots.length === 0 && (
+          {selectedDate &&
+            !availabilityLoading &&
+            !availabilityError &&
+            !fieldUnavailable &&
+            availabilityLoaded &&
+            slots.length > 0 && (
 
-                <p className="field-card-hint">
+              <div className="field-slot-list">
 
-                  Sân chưa có khung giá để đặt.
+                {slots.map(
+                  (slot, index) => {
 
-                </p>
-              )
-          }
-
-
-          {
-            selectedDate &&
-              !availabilityLoading &&
-              !availabilityError &&
-              !fieldUnavailable &&
-              availabilityLoaded &&
-              slots.length > 0 && (
-
-                <div className="field-slot-list">
-
-                  {
-                    slots.map(
-                      (
-                        slot,
-                        index
-                      ) => {
-
-                        const available =
-                          slot.available ===
-                          true;
+                    const available =
+                      slot.available ===
+                      true;
 
 
-                        const slotKey =
-
-                          slot.PriceID ??
-
-                          `${slot.StartTime || slot.startTime}-${slot.EndTime || slot.endTime}-${index}`;
-
-
-                        return (
-
-                          <div
-                            key={
-                              slotKey
-                            }
-
-                            className={
-                              `field-slot ${
-                                available
-
-                                  ? "field-slot-available"
-
-                                  : "field-slot-unavailable"
-                              }`
-                            }
-                          >
-
-                            <div>
-
-                              <strong>
-
-                                {
-                                  formatTime(
-                                    slot.StartTime ??
-                                    slot.startTime
-                                  )
-                                }
-
-                                {" - "}
-
-                                {
-                                  formatTime(
-                                    slot.EndTime ??
-                                    slot.endTime
-                                  )
-                                }
-
-                              </strong>
+                    const slotKey =
+                      slot.PriceID ??
+                      `${slot.StartTime ||
+                        slot.startTime}-${slot.EndTime ||
+                        slot.endTime}-${index}`;
 
 
-                              {
-                                (
-                                  slot.Price ??
-                                  slot.price
-                                ) !== undefined && (
+                    return (
+                      <div
+                        key={slotKey}
+                        className={`field-slot ${
+                          available
+                            ? "field-slot-available"
+                            : "field-slot-unavailable"
+                        }`}
+                      >
 
-                                  <span>
+                        <div>
 
-                                    {
-                                      formatPrice(
-                                        slot.Price ??
-                                        slot.price
-                                      )
-                                    }
-                                    đ
+                          <strong>
+                            {formatTime(
+                              slot.StartTime ??
+                              slot.startTime
+                            )}
 
-                                  </span>
-                                )
-                              }
+                            {" - "}
 
-                            </div>
+                            {formatTime(
+                              slot.EndTime ??
+                              slot.endTime
+                            )}
+                          </strong>
 
 
-                            <span className="field-slot-state">
+                          {(slot.Price ??
+                            slot.price) !==
+                            undefined && (
 
-                              {
-                                available
-                                  ? "Trống"
-                                  : "Đã đặt"
-                              }
-
+                            <span>
+                              {formatPrice(
+                                slot.Price ??
+                                slot.price
+                              )}
+                              đ
                             </span>
 
-                          </div>
-                        );
-                      }
-                    )
-                  }
+                          )}
 
-                </div>
-              )
-          }
+                        </div>
+
+
+                        <span className="field-slot-state">
+                          {available
+                            ? "Trống"
+                            : "Đã đặt"}
+                        </span>
+
+                      </div>
+                    );
+                  }
+                )}
+
+              </div>
+            )}
 
         </div>
 
 
-        {/* ===================================================
-            BOOKING BUTTON
-        =================================================== */}
-
         <button
           type="button"
-
-          className="
-            field-card-booking-button
-          "
-
-          disabled={
-            !canBook
-          }
-
-          onClick={
-            handleBooking
-          }
+          className="field-card-booking-button"
+          disabled={!canBook}
+          onClick={handleBooking}
         >
-
-          {
-            fieldUnavailable
-
-              ? "Sân đang bảo trì"
-
-              : !selectedDate
-
-                ? "Chọn ngày để đặt sân"
-
-                : canBook
-
-                  ? "Đặt sân"
-
-                  : "Không có khung giờ trống"
-          }
-
+          {fieldUnavailable
+            ? "Sân đang bảo trì"
+            : !selectedDate
+              ? "Chọn ngày để đặt sân"
+              : canBook
+                ? "Đặt sân"
+                : "Không có khung giờ trống"}
         </button>
 
       </div>
