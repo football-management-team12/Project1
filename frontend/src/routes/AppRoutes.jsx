@@ -18,6 +18,15 @@ import FieldList
 import Admin
   from "../pages/Admin/Admin";
 
+import FieldManagement
+  from "../pages/Admin/FieldManagement";
+
+import BookingManagement
+  from "../pages/Admin/BookingManagement";
+
+import AdminLayout
+  from "../components/AdminLayout/AdminLayout";
+
 import About
   from "../pages/About/About";
 
@@ -33,34 +42,28 @@ import Pricing
 import ProtectedRoute
   from "../components/ProtectedRoute/ProtectedRoute";
 
-
 function AppRoutes() {
   return (
     <Routes>
-
       <Route
         path="/"
         element={<Home />}
       />
-
 
       <Route
         path="/login"
         element={<Login />}
       />
 
-
       <Route
         path="/register"
         element={<Register />}
       />
 
-
       <Route
         path="/fields"
         element={<FieldList />}
       />
-
 
       <Route
         path="/booking"
@@ -71,7 +74,6 @@ function AppRoutes() {
         }
       />
 
-
       <Route
         path="/booking/confirm"
         element={
@@ -81,27 +83,41 @@ function AppRoutes() {
         }
       />
 
-
       <Route
         path="/pricing"
         element={<Pricing />}
       />
-
 
       <Route
         path="/about"
         element={<About />}
       />
 
-
       <Route
         path="/admin"
-        element={<Admin />}
-      />
+        element={<AdminLayout />}
+      >
+        <Route
+          index
+          element={<Admin />}
+        />
 
+        <Route
+          path="fields"
+          element={
+            <FieldManagement />
+          }
+        />
+
+        <Route
+          path="bookings"
+          element={
+            <BookingManagement />
+          }
+        />
+      </Route>
     </Routes>
   );
 }
-
 
 export default AppRoutes;
