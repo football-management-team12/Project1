@@ -151,9 +151,8 @@ function Register() {
             </label>
 
             <div
-              className={`register-input-wrapper ${
-                errors.username ? "input-error" : ""
-              }`}
+              className={`register-input-wrapper ${errors.username ? "input-error" : ""
+                }`}
             >
               <UserRound size={23} />
 
@@ -180,9 +179,8 @@ function Register() {
             </label>
 
             <div
-              className={`register-input-wrapper ${
-                errors.email ? "input-error" : ""
-              }`}
+              className={`register-input-wrapper ${errors.email ? "input-error" : ""
+                }`}
             >
               <Mail size={20} />
 
@@ -209,9 +207,8 @@ function Register() {
             </label>
 
             <div
-              className={`register-input-wrapper ${
-                errors.phone ? "input-error" : ""
-              }`}
+              className={`register-input-wrapper ${errors.phone ? "input-error" : ""
+                }`}
             >
               <Phone size={20} />
 
@@ -238,9 +235,8 @@ function Register() {
             </label>
 
             <div
-              className={`register-input-wrapper ${
-                errors.password ? "input-error" : ""
-              }`}
+              className={`register-input-wrapper ${errors.password ? "input-error" : ""
+                }`}
             >
               <LockKeyhole size={21} />
 
@@ -270,10 +266,11 @@ function Register() {
                 }
               >
                 {showPassword ? (
-                  <EyeOff size={19} />
-                ) : (
                   <Eye size={19} />
+                ) : (
+                  <EyeOff size={19} />
                 )}
+
               </button>
             </div>
 
