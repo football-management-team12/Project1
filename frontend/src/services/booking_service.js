@@ -15,7 +15,8 @@ const parseResponse = async (
   let result = null;
 
   try {
-    result = await response.json();
+    result =
+      await response.json();
   } catch {
     result = null;
   }
@@ -131,11 +132,13 @@ export const getAllBookings =
 
 
 /* =========================================================
-   BOOKING DETAIL
+   STAFF / ADMIN - BOOKING DETAIL
 ========================================================= */
 
 export const getBookingDetail =
-  async (bookingID) => {
+  async (
+    bookingID
+  ) => {
 
     const response =
       await fetch(
@@ -168,7 +171,8 @@ export const updateBookingStatus =
           bookingID
         )}/status`,
         {
-          method: "PATCH",
+          method:
+            "PATCH",
 
           headers: {
             "Content-Type":
@@ -184,6 +188,74 @@ export const updateBookingStatus =
                 managerUserID,
             }),
         }
+      );
+
+
+    return parseResponse(
+      response
+    );
+  };
+
+
+/* =========================================================
+   CUSTOMER - BOOKING HISTORY
+========================================================= */
+
+export const getCustomerBookings =
+  async (
+    userID,
+    filters = {}
+  ) => {
+
+    const params =
+      new URLSearchParams();
+
+
+    if (
+      filters.status
+    ) {
+      params.set(
+        "status",
+        filters.status
+      );
+    }
+
+
+    const query =
+      params.toString();
+
+
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/customer-bookings/${encodeURIComponent(
+          userID
+        )}${query ? `?${query}` : ""}`
+      );
+
+
+    return parseResponse(
+      response
+    );
+  };
+
+
+/* =========================================================
+   CUSTOMER - BOOKING DETAIL
+========================================================= */
+
+export const getCustomerBookingDetail =
+  async (
+    userID,
+    bookingID
+  ) => {
+
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/customer-bookings/${encodeURIComponent(
+          userID
+        )}/${encodeURIComponent(
+          bookingID
+        )}`
       );
 
 

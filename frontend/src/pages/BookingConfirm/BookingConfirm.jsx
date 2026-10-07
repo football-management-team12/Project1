@@ -370,11 +370,11 @@ function BookingConfirm() {
 
                 onClick={() =>
                   navigate(
-                    "/fields"
+                    "/bookings"
                   )
                 }
               >
-                Quay lại danh sách sân
+                Xem lịch sử đặt sân
               </button>
 
             </section>
