@@ -1,0 +1,57 @@
+$kind: http-request
+description: ""
+url: "{{baseUrl}}/api/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "account": "",  
+       "password": "13456"}
+  $type: |-
+    {
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string",
+          "example": "admin"
+        },
+        "password": {
+          "type": "string",
+          "example": "123456"
+        }
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: "\r
+
+      pm.test(\"Status code is 200 OK\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      \r
+
+      pm.test(\"Trả về đúng thông tin hồ sơ của tài khoản 0900000000\", function () {\r
+
+      \    const res = pm.response.json();\r
+
+      \    \r
+
+      \    \r
+
+      \    const phone = res.phone || (res.user && res.user.Phone) || (res.data && res.data.phone);\r
+
+      \    pm.expect(phone).to.eql(\"0900000000\");\r
+
+      });"
+    language: text/javascript
+settings: {}
+examples: ./.resources/Đăng nhập người dùng.resources/examples
+order: 1000

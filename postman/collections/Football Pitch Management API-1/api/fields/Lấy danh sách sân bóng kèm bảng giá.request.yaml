@@ -1,0 +1,10 @@
+$kind: http-request
+description: ""
+url: "{{baseUrl}}/api/fields/"
+method: GET
+body:
+  type: text
+  content: ""
+settings: {}
+examples: ./.resources/Lấy danh sách sân bóng kèm bảng giá.resources/examples
+order: 1000

@@ -54,36 +54,555 @@ paths:
         200:
           description: "Trả về danh sách sân bóng thành công"
 
-  /api/fields/price/{field_id}:
-    put:
+  /api/fields/:
+    get:
+      summary: Lấy danh sách tất cả các sân bóng (BE-03)
+      operationId: getFields
       tags:
         - Fields
-      summary: "Cập nhật giá sân bóng theo FieldID"
-      consumes:
-        - "application/json"
-      produces:
-        - "application/json"
-      parameters:
-        - in: "path"
-          name: "field_id"
-          required: true
-          type: "integer"
-          description: "ID của sân bóng cần cập nhật"
-        - in: "body"
-          name: "body"
-          required: true
-          schema:
-            type: "object"
-            properties:
-              StartTime:
-                type: "string"
-                example: "06:00:00"
-              EndTime:
-                type: "string"
-                example: "17:00:00"
-              Price:
-                type: "number"
-                example: 200000
       responses:
-        200:
-          description: "Cập nhật giá thành công"
+        '200':
+          description: Lấy danh sách sân bóng thành công.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FieldWithPrice'
+        '500':
+          description: Lỗi máy chủ nội bộ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/fields/price/{field_id}:
+    put:
+      summary: Cập nhật giá/khung giờ sân bóng
+      operationId: updateFieldPrice
+      tags:
+        - Fields
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          description: ID của sân bóng
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - StartTime
+                - EndTime
+                - Price
+              properties:
+                StartTime:
+                  type: string
+                  example: "06:00:00"
+                EndTime:
+                  type: string
+                  example: "07:30:00"
+                Price:
+                  type: number
+                  format: float
+                  example: 300000.0
+      responses:
+        '200':
+          description: Cập nhật giá thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Update price successfully"
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy sân bóng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==========================================
+  # AVAILABILITY ENDPOINTS
+  # ==========================================
+  /api/fields/{field_id}/availability:
+    get:
+      summary: Kiểm tra lịch trống của một sân bóng theo ngày (BE-05 / T123-59)
+      operationId: getFieldAvailability
+      tags:
+        - Availability
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          description: ID của sân bóng
+          schema:
+            type: integer
+            example: 1
+        - name: date
+          in: query
+          required: true
+          description: Ngày cần kiểm tra (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2026-09-26"
+      responses:
+        '200':
+          description: Chi tiết lịch trống sân bóng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleFieldAvailabilityResponse'
+        '400':
+          description: Thiếu thông số date hoặc sai định dạng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy sân bóng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/fields/availability:
+    get:
+      summary: Kiểm tra lịch trống của toàn bộ sân bóng theo ngày (BE-05.1)
+      operationId: getAllFieldsAvailability
+      tags:
+        - Availability
+      parameters:
+        - name: date
+          in: query
+          required: true
+          description: Ngày cần kiểm tra (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2026-10-04"
+      responses:
+        '200':
+          description: Lịch trống của toàn bộ sân bóng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllFieldsAvailabilityResponse'
+        '400':
+          description: Thiếu thông số date hoặc sai định dạng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==========================================
+  # BOOKING ENDPOINTS
+  # ==========================================
+  /api/bookings/:
+    post:
+      summary: Tạo lượt đặt sân bóng mới (Booking)
+      operationId: createBooking
+      tags:
+        - Booking
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - FieldID
+                - BookingDate
+                - PriceID
+              properties:
+                FieldID:
+                  type: integer
+                  example: 1
+                BookingDate:
+                  type: string
+                  format: date
+                  example: "2026-10-05"
+                PriceID:
+                  type: integer
+                  example: 101
+                Note:
+                  type: string
+                  example: "Cần chuẩn bị sẵn 2 bộ áo lưới"
+      responses:
+        '201':
+          description: Đặt sân thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Booking created successfully"
+                  booking:
+                    $ref: '#/components/schemas/BookingDetail'
+        '400':
+          description: Dữ liệu không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Khung giờ đã được người khác đặt.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Lấy danh sách lịch đặt sân (Cá nhân hoặc toàn hệ thống đối với Admin)
+      operationId: getBookings
+      tags:
+        - Booking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Lọc theo trạng thái (PENDING, CONFIRMED, CANCELLED)
+          schema:
+            type: string
+            example: "CONFIRMED"
+        - name: date
+          in: query
+          required: false
+          description: Lọc theo ngày đặt (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2026-10-05"
+      responses:
+        '200':
+          description: Danh sách lượt đặt sân.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingDetail'
+
+  /api/bookings/{booking_id}:
+    get:
+      summary: Lấy thông tin chi tiết của một lượt đặt sân
+      operationId: getBookingById
+      tags:
+        - Booking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          description: ID của lượt đặt sân
+          schema:
+            type: integer
+            example: 50
+      responses:
+        '200':
+          description: Chi tiết đơn đặt sân.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDetail'
+        '404':
+          description: Không tìm thấy lượt đặt sân.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/bookings/{booking_id}/cancel:
+    put:
+      summary: Hủy lượt đặt sân
+      operationId: cancelBooking
+      tags:
+        - Booking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          description: ID lượt đặt sân cần hủy
+          schema:
+            type: integer
+            example: 50
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  example: "Bận đột xuất không đá được"
+      responses:
+        '200':
+          description: Hủy đặt sân thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Booking cancelled successfully"
+        '400':
+          description: Không thể hủy lượt đặt sân này (ví dụ đã qua giờ đá).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ------------------ AUTH SCHEMAS ------------------
+    UserProfile:
+      type: object
+      properties:
+        UserID:
+          type: integer
+          example: 1
+        Username:
+          type: string
+          example: "nguyenvana"
+        Email:
+          type: string
+          example: "nguyenvana@gmail.com"
+        FullName:
+          type: string
+          example: "Nguyễn Văn A"
+        PhoneNumber:
+          type: string
+          example: "0987654321"
+        Role:
+          type: string
+          example: "CUSTOMER"
+
+    # ------------------ FIELDS SCHEMAS ------------------
+    FieldWithPrice:
+      type: object
+      properties:
+        FieldID:
+          type: integer
+          example: 1
+        FieldName:
+          type: string
+          example: "Sân 7 A1"
+        FieldType:
+          type: string
+          example: "Sân 7 người"
+        Location:
+          type: string
+          example: "Khu A"
+        Image:
+          type: string
+          nullable: true
+          example: "san_a1.jpg"
+        Status:
+          type: string
+          example: "AVAILABLE"
+        StartTime:
+          type: string
+          example: "06:00:00"
+        EndTime:
+          type: string
+          example: "07:30:00"
+        Price:
+          type: number
+          format: float
+          example: 300000.0
+
+    Slot:
+      type: object
+      properties:
+        PriceID:
+          type: integer
+          example: 101
+        StartTime:
+          type: string
+          example: "06:00:00"
+        EndTime:
+          type: string
+          example: "07:30:00"
+        Price:
+          type: number
+          format: float
+          example: 300000.0
+        available:
+          type: boolean
+          example: true
+
+    # ------------------ AVAILABILITY SCHEMAS ------------------
+    SingleFieldAvailabilityResponse:
+      type: object
+      properties:
+        FieldID:
+          type: integer
+          example: 1
+        FieldName:
+          type: string
+          example: "Sân 7 A1"
+        FieldType:
+          type: string
+          example: "Sân 7 người"
+        Location:
+          type: string
+          example: "Khu A"
+        FieldStatus:
+          type: string
+          example: "AVAILABLE"
+        Date:
+          type: string
+          format: date
+          example: "2026-09-26"
+        FieldAvailable:
+          type: boolean
+          example: true
+        AvailableCount:
+          type: integer
+          example: 8
+        UnavailableCount:
+          type: integer
+          example: 2
+        Slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slot'
+
+    FieldAvailabilityItem:
+      type: object
+      properties:
+        FieldID:
+          type: integer
+          example: 1
+        FieldName:
+          type: string
+          example: "Sân 7 A1"
+        FieldType:
+          type: string
+          example: "Sân 7 người"
+        Location:
+          type: string
+          example: "Khu A"
+        FieldStatus:
+          type: string
+          example: "AVAILABLE"
+        FieldAvailable:
+          type: boolean
+          example: true
+        AvailableCount:
+          type: integer
+          example: 8
+        UnavailableCount:
+          type: integer
+          example: 2
+        HasAvailableSlot:
+          type: boolean
+          example: true
+        Slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slot'
+
+    AllFieldsAvailabilityResponse:
+      type: object
+      properties:
+        Date:
+          type: string
+          format: date
+          example: "2026-10-04"
+        TotalFields:
+          type: integer
+          example: 5
+        AvailableFields:
+          type: integer
+          example: 4
+        UnavailableFields:
+          type: integer
+          example: 1
+        Fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldAvailabilityItem'
+
+    # ------------------ BOOKING SCHEMAS ------------------
+    BookingDetail:
+      type: object
+      properties:
+        BookingID:
+          type: integer
+          example: 50
+        UserID:
+          type: integer
+          example: 1
+        FieldID:
+          type: integer
+          example: 1
+        FieldName:
+          type: string
+          example: "Sân 7 A1"
+        BookingDate:
+          type: string
+          format: date
+          example: "2026-10-05"
+        StartTime:
+          type: string
+          example: "06:00:00"
+        EndTime:
+          type: string
+          example: "07:30:00"
+        Price:
+          type: number
+          format: float
+          example: 300000.0
+        Status:
+          type: string
+          example: "CONFIRMED"
+        CreatedAt:
+          type: string
+          format: date-time
+          example: "2026-10-01T08:30:00Z"
+
+    # ------------------ ERROR SCHEMA ------------------
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Thông tin yêu cầu không hợp lệ"
+        example:
+          type: string
+          nullable: true
+          example: "?date=2026-10-04"

@@ -1,0 +1,5 @@
+$kind: collection
+name: Football Pitch Management API
+description: Tài liệu API Hệ thống Quản lý Sân bóng
+variables:
+  baseUrl: http://127.0.0.1:5000

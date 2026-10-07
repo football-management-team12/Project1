@@ -1,0 +1,52 @@
+$kind: http-request
+description: ""
+url: "{{baseUrl}}/api/fields/price/:field_id"
+method: PUT
+headers:
+  Content-Type: application/json
+pathVariables:
+  - key: field_id
+    value: "235"
+    disabled: false
+    description: ID của sân bóng cần cập nhật
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: json
+  content: |-
+    {
+      "StartTime": "06:00:00",
+      "EndTime": "17:00:00",
+      "Price": 200000
+    }
+  $type: |-
+    {
+      "type": "object",
+      "properties": {
+        "StartTime": {
+          "type": "string",
+          "example": "06:00:00"
+        },
+        "EndTime": {
+          "type": "string",
+          "example": "17:00:00"
+        },
+        "Price": {
+          "type": "number",
+          "example": 200000
+        }
+      }
+    }
+settings: {}
+examples: ./.resources/Cập nhật giá sân bóng theo FieldID.resources/examples
+order: 1000
