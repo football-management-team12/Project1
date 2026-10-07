@@ -2,7 +2,11 @@ workspace:
   id: 88e58a33-6758-4af6-8a8f-7301a64573d3
 localResources:
   specs:
-    - ..\backend\swagger.yaml
+    - ../backend/swagger.yaml
+    - ../postman/specs/New Specification/New Specification.yaml
+    - ../C:/Users/ADMIN/Documents/Project1/backend/swagger.yaml
 resourceNameMappings:
   specs:
     - ../postman/specs/Football Pitch Management API/swagger.yaml: swagger.yaml
+    - ../postman/specs/New Specification/New Specification.yaml: New Specification
+    - ../backend/swagger.yaml: swagger.yaml

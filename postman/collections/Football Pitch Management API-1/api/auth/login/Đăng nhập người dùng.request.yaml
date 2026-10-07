@@ -8,8 +8,9 @@ body:
   type: json
   content: |-
     {
-      "account": "",  
-       "password": "13456"}
+      "account": "admin1@gmail.com", 
+        "password": "123456"
+    }
   $type: |-
     {
       "type": "object",

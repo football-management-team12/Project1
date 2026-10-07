@@ -1,12 +1,11 @@
-swagger: "2.0"
+openapi: "3.0.0"
 info:
   title: "Football Pitch Management API"
   description: "Tài liệu API Hệ thống Quản lý Sân bóng"
   version: "1.0.0"
-host: "127.0.0.1:5000"
-basePath: "/"
-schemes:
-  - "http"
+servers:
+  - url: "http://127.0.0.1:5000"
+    description: "Local Server"
 
 paths:
   # ------------------------------------
@@ -17,27 +16,23 @@ paths:
       tags:
         - Authentication
       summary: "Đăng nhập người dùng"
-      consumes:
-        - "application/json"
-      produces:
-        - "application/json"
-      parameters:
-        - in: "body"
-          name: "body"
-          required: true
-          schema:
-            type: "object"
-            properties:
-              account:
-                type: "string"
-                example: "admin"
-              password:
-                type: "string"
-                example: "123456"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                account:
+                  type: string
+                  example: "admin"
+                password:
+                  type: string
+                  example: "123456"
       responses:
-        200:
+        '200':
           description: "Đăng nhập thành công"
-        401:
+        '401':
           description: "Sai tài khoản hoặc mật khẩu"
 
   # ------------------------------------
@@ -47,22 +42,11 @@ paths:
     get:
       tags:
         - Fields
-      summary: "Lấy danh sách sân bóng kèm bảng giá"
-      produces:
-        - "application/json"
-      responses:
-        200:
-          description: "Trả về danh sách sân bóng thành công"
-
-  /api/fields/:
-    get:
-      summary: Lấy danh sách tất cả các sân bóng (BE-03)
+      summary: "Lấy danh sách tất cả các sân bóng (BE-03)"
       operationId: getFields
-      tags:
-        - Fields
       responses:
         '200':
-          description: Lấy danh sách sân bóng thành công.
+          description: "Lấy danh sách sân bóng thành công."
           content:
             application/json:
               schema:
@@ -70,7 +54,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/FieldWithPrice'
         '500':
-          description: Lỗi máy chủ nội bộ.
+          description: "Lỗi máy chủ nội bộ."
           content:
             application/json:
               schema:
@@ -78,17 +62,17 @@ paths:
 
   /api/fields/price/{field_id}:
     put:
-      summary: Cập nhật giá/khung giờ sân bóng
-      operationId: updateFieldPrice
       tags:
         - Fields
+      summary: "Cập nhật giá/khung giờ sân bóng"
+      operationId: updateFieldPrice
       security:
         - BearerAuth: []
       parameters:
         - name: field_id
           in: path
           required: true
-          description: ID của sân bóng
+          description: "ID của sân bóng"
           schema:
             type: integer
             example: 1
@@ -115,7 +99,7 @@ paths:
                   example: 300000.0
       responses:
         '200':
-          description: Cập nhật giá thành công.
+          description: "Cập nhật giá thành công."
           content:
             application/json:
               schema:
@@ -125,58 +109,58 @@ paths:
                     type: string
                     example: "Update price successfully"
         '400':
-          description: Dữ liệu đầu vào không hợp lệ.
+          description: "Dữ liệu đầu vào không hợp lệ."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Không tìm thấy sân bóng.
+          description: "Không tìm thấy sân bóng."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  # ==========================================
-  # AVAILABILITY ENDPOINTS
-  # ==========================================
+  # ------------------------------------
+  # 3. AVAILABILITY ENDPOINTS
+  # ------------------------------------
   /api/fields/{field_id}/availability:
     get:
-      summary: Kiểm tra lịch trống của một sân bóng theo ngày (BE-05 / T123-59)
-      operationId: getFieldAvailability
       tags:
         - Availability
+      summary: "Kiểm tra lịch trống của một sân bóng theo ngày (BE-05 / T123-59)"
+      operationId: getFieldAvailability
       parameters:
         - name: field_id
           in: path
           required: true
-          description: ID của sân bóng
+          description: "ID của sân bóng"
           schema:
             type: integer
             example: 1
         - name: date
           in: query
           required: true
-          description: Ngày cần kiểm tra (YYYY-MM-DD)
+          description: "Ngày cần kiểm tra (YYYY-MM-DD)"
           schema:
             type: string
             format: date
             example: "2026-09-26"
       responses:
         '200':
-          description: Chi tiết lịch trống sân bóng.
+          description: "Chi tiết lịch trống sân bóng."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SingleFieldAvailabilityResponse'
         '400':
-          description: Thiếu thông số date hoặc sai định dạng.
+          description: "Thiếu thông số date hoặc sai định dạng."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Không tìm thấy sân bóng.
+          description: "Không tìm thấy sân bóng."
           content:
             application/json:
               schema:
@@ -184,42 +168,42 @@ paths:
 
   /api/fields/availability:
     get:
-      summary: Kiểm tra lịch trống của toàn bộ sân bóng theo ngày (BE-05.1)
-      operationId: getAllFieldsAvailability
       tags:
         - Availability
+      summary: "Kiểm tra lịch trống của toàn bộ sân bóng theo ngày (BE-05.1)"
+      operationId: getAllFieldsAvailability
       parameters:
         - name: date
           in: query
           required: true
-          description: Ngày cần kiểm tra (YYYY-MM-DD)
+          description: "Ngày cần kiểm tra (YYYY-MM-DD)"
           schema:
             type: string
             format: date
             example: "2026-10-04"
       responses:
         '200':
-          description: Lịch trống của toàn bộ sân bóng.
+          description: "Lịch trống của toàn bộ sân bóng."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AllFieldsAvailabilityResponse'
         '400':
-          description: Thiếu thông số date hoặc sai định dạng.
+          description: "Thiếu thông số date hoặc sai định dạng."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  # ==========================================
-  # BOOKING ENDPOINTS
-  # ==========================================
+  # ------------------------------------
+  # 4. BOOKING ENDPOINTS
+  # ------------------------------------
   /api/bookings/:
     post:
-      summary: Tạo lượt đặt sân bóng mới (Booking)
-      operationId: createBooking
       tags:
         - Booking
+      summary: "Tạo lượt đặt sân bóng mới (Booking)"
+      operationId: createBooking
       security:
         - BearerAuth: []
       requestBody:
@@ -248,7 +232,7 @@ paths:
                   example: "Cần chuẩn bị sẵn 2 bộ áo lưới"
       responses:
         '201':
-          description: Đặt sân thành công.
+          description: "Đặt sân thành công."
           content:
             application/json:
               schema:
@@ -260,44 +244,44 @@ paths:
                   booking:
                     $ref: '#/components/schemas/BookingDetail'
         '400':
-          description: Dữ liệu không hợp lệ.
+          description: "Dữ liệu không hợp lệ."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: Khung giờ đã được người khác đặt.
+          description: "Khung giờ đã được người khác đặt."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
     get:
-      summary: Lấy danh sách lịch đặt sân (Cá nhân hoặc toàn hệ thống đối với Admin)
-      operationId: getBookings
       tags:
         - Booking
+      summary: "Lấy danh sách lịch đặt sân (Cá nhân hoặc toàn hệ thống đối với Admin)"
+      operationId: getBookings
       security:
         - BearerAuth: []
       parameters:
         - name: status
           in: query
           required: false
-          description: Lọc theo trạng thái (PENDING, CONFIRMED, CANCELLED)
+          description: "Lọc theo trạng thái (PENDING, CONFIRMED, CANCELLED)"
           schema:
             type: string
             example: "CONFIRMED"
         - name: date
           in: query
           required: false
-          description: Lọc theo ngày đặt (YYYY-MM-DD)
+          description: "Lọc theo ngày đặt (YYYY-MM-DD)"
           schema:
             type: string
             format: date
             example: "2026-10-05"
       responses:
         '200':
-          description: Danh sách lượt đặt sân.
+          description: "Danh sách lượt đặt sân."
           content:
             application/json:
               schema:
@@ -307,29 +291,29 @@ paths:
 
   /api/bookings/{booking_id}:
     get:
-      summary: Lấy thông tin chi tiết của một lượt đặt sân
-      operationId: getBookingById
       tags:
         - Booking
+      summary: "Lấy thông tin chi tiết của một lượt đặt sân"
+      operationId: getBookingById
       security:
         - BearerAuth: []
       parameters:
         - name: booking_id
           in: path
           required: true
-          description: ID của lượt đặt sân
+          description: "ID của lượt đặt sân"
           schema:
             type: integer
             example: 50
       responses:
         '200':
-          description: Chi tiết đơn đặt sân.
+          description: "Chi tiết đơn đặt sân."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BookingDetail'
         '404':
-          description: Không tìm thấy lượt đặt sân.
+          description: "Không tìm thấy lượt đặt sân."
           content:
             application/json:
               schema:
@@ -337,17 +321,17 @@ paths:
 
   /api/bookings/{booking_id}/cancel:
     put:
-      summary: Hủy lượt đặt sân
-      operationId: cancelBooking
       tags:
         - Booking
+      summary: "Hủy lượt đặt sân"
+      operationId: cancelBooking
       security:
         - BearerAuth: []
       parameters:
         - name: booking_id
           in: path
           required: true
-          description: ID lượt đặt sân cần hủy
+          description: "ID lượt đặt sân cần hủy"
           schema:
             type: integer
             example: 50
@@ -363,7 +347,7 @@ paths:
                   example: "Bận đột xuất không đá được"
       responses:
         '200':
-          description: Hủy đặt sân thành công.
+          description: "Hủy đặt sân thành công."
           content:
             application/json:
               schema:
@@ -373,7 +357,7 @@ paths:
                     type: string
                     example: "Booking cancelled successfully"
         '400':
-          description: Không thể hủy lượt đặt sân này (ví dụ đã qua giờ đá).
+          description: "Không thể hủy lượt đặt sân này (ví dụ đã qua giờ đá)."
           content:
             application/json:
               schema:
