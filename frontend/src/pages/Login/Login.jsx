@@ -422,9 +422,9 @@ function Login() {
                 }
               >
                 {showPassword ? (
-                  <EyeOff size={19} />
-                ) : (
                   <Eye size={19} />
+                ) : (
+                  <EyeOff size={19} />
                 )}
               </button>
 
