@@ -218,7 +218,7 @@ function Navbar() {
 
 
           <NavLink
-            to="/booking"
+            to="/bookings"
             className={
               ({ isActive }) =>
                 isActive
