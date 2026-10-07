@@ -214,8 +214,8 @@ function Login() {
 
       const safeRedirect =
         redirectTo &&
-        redirectTo.startsWith("/") &&
-        !redirectTo.startsWith("//")
+          redirectTo.startsWith("/") &&
+          !redirectTo.startsWith("//")
           ? redirectTo
           : null;
 
@@ -349,11 +349,10 @@ function Login() {
 
 
             <div
-              className={`login-input-wrapper ${
-                errors.account
-                  ? "input-error"
-                  : ""
-              }`}
+              className={`login-input-wrapper ${errors.account
+                ? "input-error"
+                : ""
+                }`}
             >
               <UserRound size={23} />
 
@@ -386,11 +385,10 @@ function Login() {
 
 
             <div
-              className={`login-input-wrapper ${
-                errors.password
-                  ? "input-error"
-                  : ""
-              }`}
+              className={`login-input-wrapper ${errors.password
+                ? "input-error"
+                : ""
+                }`}
             >
               <LockKeyhole size={21} />
 
