@@ -85,9 +85,9 @@ jobs:
   # API TEST
   # =========================================================
 
-  api-test:
+    api-test:
     runs-on: ubuntu-latest
-    needs: [backend, docker] # Chờ backend và docker build xong mới chạy
+    needs: [backend, docker]
 
     steps:
       - name: Checkout code
@@ -98,7 +98,7 @@ jobs:
         with:
           node-version: 20
 
-      # 1. Cài đặt Newman và công cụ chuyển đổi OpenAPI/Swagger
+      # 1. Cài Newman và OpenAPI converter
       - name: Install Newman and OpenAPI Converter
         run: npm install -g newman openapi-to-postmanv2
 
@@ -108,14 +108,42 @@ jobs:
           docker compose up -d --build
           sleep 10
 
-      # 3. Chuyển đổi backend/swagger.yaml sang Collection & Chạy Test
+          echo "===== CONTAINER STATUS ====="
+          docker compose ps
+
+          echo "===== CONTAINER LOGS ====="
+          docker compose logs --no-color
+
+      # 3. Kiểm tra Backend đã thực sự sẵn sàng
+      - name: Check Backend API
+        run: |
+          echo "Checking backend..."
+
+          for i in {1..20}; do
+            if curl -f http://127.0.0.1:5000/api/fields/; then
+              echo "Backend is ready"
+              exit 0
+            fi
+
+            echo "Waiting for backend..."
+            sleep 3
+          done
+
+          echo "Backend is not reachable"
+
+          docker compose ps
+          docker compose logs --no-color
+
+          exit 1
+
+      # 4. Convert Swagger và chạy API test
       - name: Convert Swagger to Postman Collection & Run Tests
         run: |
           openapi2postmanv2 -s backend/swagger.yaml -o converted_collection.json -p
 
           newman run converted_collection.json
 
-      # 4. Tắt môi trường Docker
+      # 5. Tắt môi trường Docker
       - name: Stop Services
         if: always()
         run: docker compose down
