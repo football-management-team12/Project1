@@ -469,7 +469,7 @@ function Login() {
 
 
           {serverMessage && (
-            <p className="server-message">
+            <p className="form-error server-message-center">
               {serverMessage}
             </p>
           )}
