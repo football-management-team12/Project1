@@ -1,3 +1,4 @@
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -8,10 +9,19 @@ from flasgger import Swagger
 
 app = Flask(__name__)
 
-CORS(app)
+debug = os.getenv("DEBUG", "false").strip().lower() in (
+    "1", "true", "yes", "on"
+)
 
+frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
 
-# import blueprint sau khi có app
+if frontend_url:
+    CORS(app, resources={r"/api/*": {"origins": [frontend_url]}})
+else:
+    # Fail-safe: khong mo CORS cho moi origin khi chua cau hinh frontend.
+    CORS(app, resources={r"/api/*": {"origins": []}})
+
+# Import blueprint sau khi co app
 from routes.auth import auth_bp
 from routes.field import field_bp
 from routes.booking import booking_bp
@@ -22,30 +32,25 @@ swagger = Swagger(
     template_file="swagger.yaml"
 )
 
-
 app.register_blueprint(
     auth_bp,
     url_prefix="/api/auth"
 )
-
 
 app.register_blueprint(
     field_bp,
     url_prefix="/api/fields"
 )
 
-
 app.register_blueprint(
     booking_bp,
     url_prefix="/api/bookings"
 )
 
-
 app.register_blueprint(
     customer_booking_bp,
     url_prefix="/api/customer-bookings"
 )
-
 
 @app.route("/")
 def home():
@@ -53,10 +58,12 @@ def home():
         "message": "Backend running"
     }
 
-
 if __name__ == "__main__":
+    host = os.getenv("APP_HOST", "127.0.0.1")
+    port = int(os.getenv("APP_PORT", "5000"))
+
     app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=True
+        host=host,
+        port=port,
+        debug=debug
     )
