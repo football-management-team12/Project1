@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -13,6 +14,7 @@ import {
 
 import {
   Navigate,
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
@@ -128,6 +130,12 @@ function BookingDetail() {
 
   const navigate =
     useNavigate();
+
+  const location =
+    useLocation();
+
+  const focusedDeposit =
+    useRef(false);
 
 
   const {
@@ -296,6 +304,28 @@ function BookingDetail() {
       role,
     ]
   );
+
+
+  useEffect(() => {
+    if (
+      !location.state?.focusDeposit ||
+      !booking ||
+      loading ||
+      focusedDeposit.current
+    ) {
+      return;
+    }
+
+    focusedDeposit.current = true;
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("booking-deposit-panel")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+    });
+  }, [location.state, booking, loading]);
 
 
   if (
@@ -655,11 +685,13 @@ function BookingDetail() {
 
               {
                 !["CANCELLED", "COMPLETED"].includes(normalizedStatus) && (
-                  <DepositPanel
-                    bookingId={booking.BookingID}
-                    bookingStatus={booking.Status}
-                    onPaymentChanged={refreshBooking}
-                  />
+                  <div id="booking-deposit-panel">
+                    <DepositPanel
+                      bookingId={booking.BookingID}
+                      bookingStatus={booking.Status}
+                      onPaymentChanged={refreshBooking}
+                    />
+                  </div>
                 )
               }
 
