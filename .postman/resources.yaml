@@ -3,10 +3,10 @@ workspace:
 
 localResources:
   specs:
-    - ../swagger.yaml
+    - ../backend/swagger.yaml
 resourceNameMappings:
   specs:
-    - ../swagger.yaml: swagger.yaml
+    - ../backend/swagger.yaml: swagger.yaml
 
 # Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
 
