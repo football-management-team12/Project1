@@ -18,6 +18,9 @@ services:
       DB_USER: ${DB_USER:-ci_user}
       DB_PASSWORD: ${DB_PASSWORD:-ci_dummy_password}
       DB_TRUST_SERVER_CERTIFICATE: ${DB_TRUST_SERVER_CERTIFICATE:-yes}
+      FRONTEND_URL: ${FRONTEND_URL}
+    networks:
+      - football-network
 
 networks:
   football-network:
