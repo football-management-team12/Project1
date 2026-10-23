@@ -12,18 +12,20 @@ def get_connection():
         database = os.getenv("DB_NAME")
         user = os.getenv("DB_USER")
         password = os.getenv("DB_PASSWORD")
-        trusted_certificate = os.getenv(
+        trust_server_certificate = os.getenv(
             "DB_TRUST_SERVER_CERTIFICATE", "yes"
         )
 
-        conn = pyodbc.connect(
-            "DRIVER={ODBC Driver 17 for SQL Server};"
-            "SERVER=LAPTOP-F7NE9URR\\SQLEXPRESS;"
-            "DATABASE=FootballBookingDB;"
-            "Trusted_Connection=yes;"
-            "Encrypt=yes;"
-            "TrustServerCertificate=yes;" 
+        connection_string = (
+            f"DRIVER={{{driver}}};"
+            f"SERVER={server};"
+            f"DATABASE={database};"
+            f"UID={user};"
+            f"PWD={password};"
+            f"TrustServerCertificate={trust_server_certificate};"
         )
+
+        conn = pyodbc.connect(connection_string)
 
         return conn
 
@@ -32,3 +34,7 @@ def get_connection():
         print(e)
         return None
 
+    except Exception as e:
+        print("Unexpected error:")
+        print(e)
+        return None
