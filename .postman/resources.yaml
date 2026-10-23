@@ -3,7 +3,9 @@ workspace:
 localResources:
   specs:
     - ../postman/specs/Football Pitch Management API/swagger.yaml
+    - ../C:/Users/ADMIN/Documents/Project1/backend/swagger.yaml
 resourceNameMappings:
   specs:
     - ../postman/specs/Football Pitch Management API/swagger.yaml: swagger.yaml
     - ../postman/specs/New Specification/New Specification.yaml: New Specification.yaml
+    - ../backend/swagger.yaml: swagger.yaml

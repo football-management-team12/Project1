@@ -480,6 +480,21 @@ components:
       bearerFormat: JWT
 
   schemas:
+    PublicUser:
+      type: object
+      properties:
+        userId:
+          type: integer
+          example: 123
+        username:
+          type: string
+          example: "nguyenvana"
+        email:
+          type: string
+          example: "a@example.com"
+        role:
+          type: string
+          example: "CUSTOMER"
     FieldWithPrice:
       type: object
       properties:
