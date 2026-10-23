@@ -6,15 +6,15 @@ body:
   type: json
   content: "{\r
 
-    \  \"fullName\": \"Nguyen Van A 12345678999999999999999999\",\r
+    \  \"fullName\": \"Nguyen Van Test\",\r
 
-    \  \"username\": \"test_user12\",\r
+    \  \"username\": \"  test_user_06  \",\r
 
-    \  \"email\": \"test12@example.com\",\r
+    \  \"email\": \"  test06@example.com  \",\r
 
-    \  \"phone\": \"0901234567\",\r
+    \  \"phone\": \"0912345682\",\r
 
-    \  \"password\": \"Abc@1238\"\r
+    \  \"password\": \"Test@123456\"\r
 
     }"
 order: 10000

@@ -5,15 +5,15 @@ body:
   type: json
   content: "{\r
 
-    \  \"fullName\": \"Nguyen Van A 12345678999999999999999999\",\r
+    \"fullName\": \"Nguyen Van A\",\r
 
-    \  \"username\": \"test_user12\",\r
+    \"username\": \"test_user04\",\r
 
-    \  \"email\": \"test12@example.com\",\r
+    \"email\": \"\",\r
 
-    \  \"phone\": \"0901234567\",\r
+    \"phone\": \"0901234567\",\r
 
-    \  \"password\": \"Abc@1238\"\r
+    \"password\": \"P@ssw0rd\"\r
 
     }"
 order: 13000
