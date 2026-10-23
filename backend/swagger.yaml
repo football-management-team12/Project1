@@ -11,9 +11,6 @@ paths:
   # ------------------------------------
   # 1. API Authentication (routes/auth.py)
   # ------------------------------------
-  # ------------------------------------
-  # 1. API Authentication (routes/auth.py)
-  # ------------------------------------
   /api/auth/register:
     post:
       tags:
@@ -90,31 +87,18 @@ paths:
                 properties:
                   success: { type: boolean, example: false }
                   message: { type: string, example: "Vui lòng kiểm tra thông tin đăng nhập" }
-                  errors:
-                    type: object
-                    properties:
-                      account: { type: array, items: { type: string }, example: ["Vui lòng nhập tên đăng nhập, email hoặc số điện thoại"] }
-                      email: { type: array, items: { type: string }, example: ["Email không đúng định dạng"] }
-                      password: { type: array, items: { type: string }, example: ["Vui lòng nhập mật khẩu"] }
 
   /api/auth/me:
     get:
       tags:
         - Authentication
-      summary: "Lấy thông tin tài khoản hiện tại"
-      operationId: getCurrentUser
+      summary: "Lấy thông tin tài khoản hiện tại qua Auth"
+      operationId: getCurrentUserAuth
       security:
         - BearerAuth: []
       responses:
         '200':
           description: "Lấy thông tin thành công"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/PublicUser'
         '401':
           description: "Chưa xác thực hoặc Token không hợp lệ"
         '403':
@@ -123,7 +107,141 @@ paths:
           description: "Không tìm thấy người dùng"
 
   # ------------------------------------
-  # 2. API Fields (routes/field.py)
+  # 2. API Users (routes/user.py)
+  # ------------------------------------
+  /api/users/me:
+    get:
+      tags:
+        - Users
+      summary: "Lấy thông tin cá nhân của người dùng đang đăng nhập"
+      operationId: getMyProfile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: "Lấy thông tin cá nhân thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    example: 1
+                  fullName:
+                    type: string
+                    example: "Pham Ngoc Anh"
+                  username:
+                    type: string
+                    example: "ngocanh"
+                  email:
+                    type: string
+                    format: email
+                    example: "ngocanh@example.com"
+                  phone:
+                    type: string
+                    example: "0987654321"
+                  role:
+                    type: string
+                    example: "User"
+                  status:
+                    type: string
+                    example: "Active"
+        '401':
+          description: "Access token thiếu, sai hoặc hết hạn"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token không hợp lệ hoặc đã hết hạn"
+        '403':
+          description: "Tài khoản không hoạt động"
+        '404':
+          description: "Không tìm thấy người dùng"
+        '500':
+          description: "Lỗi server nội bộ"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Không thể tải thông tin cá nhân"
+
+    put:
+      tags:
+        - Users
+      summary: "Cập nhật thông tin cá nhân của người dùng đang đăng nhập"
+      operationId: updateMyProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fullName
+                - email
+                - phone
+              properties:
+                fullName:
+                  type: string
+                  example: "Pham Ngoc Anh Updated"
+                email:
+                  type: string
+                  format: email
+                  example: "ngocanh.new@example.com"
+                phone:
+                  type: string
+                  example: "0912345678"
+      responses:
+        '200':
+          description: "Cập nhật thông tin thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Cập nhật thông tin thành công"
+                  user:
+                    type: object
+                    properties:
+                      userId: { type: integer, example: 1 }
+                      fullName: { type: string, example: "Pham Ngoc Anh Updated" }
+                      username: { type: string, example: "ngocanh" }
+                      email: { type: string, example: "ngocanh.new@example.com" }
+                      phone: { type: string, example: "0912345678" }
+                      role: { type: string, example: "User" }
+                      status: { type: string, example: "Active" }
+        '400':
+          description: "Dữ liệu sai hoặc request chứa trường không được phép"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: false }
+                  message: { type: string, example: "Vui lòng nhập đầy đủ họ tên, email và số điện thoại" }
+        '401':
+          description: "Access token thiếu, sai hoặc hết hạn"
+        '409':
+          description: "Email hoặc số điện thoại đã tồn tại"
+        '500':
+          description: "Lỗi hệ thống khi cập nhật"
+
+  # ------------------------------------
+  # 3. API Fields (routes/field.py)
   # ------------------------------------
   /api/fields/:
     get:
@@ -174,27 +292,12 @@ paths:
                 - EndTime
                 - Price
               properties:
-                StartTime:
-                  type: string
-                  example: "06:00:00"
-                EndTime:
-                  type: string
-                  example: "07:30:00"
-                Price:
-                  type: number
-                  format: float
-                  example: 300000.0
+                StartTime: { type: string, example: "06:00:00" }
+                EndTime: { type: string, example: "07:30:00" }
+                Price: { type: number, format: float, example: 300000.0 }
       responses:
         '200':
           description: "Cập nhật giá thành công."
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Update price successfully"
         '400':
           description: "Dữ liệu đầu vào không hợp lệ."
           content:
@@ -209,30 +312,23 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   # ------------------------------------
-  # 3. AVAILABILITY ENDPOINTS
+  # 4. AVAILABILITY ENDPOINTS
   # ------------------------------------
   /api/fields/{field_id}/availability:
     get:
       tags:
         - Availability
-      summary: "Kiểm tra lịch trống của một sân bóng theo ngày (BE-05 / T123-59)"
+      summary: "Kiểm tra lịch trống của một sân bóng theo ngày"
       operationId: getFieldAvailability
       parameters:
         - name: field_id
           in: path
           required: true
-          description: "ID của sân bóng"
-          schema:
-            type: integer
-            example: 1
+          schema: { type: integer, example: 1 }
         - name: date
           in: query
           required: true
-          description: "Ngày cần kiểm tra (YYYY-MM-DD)"
-          schema:
-            type: string
-            format: date
-            example: "2026-09-26"
+          schema: { type: string, format: date, example: "2026-09-26" }
       responses:
         '200':
           description: "Chi tiết lịch trống sân bóng."
@@ -242,32 +338,20 @@ paths:
                 $ref: '#/components/schemas/SingleFieldAvailabilityResponse'
         '400':
           description: "Thiếu thông số date hoặc sai định dạng."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: "Không tìm thấy sân bóng."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
   /api/fields/availability:
     get:
       tags:
         - Availability
-      summary: "Kiểm tra lịch trống của toàn bộ sân bóng theo ngày (BE-05.1)"
+      summary: "Kiểm tra lịch trống của toàn bộ sân bóng theo ngày"
       operationId: getAllFieldsAvailability
       parameters:
         - name: date
           in: query
           required: true
-          description: "Ngày cần kiểm tra (YYYY-MM-DD)"
-          schema:
-            type: string
-            format: date
-            example: "2026-10-04"
+          schema: { type: string, format: date, example: "2026-10-04" }
       responses:
         '200':
           description: "Lịch trống của toàn bộ sân bóng."
@@ -277,13 +361,9 @@ paths:
                 $ref: '#/components/schemas/AllFieldsAvailabilityResponse'
         '400':
           description: "Thiếu thông số date hoặc sai định dạng."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
   # ------------------------------------
-  # 4. BOOKING ENDPOINTS
+  # 5. BOOKING ENDPOINTS
   # ------------------------------------
   /api/bookings/:
     post:
@@ -299,54 +379,24 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - FieldID
-                - BookingDate
-                - PriceID
+              required: [FieldID, BookingDate, PriceID]
               properties:
-                FieldID:
-                  type: integer
-                  example: 1
-                BookingDate:
-                  type: string
-                  format: date
-                  example: "2026-10-05"
-                PriceID:
-                  type: integer
-                  example: 101
-                Note:
-                  type: string
-                  example: "Cần chuẩn bị sẵn 2 bộ áo lưới"
+                FieldID: { type: integer, example: 1 }
+                BookingDate: { type: string, format: date, example: "2026-10-05" }
+                PriceID: { type: integer, example: 101 }
+                Note: { type: string, example: "Cần chuẩn bị sẵn 2 bộ áo lưới" }
       responses:
         '201':
           description: "Đặt sân thành công."
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Booking created successfully"
-                  booking:
-                    $ref: '#/components/schemas/BookingDetail'
         '400':
           description: "Dữ liệu không hợp lệ."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: "Khung giờ đã được người khác đặt."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
     get:
       tags:
         - Booking
-      summary: "Lấy danh sách lịch đặt sân (Cá nhân hoặc toàn hệ thống đối với Admin)"
+      summary: "Lấy danh sách lịch đặt sân"
       operationId: getBookings
       security:
         - BearerAuth: []
@@ -354,27 +404,14 @@ paths:
         - name: status
           in: query
           required: false
-          description: "Lọc theo trạng thái (PENDING, CONFIRMED, CANCELLED)"
-          schema:
-            type: string
-            example: "CONFIRMED"
+          schema: { type: string, example: "CONFIRMED" }
         - name: date
           in: query
           required: false
-          description: "Lọc theo ngày đặt (YYYY-MM-DD)"
-          schema:
-            type: string
-            format: date
-            example: "2026-10-05"
+          schema: { type: string, format: date, example: "2026-10-05" }
       responses:
         '200':
           description: "Danh sách lượt đặt sân."
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/BookingDetail'
 
   /api/bookings/{booking_id}:
     get:
@@ -388,23 +425,12 @@ paths:
         - name: booking_id
           in: path
           required: true
-          description: "ID của lượt đặt sân"
-          schema:
-            type: integer
-            example: 50
+          schema: { type: integer, example: 50 }
       responses:
         '200':
           description: "Chi tiết đơn đặt sân."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BookingDetail'
         '404':
           description: "Không tìm thấy lượt đặt sân."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
   /api/bookings/{booking_id}/cancel:
     put:
@@ -418,10 +444,7 @@ paths:
         - name: booking_id
           in: path
           required: true
-          description: "ID lượt đặt sân cần hủy"
-          schema:
-            type: integer
-            example: 50
+          schema: { type: integer, example: 50 }
       requestBody:
         required: false
         content:
@@ -429,26 +452,12 @@ paths:
             schema:
               type: object
               properties:
-                reason:
-                  type: string
-                  example: "Bận đột xuất không đá được"
+                reason: { type: string, example: "Bận đột xuất không đá được" }
       responses:
         '200':
           description: "Hủy đặt sân thành công."
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Booking cancelled successfully"
         '400':
-          description: "Không thể hủy lượt đặt sân này (ví dụ đã qua giờ đá)."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: "Không thể hủy lượt đặt sân này."
 
   /api/user/profile:
     get:
@@ -471,115 +480,35 @@ components:
       bearerFormat: JWT
 
   schemas:
-    # ------------------ AUTH SCHEMAS ------------------
-    UserProfile:
-      type: object
-      properties:
-        UserID:
-          type: integer
-          example: 1
-        Username:
-          type: string
-          example: "nguyenvana"
-        Email:
-          type: string
-          example: "nguyenvana@gmail.com"
-        FullName:
-          type: string
-          example: "Nguyễn Văn A"
-        PhoneNumber:
-          type: string
-          example: "0987654321"
-        Role:
-          type: string
-          example: "CUSTOMER"
-
-    # ------------------ FIELDS SCHEMAS ------------------
     FieldWithPrice:
       type: object
       properties:
-        FieldID:
-          type: integer
-          example: 1
-        FieldName:
-          type: string
-          example: "Sân 7 A1"
-        FieldType:
-          type: string
-          example: "Sân 7 người"
-        Location:
-          type: string
-          example: "Khu A"
-        Image:
-          type: string
-          nullable: true
-          example: "san_a1.jpg"
-        Status:
-          type: string
-          example: "AVAILABLE"
-        StartTime:
-          type: string
-          example: "06:00:00"
-        EndTime:
-          type: string
-          example: "07:30:00"
-        Price:
-          type: number
-          format: float
-          example: 300000.0
+        FieldID: { type: integer, example: 1 }
+        FieldName: { type: string, example: "Sân 7 A1" }
+        FieldType: { type: string, example: "Sân 7 người" }
+        Location: { type: string, example: "Khu A" }
+        Image: { type: string, nullable: true, example: "san_a1.jpg" }
+        Status: { type: string, example: "AVAILABLE" }
+        StartTime: { type: string, example: "06:00:00" }
+        EndTime: { type: string, example: "07:30:00" }
+        Price: { type: number, format: float, example: 300000.0 }
 
     Slot:
       type: object
       properties:
-        PriceID:
-          type: integer
-          example: 101
-        StartTime:
-          type: string
-          example: "06:00:00"
-        EndTime:
-          type: string
-          example: "07:30:00"
-        Price:
-          type: number
-          format: float
-          example: 300000.0
-        available:
-          type: boolean
-          example: true
+        PriceID: { type: integer, example: 101 }
+        StartTime: { type: string, example: "06:00:00" }
+        EndTime: { type: string, example: "07:30:00" }
+        Price: { type: number, format: float, example: 300000.0 }
+        available: { type: boolean, example: true }
 
-    # ------------------ AVAILABILITY SCHEMAS ------------------
     SingleFieldAvailabilityResponse:
       type: object
       properties:
-        FieldID:
-          type: integer
-          example: 1
-        FieldName:
-          type: string
-          example: "Sân 7 A1"
-        FieldType:
-          type: string
-          example: "Sân 7 người"
-        Location:
-          type: string
-          example: "Khu A"
-        FieldStatus:
-          type: string
-          example: "AVAILABLE"
-        Date:
-          type: string
-          format: date
-          example: "2026-09-26"
-        FieldAvailable:
-          type: boolean
-          example: true
-        AvailableCount:
-          type: integer
-          example: 8
-        UnavailableCount:
-          type: integer
-          example: 2
+        FieldID: { type: integer, example: 1 }
+        FieldName: { type: string, example: "Sân 7 A1" }
+        Date: { type: string, format: date, example: "2026-09-26" }
+        FieldAvailable: { type: boolean, example: true }
         Slots:
           type: array
           items:
@@ -588,33 +517,8 @@ components:
     FieldAvailabilityItem:
       type: object
       properties:
-        FieldID:
-          type: integer
-          example: 1
-        FieldName:
-          type: string
-          example: "Sân 7 A1"
-        FieldType:
-          type: string
-          example: "Sân 7 người"
-        Location:
-          type: string
-          example: "Khu A"
-        FieldStatus:
-          type: string
-          example: "AVAILABLE"
-        FieldAvailable:
-          type: boolean
-          example: true
-        AvailableCount:
-          type: integer
-          example: 8
-        UnavailableCount:
-          type: integer
-          example: 2
-        HasAvailableSlot:
-          type: boolean
-          example: true
+        FieldID: { type: integer, example: 1 }
+        FieldName: { type: string, example: "Sân 7 A1" }
         Slots:
           type: array
           items:
@@ -623,262 +527,15 @@ components:
     AllFieldsAvailabilityResponse:
       type: object
       properties:
-        Date:
-          type: string
-          format: date
-          example: "2026-10-04"
-        TotalFields:
-          type: integer
-          example: 5
-        AvailableFields:
-          type: integer
-          example: 4
-        UnavailableFields:
-          type: integer
-          example: 1
+        Date: { type: string, format: date, example: "2026-10-04" }
+        TotalFields: { type: integer, example: 5 }
         Fields:
           type: array
           items:
             $ref: '#/components/schemas/FieldAvailabilityItem'
 
-    # ------------------ BOOKING SCHEMAS ------------------
-    BookingDetail:
-      type: object
-      properties:
-        BookingID:
-          type: integer
-          example: 50
-        UserID:
-          type: integer
-          example: 1
-        FieldID:
-          type: integer
-          example: 1
-        FieldName:
-          type: string
-          example: "Sân 7 A1"
-        BookingDate:
-          type: string
-          format: date
-          example: "2026-10-05"
-        StartTime:
-          type: string
-          example: "06:00:00"
-        EndTime:
-          type: string
-          example: "07:30:00"
-        Price:
-          type: number
-          format: float
-          example: 300000.0
-        Status:
-          type: string
-          example: "CONFIRMED"
-        CreatedAt:
-          type: string
-          format: date-time
-          example: "2026-10-01T08:30:00Z"
-
-    # ------------------ ERROR SCHEMA ------------------
     ErrorResponse:
       type: object
       properties:
-        message:
-          type: string
-          example: "Thông tin yêu cầu không hợp lệ"
-        example:
-          type: string
-          nullable: true
-          example: "?date=2026-10-04"
-  /api/users/me:
-
-    get:
-
-      tags:
-        - Users
-
-      summary: "Lấy thông tin cá nhân của người dùng đang đăng nhập"
-
-      operationId: getMyProfile
-
-      security:
-        - BearerAuth: []
-
-      responses:
-
-        '200':
-
-          description: "Lấy thông tin cá nhân thành công"
-
-          content:
-
-            application/json:
-
-              schema:
-
-                type: object
-
-                properties:
-
-                  userId:
-                    type: integer
-                    example: 1
-
-                  fullName:
-                    type: string
-                    example: "Nguyen Van A"
-
-                  username:
-                    type: string
-                    example: "nguyenvana"
-
-                  email:
-                    type: string
-                    format: email
-                    example: "a@example.com"
-
-                  phone:
-                    type: string
-                    example: "0901234567"
-
-                  role:
-                    type: string
-                    example: "CUSTOMER"
-
-                  status:
-                    type: string
-                    example: "ACTIVE"
-
-
-        '401':
-
-          description: "Access token thiếu, sai hoặc hết hạn"
-
-
-        '403':
-
-          description: "Tài khoản không hoạt động"
-
-
-        '404':
-
-          description: "Không tìm thấy người dùng"
-
-
-    put:
-
-      tags:
-        - Users
-
-      summary: "Cập nhật thông tin cá nhân của người dùng đang đăng nhập"
-
-      operationId: updateMyProfile
-
-      security:
-        - BearerAuth: []
-
-      requestBody:
-
-        required: true
-
-        content:
-
-          application/json:
-
-            schema:
-
-              type: object
-
-              required:
-                - fullName
-                - email
-                - phone
-
-              properties:
-
-                fullName:
-                  type: string
-                  example: "Nguyen Van B"
-
-                email:
-                  type: string
-                  format: email
-                  example: "b@example.com"
-
-                phone:
-                  type: string
-                  example: "0907654321"
-
-
-      responses:
-
-        '200':
-
-          description: "Cập nhật thông tin thành công"
-
-          content:
-
-            application/json:
-
-              schema:
-
-                type: object
-
-                properties:
-
-                  success:
-                    type: boolean
-                    example: true
-
-                  message:
-                    type: string
-                    example: "Cập nhật thông tin thành công"
-
-                  user:
-
-                    type: object
-
-                    properties:
-
-                      userId:
-                        type: integer
-                        example: 1
-
-                      fullName:
-                        type: string
-                        example: "Nguyen Van B"
-
-                      username:
-                        type: string
-                        example: "nguyenvana"
-
-                      email:
-                        type: string
-                        example: "b@example.com"
-
-                      phone:
-                        type: string
-                        example: "0907654321"
-
-                      role:
-                        type: string
-                        example: "CUSTOMER"
-
-                      status:
-                        type: string
-                        example: "ACTIVE"
-
-
-        '400':
-
-          description: "Dữ liệu sai hoặc request chứa trường không được phép"
-
-
-        '401':
-
-          description: "Access token thiếu, sai hoặc hết hạn"
-
-
-        '409':
-
-          description: "Email hoặc số điện thoại đã tồn tại"
+        message: { type: string, example: "Thông tin yêu cầu không hợp lệ" }
+        example: { type: string, nullable: true, example: "?date=2026-10-04" }
