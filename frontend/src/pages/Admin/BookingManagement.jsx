@@ -837,6 +837,22 @@ function BookingManagement() {
                   đ
                 </strong>
               </div>
+
+              <div>
+                <span>Đã đặt cọc</span>
+
+                <strong className="booking-payment-paid">
+                  {formatPrice(selectedBooking.PaidAmount)}đ
+                </strong>
+              </div>
+
+              <div>
+                <span>Còn phải thanh toán</span>
+
+                <strong>
+                  {formatPrice(selectedBooking.RemainingAmount)}đ
+                </strong>
+              </div>
             </div>
 
             <button

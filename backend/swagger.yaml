@@ -4,13 +4,10 @@ info:
   description: "Tài liệu API Hệ thống Quản lý Sân bóng"
   version: "1.0.0"
 servers:
-  - url: "http://127.0.0.1:5000"
+  - url: "http://127.0.0.1:5001"
     description: "Local Server"
 
 paths:
-  # ------------------------------------
-  # 1. API Authentication (routes/auth.py)
-  # ------------------------------------
   # ------------------------------------
   # 1. API Authentication (routes/auth.py)
   # ------------------------------------
@@ -49,8 +46,8 @@ paths:
                       username: { type: string, example: "nguyenvana" }
                       email: { type: string, example: "a@example.com" }
                       role: { type: string, example: "CUSTOMER" }
-        '400': { description: "Dữ liệu JSON không hợp lệ hoặc thiếu trường" }
-        '500': { description: "Không thể đăng ký tài khoản" }
+        '400': { description: "Thiếu trường hoặc dữ liệu sai định dạng" }
+        '409': { description: "Username, Email hoặc Phone đã tồn tại" }
 
   /api/auth/login:
     post:
@@ -63,6 +60,10 @@ paths:
           application/json:
             schema:
               type: object
+              required: [password]
+              anyOf:
+                - required: [account]
+                - required: [email]
               properties:
                 account:
                   type: string
@@ -79,6 +80,21 @@ paths:
       responses:
         '200':
           description: "Đăng nhập thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  accessToken: { type: string, example: "eyJhbGciOiJIUzI1NiJ9..." }
+                  tokenType: { type: string, example: "Bearer" }
+                  user:
+                    type: object
+                    properties:
+                      id: { type: integer, example: 123 }
+                      userId: { type: integer, example: 123 }
+                      email: { type: string, format: email, example: "admin@gmail.com" }
+                      role: { type: string, example: "ADMIN" }
         '401':
           description: "Tên đăng nhập hoặc mật khẩu không hợp lệ"
         '400':
@@ -462,6 +478,89 @@ paths:
           description: "Trả về hồ sơ tài khoản trong token"
         '401':
           description: "Access token thiếu, sai hoặc hết hạn"
+    # UC06: Deposit VietQR demo, backend payment_service.py
+  /api/bookings/{bookingId}/deposit:
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        description: BookingID của CUSTOMER đang đăng nhập.
+        schema: { type: integer, minimum: 1 }
+    get:
+      tags: [Payments]
+      operationId: getBookingDeposit
+      summary: UC06 - Thông tin đặt cọc
+      description: Lấy trạng thái đặt cọc. Nếu quá hạn, booking PENDING và deposit PENDING có thể được chuyển sang CANCELLED/EXPIRED.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Thông tin cọc, trạng thái thanh toán và VietQR
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DepositInfoResponse' }
+        '401': { $ref: '#/components/responses/UC06Unauthorized' }
+        '403': { $ref: '#/components/responses/UC06Forbidden' }
+        '404': { $ref: '#/components/responses/UC06NotFound' }
+        '409': { $ref: '#/components/responses/UC06Conflict' }
+        '500': { $ref: '#/components/responses/UC06ServerError' }
+    post:
+      tags: [Payments]
+      operationId: createBookingDeposit
+      summary: UC06 - Tạo đặt cọc VietQR demo
+      description: Không cần request body. Backend tự tính tiền cọc; không dùng amount/paymentMethod do client truyền.
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Tạo DEPOSIT / VIETQR / PENDING
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreateDepositResponse' }
+        '401': { $ref: '#/components/responses/UC06Unauthorized' }
+        '403': { $ref: '#/components/responses/UC06Forbidden' }
+        '404': { $ref: '#/components/responses/UC06NotFound' }
+        '409': { $ref: '#/components/responses/UC06Conflict' }
+        '410': { $ref: '#/components/responses/UC06Expired' }
+        '500': { $ref: '#/components/responses/UC06ServerError' }
+  /api/payments/{paymentId}/demo-status:
+    patch:
+      tags: [Payments]
+      operationId: updateDepositDemoStatus
+      summary: UC06 - Mô phỏng trạng thái giao dịch
+      description: Chỉ hoạt động khi PAYMENT_DEMO_MODE=true. SUCCESS xác nhận booking còn PENDING và chưa quá deadline. FAILED/EXPIRED không xác nhận.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [SUCCESS, FAILED, EXPIRED]
+              additionalProperties: false
+            example: { status: SUCCESS }
+      responses:
+        '200':
+          description: Thay đổi trạng thái demo thành công, hoặc gọi lặp cùng trạng thái
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DemoStatusResponse' }
+        '400': { $ref: '#/components/responses/UC06InvalidStatus' }
+        '401': { $ref: '#/components/responses/UC06Unauthorized' }
+        '403': { $ref: '#/components/responses/UC06Forbidden' }
+        '404': { $ref: '#/components/responses/UC06NotFound' }
+        '409': { $ref: '#/components/responses/UC06Conflict' }
+        '500': { $ref: '#/components/responses/UC06ServerError' }
 
 components:
   securitySchemes:
@@ -470,7 +569,119 @@ components:
       scheme: bearer
       bearerFormat: JWT
 
+  responses:
+    UC06Unauthorized:
+      description: Thiếu, sai hoặc hết hạn JWT (401)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Access token đã hết hạn' }
+    UC06Forbidden:
+      description: Sai role, inactive hoặc demo disabled (403)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Demo payment status đang bị tắt', code: PAYMENT_DEMO_DISABLED }
+    UC06NotFound:
+      description: Booking/payment không tồn tại hoặc khác chủ sở hữu (404)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Không tìm thấy booking hoặc bạn không có quyền thao tác booking này', code: BOOKING_NOT_FOUND }
+    UC06InvalidStatus:
+      description: Status không hợp lệ (400)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Status demo không hợp lệ', code: INVALID_PAYMENT_STATUS }
+    UC06Conflict:
+      description: Trạng thái không thể xử lý, trùng deposit, số tiền sai hoặc payment đã FINAL (409)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Booking đang có giao dịch đặt cọc PENDING', code: DEPOSIT_PENDING_EXISTS }
+    UC06Expired:
+      description: Booking đã quá hạn tạo đặt cọc (410)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Booking đã quá thời hạn đặt cọc', code: DEPOSIT_DEADLINE_EXPIRED }
+    UC06ServerError:
+      description: Lỗi DB hoặc lỗi server (500)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Không thể kết nối database', code: DATABASE_UNAVAILABLE }
   schemas:
+    UC06Error:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+        code: { type: string, description: Có thể không xuất hiện ở lỗi JWT và lỗi server không xác định }
+    DepositBooking:
+      type: object
+      properties:
+        bookingId: { type: integer, example: 1001 }
+        fieldId: { type: integer, example: 2 }
+        bookingDate: { type: string, example: '2026-10-25' }
+        startTime: { type: string, example: '18:00' }
+        endTime: { type: string, example: '19:30' }
+        totalAmount: { type: number, example: 600000 }
+        status: { type: string, example: PENDING }
+        createdAt: { type: string, format: date-time, nullable: true }
+    DepositPayment:
+      type: object
+      properties:
+        paymentId: { type: integer, example: 501 }
+        bookingId: { type: integer, example: 1001 }
+        paymentType: { type: string, example: DEPOSIT }
+        paymentMethod: { type: string, example: VIETQR }
+        amount: { type: number, example: 200000 }
+        status: { type: string, enum: [PENDING, SUCCESS, FAILED, EXPIRED] }
+        reference: { type: string, example: 'BOOKING-1001-DEPOSIT' }
+        deadline: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time, nullable: true }
+        updatedAt: { type: string, format: date-time, nullable: true }
+    DepositVietQr:
+      type: object
+      properties:
+        bankId: { type: string, nullable: true, example: MB }
+        accountNo: { type: string, nullable: true, example: '0000000000' }
+        accountName: { type: string, example: TEAM 12 }
+        amount: { type: number, example: 200000 }
+        content: { type: string, example: 'BOOKING-1001-DEPOSIT' }
+        imageUrl: { type: string, nullable: true, example: 'https://img.vietqr.io/image/MB-0000000000-compact2.png?amount=200000&addInfo=BOOKING-1001-DEPOSIT&accountName=TEAM%2012' }
+    DepositInfoResponse:
+      type: object
+      properties:
+        booking: { $ref: '#/components/schemas/DepositBooking' }
+        depositAmount: { type: number, example: 200000 }
+        depositRate: { type: number, example: 0.3333333333333333 }
+        depositRatio: { type: string, example: '1/3' }
+        depositRoundStep: { type: integer, example: 100000 }
+        depositMinAmount: { type: integer, example: 100000 }
+        deadline: { type: string, format: date-time, nullable: true }
+        isExpired: { type: boolean, example: false }
+        currentPaymentStatus: { type: string, example: NOT_CREATED }
+        payment:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/DepositPayment' }]
+        vietQr: { $ref: '#/components/schemas/DepositVietQr' }
+        demoMode: { type: boolean, example: true }
+    CreateDepositResponse:
+      allOf:
+        - { $ref: '#/components/schemas/DepositPayment' }
+        - type: object
+          properties:
+            depositRatio: { type: string, example: '1/3' }
+            vietQr: { $ref: '#/components/schemas/DepositVietQr' }
+            demoMode: { type: boolean, example: true }
+    DemoStatusResponse:
+      type: object
+      properties:
+        message: { type: string, example: 'Cập nhật trạng thái giao dịch thành công' }
+        payment: { $ref: '#/components/schemas/DepositPayment' }
     # ------------------ AUTH SCHEMAS ------------------
     UserProfile:
       type: object

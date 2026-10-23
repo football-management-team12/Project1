@@ -239,3 +239,63 @@ export const getCustomerBookingDetail =
       }
     );
   };
+
+  // =========================================================
+// UC06 - DEPOSIT
+// =========================================================
+
+export const getDepositInfo =
+  async (
+    bookingID
+  ) => {
+
+    return apiRequest(
+      `/api/bookings/${encodeURIComponent(
+        bookingID
+      )}/deposit`,
+      {
+        method:
+          "GET",
+      }
+    );
+  };
+
+
+export const createDeposit =
+  async (
+    bookingID
+  ) => {
+
+    return apiRequest(
+      `/api/bookings/${encodeURIComponent(
+        bookingID
+      )}/deposit`,
+      {
+        method:
+          "POST",
+      }
+    );
+  };
+
+
+export const updateDepositDemoStatus =
+  async (
+    paymentID,
+    status
+  ) => {
+
+    return apiRequest(
+      `/api/payments/${encodeURIComponent(
+        paymentID
+      )}/demo-status`,
+      {
+        method:
+          "PATCH",
+
+        body:
+          JSON.stringify({
+            status,
+          }),
+      }
+    );
+  };

@@ -9,7 +9,8 @@ from flask import (
 from database import get_connection
 
 from services.availability_service import (
-    build_availability_slots
+    build_availability_slots,
+    expire_pending_bookings,
 )
 
 from services.jwt_service import (
@@ -50,6 +51,7 @@ def get_fields():
             }), 500
 
         cursor = conn.cursor()
+
 
         sql = """
             SELECT
@@ -239,6 +241,7 @@ def update_field_price(
 
         cursor = conn.cursor()
 
+
         sql = """
             UPDATE FieldPrices
 
@@ -386,6 +389,9 @@ def get_field_availability(
             }), 500
 
         cursor = conn.cursor()
+
+        expire_pending_bookings(cursor)
+        conn.commit()
 
         # ====================================================
         # CHECK FIELD EXISTS
@@ -754,6 +760,9 @@ def get_all_fields_availability():
             }), 500
 
         cursor = conn.cursor()
+
+        expire_pending_bookings(cursor)
+        conn.commit()
 
         # ====================================================
         # QUERY 1

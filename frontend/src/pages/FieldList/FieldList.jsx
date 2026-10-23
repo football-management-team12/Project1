@@ -343,9 +343,11 @@ const FieldList = () => {
     }
 
 
-    const loadAvailability = async () => {
+    const loadAvailability = async (showLoading = true) => {
 
-      setAvailabilityLoading(true);
+      if (showLoading) {
+        setAvailabilityLoading(true);
+      }
 
       setAvailabilityError("");
 
@@ -379,18 +381,25 @@ const FieldList = () => {
 
         if (!cancelled) {
 
-          setAvailabilityLoading(false);
+          if (showLoading) {
+            setAvailabilityLoading(false);
+          }
         }
       }
     };
 
 
     loadAvailability();
+    const refreshInterval = window.setInterval(
+      () => loadAvailability(false),
+      30_000
+    );
 
 
     return () => {
 
       cancelled = true;
+      window.clearInterval(refreshInterval);
     };
 
   }, [selectedDate]);

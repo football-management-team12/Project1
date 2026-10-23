@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -13,12 +14,16 @@ import {
 
 import {
   Navigate,
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
 
 import Navbar
   from "../../components/Navbar/Navbar";
+
+import DepositPanel
+  from "../../components/DepositPanel/DepositPanel";
 
 import {
   getCustomerBookingDetail,
@@ -126,6 +131,12 @@ function BookingDetail() {
   const navigate =
     useNavigate();
 
+  const location =
+    useLocation();
+
+  const focusedDeposit =
+    useRef(false);
+
 
   const {
     bookingId,
@@ -169,6 +180,16 @@ function BookingDetail() {
     )
       .trim()
       .toUpperCase();
+
+
+  const refreshBooking = async () => {
+    const result = await getCustomerBookingDetail(
+      user.UserID,
+      bookingId,
+    );
+
+    setBooking(result);
+  };
 
 
   useEffect(
@@ -283,6 +304,28 @@ function BookingDetail() {
       role,
     ]
   );
+
+
+  useEffect(() => {
+    if (
+      !location.state?.focusDeposit ||
+      !booking ||
+      loading ||
+      focusedDeposit.current
+    ) {
+      return;
+    }
+
+    focusedDeposit.current = true;
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("booking-deposit-panel")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+    });
+  }, [location.state, booking, loading]);
 
 
   if (
@@ -609,39 +652,48 @@ function BookingDetail() {
 
                   </div>
 
+                  <div className="booking-detail-row">
 
-                  <div className="booking-detail-payment">
+                    <ReceiptText size={19} />
 
-                    <span>
-                      Trạng thái thanh toán
-                    </span>
+                    <div>
+                      <span>Đã đặt cọc</span>
+                      <strong className="booking-detail-payment-amount booking-detail-paid">
+                        {formatMoney(booking.PaidAmount)}đ
+                      </strong>
+                    </div>
 
+                  </div>
 
-                    <strong>
+                  <div className="booking-detail-row">
 
-                      {
-                        booking.PaymentStatus ||
-                        "Chưa có thông tin thanh toán"
-                      }
+                    <ReceiptText size={19} />
 
-                    </strong>
-
-
-                    {
-                      !booking.PaymentStatus && (
-
-                        <small>
-                          Chức năng thanh toán sẽ được tích hợp ở PAYMENT-01.
-                        </small>
-
-                      )
-                    }
+                    <div>
+                      <span>Còn phải thanh toán</span>
+                      <strong className="booking-detail-payment-amount booking-detail-remaining">
+                        {formatMoney(booking.RemainingAmount)}đ
+                      </strong>
+                    </div>
 
                   </div>
 
                 </section>
 
               </div>
+
+
+              {
+                !["CANCELLED", "COMPLETED"].includes(normalizedStatus) && (
+                  <div id="booking-deposit-panel">
+                    <DepositPanel
+                      bookingId={booking.BookingID}
+                      bookingStatus={booking.Status}
+                      onPaymentChanged={refreshBooking}
+                    />
+                  </div>
+                )
+              }
 
 
               <section className="booking-detail-customer">

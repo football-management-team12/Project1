@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, request
 from database import get_connection
 from services.availability_service import (
     booking_is_cancelled,
+    expire_pending_bookings,
     is_time_overlap,
 )
 from services.jwt_service import (
@@ -130,6 +131,14 @@ def row_to_booking(row):
         "TotalAmount": float(
             row.TotalAmount or 0
         ),
+        "PaidAmount": float(
+            getattr(row, "PaidAmount", 0) or 0
+        ),
+        "RemainingAmount": max(
+            float(row.TotalAmount or 0)
+            - float(getattr(row, "PaidAmount", 0) or 0),
+            0,
+        ),
         "Status": str(
             row.Status or ""
         ).strip().upper(),
@@ -221,7 +230,8 @@ def get_booking_row(
 
             U.FullName,
             U.Phone,
-            U.Email
+            U.Email,
+            PaymentTotals.PaidAmount
 
         FROM Bookings B
 
@@ -230,6 +240,21 @@ def get_booking_row(
 
         INNER JOIN Users U
             ON B.UserID = U.UserID
+
+        OUTER APPLY
+        (
+            SELECT
+                SUM(
+                    CASE
+                        WHEN UPPER(LTRIM(RTRIM(P.Status))) = 'SUCCESS'
+                        THEN P.Amount
+                        ELSE 0
+                    END
+                ) AS PaidAmount
+            FROM Payments P
+            WHERE P.BookingID = B.BookingID
+              AND P.PaymentType = 'DEPOSIT'
+        ) PaymentTotals
 
         WHERE B.BookingID = ?
         """,
@@ -405,6 +430,8 @@ def create_booking():
         cursor.execute(
             "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"
         )
+
+        expire_pending_bookings(cursor)
 
         # ====================================================
         # CHECK USER
