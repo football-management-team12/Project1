@@ -278,8 +278,8 @@ def authenticate_user(
 
             FROM Users
 
-            WHERE Username = ?
-               OR Email = ?
+            WHERE Username COLLATE Latin1_General_100_CS_AS = ?
+               OR Email COLLATE Latin1_General_100_CS_AS = ?
                OR Phone = ?
             """,
 
@@ -296,7 +296,7 @@ def authenticate_user(
 
             raise AuthenticationError(
 
-                "Sai tài khoản hoặc mật khẩu",
+                "Tên đăng nhập hoặc mật khẩu không hợp lệ",
 
                 401,
             )
@@ -338,7 +338,7 @@ def authenticate_user(
 
             raise AuthenticationError(
 
-                "Sai tài khoản hoặc mật khẩu",
+                "Tên đăng nhập hoặc mật khẩu không hợp lệ",
 
                 401,
             )

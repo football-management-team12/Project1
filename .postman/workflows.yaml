@@ -8,11 +8,13 @@ workflows:
     - spec: ../postman/specs/Football Pitch Management API/swagger.yaml
       collection: ../postman/collections/Football Pitch Management API-1
       options:
+        folderStrategy: Tags
         syncExamples: false
         deleteOrphanedRequests: false
   syncCollectionToSpec:
     - spec: ../postman/specs/Football Pitch Management API/swagger.yaml
       collection: ../postman/collections/Football Pitch Management API-1
       options:
+        folderStrategy: Tags
         syncExamples: false
         deleteOrphanedRequests: false

@@ -16,6 +16,7 @@ import {
 
 import logoIcon
   from "../../assets/icons/ball.png";
+
 import {
   getStoredUser,
   logoutUser,
@@ -30,12 +31,15 @@ function Navbar() {
     useNavigate();
 
 
-  const [user, setUser] =
+  const [
+    user,
+    setUser,
+  ] =
     useState(null);
 
 
   // =========================================================
-  // LOAD CURRENT USER
+  // LOAD USER
   // =========================================================
 
   const loadUser = () => {
@@ -47,7 +51,7 @@ function Navbar() {
 
 
   // =========================================================
-  // LISTEN AUTH CHANGE
+  // AUTH CHANGE
   // =========================================================
 
   useEffect(() => {
@@ -55,10 +59,11 @@ function Navbar() {
     loadUser();
 
 
-    const handleAuthChanged = () => {
+    const handleAuthChanged =
+      () => {
 
-      loadUser();
-    };
+        loadUser();
+      };
 
 
     window.addEventListener(
@@ -84,20 +89,22 @@ function Navbar() {
 
   const handleLogout = () => {
 
-  logoutUser();
+    logoutUser();
 
 
-  setUser(null);
+    setUser(
+      null
+    );
 
 
-  navigate(
-    "/",
-    {
-      replace:
-        true,
-    }
-  );
-};
+    navigate(
+      "/",
+      {
+        replace:
+          true,
+      }
+    );
+  };
 
 
   // =========================================================
@@ -121,9 +128,7 @@ function Navbar() {
       <div className="navbar-container">
 
 
-        {/* ===================================================
-            LOGO
-        =================================================== */}
+        {/* LOGO */}
 
         <Link
           to="/"
@@ -143,9 +148,7 @@ function Navbar() {
         </Link>
 
 
-        {/* ===================================================
-            MENU
-        =================================================== */}
+        {/* MENU */}
 
         <nav className="navbar-menu">
 
@@ -224,9 +227,7 @@ function Navbar() {
         </nav>
 
 
-        {/* ===================================================
-            AUTH
-        =================================================== */}
+        {/* AUTH */}
 
         {
           user
@@ -234,7 +235,14 @@ function Navbar() {
 
               <div className="navbar-user-area">
 
-                <div className="navbar-user-info">
+
+                {/* CLICK USER -> PROFILE */}
+
+                <Link
+                  to="/profile"
+                  className="navbar-user-info"
+                  title="Thông tin cá nhân"
+                >
 
                   <div className="navbar-user-avatar">
 
@@ -257,13 +265,15 @@ function Navbar() {
 
                   </div>
 
-                </div>
+                </Link>
 
 
                 <button
                   type="button"
                   className="navbar-logout-button"
-                  onClick={handleLogout}
+                  onClick={
+                    handleLogout
+                  }
                 >
 
                   <LogOut

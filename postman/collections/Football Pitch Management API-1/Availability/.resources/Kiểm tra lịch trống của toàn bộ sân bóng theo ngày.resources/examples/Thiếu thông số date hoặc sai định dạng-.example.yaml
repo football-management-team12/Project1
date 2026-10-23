@@ -1,0 +1,43 @@
+$kind: http-example
+name: Thiếu thông số date hoặc sai định dạng.
+request:
+  url: "{{baseUrl}}/api/fields/availability?date=2026-10-04"
+  method: GET
+  headers:
+    Accept: application/json
+  queryParams:
+    - key: date
+      value: 2026-10-04
+      disabled: false
+      description: Ngày cần kiểm tra (YYYY-MM-DD)
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "type": "string",
+        "nullable": true,
+        "example": "?date=2026-10-04"
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Thông tin yêu cầu không hợp lệ"
+          },
+          "example": {
+            "type": "string",
+            "example": "?date=2026-10-04"
+          }
+        }
+      }
+order: 2000

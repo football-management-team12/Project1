@@ -45,6 +45,9 @@ import BookingDetail
 import Pricing
   from "../pages/Pricing/Pricing";
 
+import Profile
+  from "../pages/Profile/Profile";
+
 import ProtectedRoute
   from "../components/ProtectedRoute/ProtectedRoute";
 
@@ -54,6 +57,11 @@ function AppRoutes() {
   return (
 
     <Routes>
+
+
+      {/* =====================================================
+          PUBLIC
+      ====================================================== */}
 
       <Route
         path="/"
@@ -87,70 +95,6 @@ function AppRoutes() {
       />
 
 
-      {/* =====================================================
-          CUSTOMER
-      ====================================================== */}
-
-      <Route
-        path="/booking"
-        element={
-          <ProtectedRoute
-            allowedRoles={[
-              "CUSTOMER"
-            ]}
-          >
-            <Booking />
-          </ProtectedRoute>
-        }
-      />
-
-
-      <Route
-        path="/booking/confirm"
-        element={
-          <ProtectedRoute
-            allowedRoles={[
-              "CUSTOMER"
-            ]}
-          >
-            <BookingConfirm />
-          </ProtectedRoute>
-        }
-      />
-
-
-      <Route
-        path="/bookings"
-        element={
-          <ProtectedRoute
-            allowedRoles={[
-              "CUSTOMER"
-            ]}
-          >
-            <BookingHistory />
-          </ProtectedRoute>
-        }
-      />
-
-
-      <Route
-        path="/bookings/:bookingId"
-        element={
-          <ProtectedRoute
-            allowedRoles={[
-              "CUSTOMER"
-            ]}
-          >
-            <BookingDetail />
-          </ProtectedRoute>
-        }
-      />
-
-
-      {/* =====================================================
-          PUBLIC
-      ====================================================== */}
-
       <Route
         path="/pricing"
         element={
@@ -168,19 +112,112 @@ function AppRoutes() {
 
 
       {/* =====================================================
-          STAFF / ADMIN
+          AUTHENTICATED USER
+      ====================================================== */}
+
+      <Route
+        path="/profile"
+        element={
+
+          <ProtectedRoute>
+
+            <Profile />
+
+          </ProtectedRoute>
+        }
+      />
+
+
+      {/* =====================================================
+          CUSTOMER
+      ====================================================== */}
+
+      <Route
+        path="/booking"
+        element={
+
+          <ProtectedRoute
+            allowedRoles={[
+              "CUSTOMER"
+            ]}
+          >
+
+            <Booking />
+
+          </ProtectedRoute>
+        }
+      />
+
+
+      <Route
+        path="/booking/confirm"
+        element={
+
+          <ProtectedRoute
+            allowedRoles={[
+              "CUSTOMER"
+            ]}
+          >
+
+            <BookingConfirm />
+
+          </ProtectedRoute>
+        }
+      />
+
+
+      <Route
+        path="/bookings"
+        element={
+
+          <ProtectedRoute
+            allowedRoles={[
+              "CUSTOMER"
+            ]}
+          >
+
+            <BookingHistory />
+
+          </ProtectedRoute>
+        }
+      />
+
+
+      <Route
+        path="/bookings/:bookingId"
+        element={
+
+          <ProtectedRoute
+            allowedRoles={[
+              "CUSTOMER"
+            ]}
+          >
+
+            <BookingDetail />
+
+          </ProtectedRoute>
+        }
+      />
+
+
+      {/* =====================================================
+          ADMIN
+          Giữ nguyên scope hiện tại của source.
       ====================================================== */}
 
       <Route
         path="/admin"
         element={
+
           <ProtectedRoute
             allowedRoles={[
               "ADMIN",
               "STAFF",
             ]}
           >
+
             <AdminLayout />
+
           </ProtectedRoute>
         }
       >

@@ -207,8 +207,19 @@
   border-radius: 9px;
 
   background: #f0fdf4;
+
+  color: inherit;
+
+  text-decoration: none;
+
+  transition:
+    background 0.2s ease;
 }
 
+
+.navbar-user-info:hover {
+  background: #dcfce7;
+}
 
 .navbar-user-avatar {
   width: 30px;

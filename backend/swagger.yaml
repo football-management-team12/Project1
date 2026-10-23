@@ -11,6 +11,9 @@ paths:
   # ------------------------------------
   # 1. API Authentication (routes/auth.py)
   # ------------------------------------
+  # ------------------------------------
+  # 1. API Authentication (routes/auth.py)
+  # ------------------------------------
   /api/auth/register:
     post:
       tags:
@@ -46,8 +49,8 @@ paths:
                       username: { type: string, example: "nguyenvana" }
                       email: { type: string, example: "a@example.com" }
                       role: { type: string, example: "CUSTOMER" }
-        '400': { description: "Thiếu trường hoặc dữ liệu sai định dạng" }
-        '409': { description: "Username, Email hoặc Phone đã tồn tại" }
+        '400': { description: "Dữ liệu JSON không hợp lệ hoặc thiếu trường" }
+        '500': { description: "Không thể đăng ký tài khoản" }
 
   /api/auth/login:
     post:
@@ -63,15 +66,61 @@ paths:
               properties:
                 account:
                   type: string
-                  example: "admin"
+                  description: "Username, email hoặc số điện thoại"
+                  example: "nguyenvana"
+                email:
+                  type: string
+                  format: email
+                  example: "admin@gmail.com"
                 password:
                   type: string
+                  format: password
                   example: "123456"
       responses:
         '200':
           description: "Đăng nhập thành công"
         '401':
-          description: "Sai tài khoản hoặc mật khẩu"
+          description: "Tên đăng nhập hoặc mật khẩu không hợp lệ"
+        '400':
+          description: "Thiếu trường hoặc account không đúng định dạng"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: false }
+                  message: { type: string, example: "Vui lòng kiểm tra thông tin đăng nhập" }
+                  errors:
+                    type: object
+                    properties:
+                      account: { type: array, items: { type: string }, example: ["Vui lòng nhập tên đăng nhập, email hoặc số điện thoại"] }
+                      email: { type: array, items: { type: string }, example: ["Email không đúng định dạng"] }
+                      password: { type: array, items: { type: string }, example: ["Vui lòng nhập mật khẩu"] }
+
+  /api/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: "Lấy thông tin tài khoản hiện tại"
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: "Lấy thông tin thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/PublicUser'
+        '401':
+          description: "Chưa xác thực hoặc Token không hợp lệ"
+        '403':
+          description: "Tài khoản hiện không hoạt động"
+        '404':
+          description: "Không tìm thấy người dùng"
 
   # ------------------------------------
   # 2. API Fields (routes/field.py)
@@ -401,6 +450,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/user/profile:
+    get:
+      tags:
+        - Users
+      summary: "Lấy hồ sơ bằng Bearer token (legacy path)"
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: "Trả về hồ sơ tài khoản trong token"
+        '401':
+          description: "Access token thiếu, sai hoặc hết hạn"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -628,3 +690,195 @@ components:
           type: string
           nullable: true
           example: "?date=2026-10-04"
+  /api/users/me:
+
+    get:
+
+      tags:
+        - Users
+
+      summary: "Lấy thông tin cá nhân của người dùng đang đăng nhập"
+
+      operationId: getMyProfile
+
+      security:
+        - BearerAuth: []
+
+      responses:
+
+        '200':
+
+          description: "Lấy thông tin cá nhân thành công"
+
+          content:
+
+            application/json:
+
+              schema:
+
+                type: object
+
+                properties:
+
+                  userId:
+                    type: integer
+                    example: 1
+
+                  fullName:
+                    type: string
+                    example: "Nguyen Van A"
+
+                  username:
+                    type: string
+                    example: "nguyenvana"
+
+                  email:
+                    type: string
+                    format: email
+                    example: "a@example.com"
+
+                  phone:
+                    type: string
+                    example: "0901234567"
+
+                  role:
+                    type: string
+                    example: "CUSTOMER"
+
+                  status:
+                    type: string
+                    example: "ACTIVE"
+
+
+        '401':
+
+          description: "Access token thiếu, sai hoặc hết hạn"
+
+
+        '403':
+
+          description: "Tài khoản không hoạt động"
+
+
+        '404':
+
+          description: "Không tìm thấy người dùng"
+
+
+    put:
+
+      tags:
+        - Users
+
+      summary: "Cập nhật thông tin cá nhân của người dùng đang đăng nhập"
+
+      operationId: updateMyProfile
+
+      security:
+        - BearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+
+              type: object
+
+              required:
+                - fullName
+                - email
+                - phone
+
+              properties:
+
+                fullName:
+                  type: string
+                  example: "Nguyen Van B"
+
+                email:
+                  type: string
+                  format: email
+                  example: "b@example.com"
+
+                phone:
+                  type: string
+                  example: "0907654321"
+
+
+      responses:
+
+        '200':
+
+          description: "Cập nhật thông tin thành công"
+
+          content:
+
+            application/json:
+
+              schema:
+
+                type: object
+
+                properties:
+
+                  success:
+                    type: boolean
+                    example: true
+
+                  message:
+                    type: string
+                    example: "Cập nhật thông tin thành công"
+
+                  user:
+
+                    type: object
+
+                    properties:
+
+                      userId:
+                        type: integer
+                        example: 1
+
+                      fullName:
+                        type: string
+                        example: "Nguyen Van B"
+
+                      username:
+                        type: string
+                        example: "nguyenvana"
+
+                      email:
+                        type: string
+                        example: "b@example.com"
+
+                      phone:
+                        type: string
+                        example: "0907654321"
+
+                      role:
+                        type: string
+                        example: "CUSTOMER"
+
+                      status:
+                        type: string
+                        example: "ACTIVE"
+
+
+        '400':
+
+          description: "Dữ liệu sai hoặc request chứa trường không được phép"
+
+
+        '401':
+
+          description: "Access token thiếu, sai hoặc hết hạn"
+
+
+        '409':
+
+          description: "Email hoặc số điện thoại đã tồn tại"

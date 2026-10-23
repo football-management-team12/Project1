@@ -1,3 +1,5 @@
+import re
+
 from flask import (
     Blueprint,
     jsonify,
@@ -49,6 +51,9 @@ def to_public_user(
 
     return {
 
+        "id":
+            user["UserID"],
+
         "userId":
             user["UserID"],
 
@@ -81,19 +86,15 @@ def to_public_user(
 )
 def login():
 
-    data = (
-        request.get_json(
-            silent=True
-        )
-        or {}
-    )
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        data = {}
 
-    account = str(
-        data.get(
-            "account"
-        )
-        or ""
-    ).strip()
+    account_field = "email" if "email" in data and "account" not in data else "account"
+    account_value = data.get("account")
+    if account_value is None:
+        account_value = data.get("email")
+    account = str(account_value or "").strip()
 
     password = str(
         data.get(
@@ -102,18 +103,34 @@ def login():
         or ""
     )
 
-    if (
-        not account
-        or
-        not password
-    ):
+    errors = {}
+    if not account:
+        errors[account_field] = [
+            "Email là bắt buộc" if account_field == "email"
+            else "Vui lòng nhập tên đăng nhập, email hoặc số điện thoại"
+        ]
+    if not password:
+        errors["password"] = ["Vui lòng nhập mật khẩu"]
+    if account:
+        is_valid_email = re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", account)
+        is_valid_username = re.fullmatch(r"[A-Za-z0-9_]{4,30}", account)
+        is_valid_phone = re.fullmatch(r"0\d{9}", account)
+        if not (is_valid_email or is_valid_username or is_valid_phone):
+            if "@" in account or "." in account:
+                errors["email"] = ["Email không đúng định dạng"]
+            else:
+                errors["account"] = ["Tài khoản không đúng định dạng"]
 
+    if errors:
         return jsonify({
             "success":
                 False,
 
             "message":
-                "Vui lòng nhập tài khoản và mật khẩu"
+                "Vui lòng kiểm tra thông tin đăng nhập",
+
+            "errors":
+                errors,
         }), 400
 
     try:

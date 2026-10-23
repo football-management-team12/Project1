@@ -1,4 +1,6 @@
-import { useState } from "react";
+import {
+  useState,
+} from "react";
 
 import {
   Navigate,
@@ -9,38 +11,73 @@ import {
 
 import "../../pages/Admin/Admin.css";
 
-const MANAGER_ROLES = ["ADMIN", "STAFF"];
+
+const MANAGER_ROLES = [
+  "ADMIN",
+  "STAFF",
+];
+
 
 const getStoredUser = () => {
+
   try {
-    const rawUser = localStorage.getItem("user");
+
+    const rawUser =
+      localStorage.getItem(
+        "user"
+      );
+
 
     if (!rawUser) {
       return null;
     }
 
-    const savedUser = JSON.parse(rawUser);
+
+    const savedUser =
+      JSON.parse(
+        rawUser
+      );
+
 
     return savedUser?.UserID
       ? savedUser
       : null;
+
   } catch {
+
     return null;
   }
 };
 
+
 function AdminLayout() {
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  const [user] = useState(getStoredUser);
+  const navigate =
+    useNavigate();
 
-  const role = String(user?.Role || "")
-    .trim()
-    .toUpperCase();
+
+  const location =
+    useLocation();
+
+
+  const [user] =
+    useState(
+      getStoredUser
+    );
+
+
+  const role =
+    String(
+      user?.Role || ""
+    )
+      .trim()
+      .toUpperCase();
+
 
   if (!user) {
+
     return (
+
       <Navigate
         to="/login"
         replace
@@ -48,8 +85,15 @@ function AdminLayout() {
     );
   }
 
-  if (!MANAGER_ROLES.includes(role)) {
+
+  if (
+    !MANAGER_ROLES.includes(
+      role
+    )
+  ) {
+
     return (
+
       <Navigate
         to="/fields"
         replace
@@ -57,32 +101,53 @@ function AdminLayout() {
     );
   }
 
-  const isAdmin = role === "ADMIN";
 
-  const isActive = (path) => {
-      if (path === "/admin") {
-        return location.pathname === "/admin";
-      }
+  const isAdmin =
+    role === "ADMIN";
+
+
+  const isActive = (
+    path
+  ) => {
+
+    if (
+      path === "/admin"
+    ) {
 
       return (
-        location.pathname === path ||
-        location.pathname.startsWith(`${path}/`)
+        location.pathname
+        === "/admin"
       );
-    };
+    }
 
-    const handleLogout = () => {
+
+    return (
+
+      location.pathname === path
+      ||
+      location.pathname.startsWith(
+        `${path}/`
+      )
+    );
+  };
+
+
+  const handleLogout = () => {
 
     localStorage.removeItem(
       "user"
     );
 
+
     localStorage.removeItem(
       "accessToken"
     );
 
+
     localStorage.removeItem(
       "bookingDraft"
     );
+
 
     sessionStorage.removeItem(
       "bookingDraft"
@@ -105,100 +170,188 @@ function AdminLayout() {
     );
   };
 
+
   return (
+
     <div className="admin-container">
+
       <aside className="sidebar">
-        <h2>⚽ SÂN BÓNG</h2>
+
+        <h2>
+          ⚽ SÂN BÓNG
+        </h2>
+
 
         <ul>
+
           <li
             className={
-              isActive("/admin")
+              isActive(
+                "/admin"
+              )
                 ? "active"
                 : ""
             }
-            onClick={() =>
-              navigate("/admin")
+            onClick={
+              () =>
+                navigate(
+                  "/admin"
+                )
             }
           >
             Tổng quan
           </li>
 
-          {isAdmin && (
-            <li
-              className={
-                isActive("/admin/fields")
-                  ? "active"
-                  : ""
-              }
-              onClick={() =>
-                navigate("/admin/fields")
-              }
-            >
-              Quản lý sân bóng
-            </li>
-          )}
+
+          {
+            isAdmin
+            &&
+            (
+
+              <li
+                className={
+                  isActive(
+                    "/admin/fields"
+                  )
+                    ? "active"
+                    : ""
+                }
+                onClick={
+                  () =>
+                    navigate(
+                      "/admin/fields"
+                    )
+                }
+              >
+                Quản lý sân bóng
+              </li>
+            )
+          }
+
 
           <li
             className={
-              isActive("/admin/bookings")
+              isActive(
+                "/admin/bookings"
+              )
                 ? "active"
                 : ""
             }
-            onClick={() =>
-              navigate("/admin/bookings")
+            onClick={
+              () =>
+                navigate(
+                  "/admin/bookings"
+                )
             }
           >
             Quản lý đặt sân
           </li>
 
-          {isAdmin && (
-            <>
-              <li>Quản lý khách hàng</li>
 
-              <li>Quản lý nhân viên</li>
+          {/* UC03 */}
 
-              <li>Hóa đơn & thanh toán</li>
+          <li
+            onClick={
+              () =>
+                navigate(
+                  "/profile"
+                )
+            }
+          >
+            Thông tin cá nhân
+          </li>
 
-              <li>Thống kê & báo cáo</li>
 
-              <li>Cài đặt</li>
-            </>
-          )}
+          {
+            isAdmin
+            &&
+            (
+              <>
+
+                <li>
+                  Quản lý khách hàng
+                </li>
+
+                <li>
+                  Quản lý nhân viên
+                </li>
+
+                <li>
+                  Hóa đơn & thanh toán
+                </li>
+
+                <li>
+                  Thống kê & báo cáo
+                </li>
+
+                <li>
+                  Cài đặt
+                </li>
+
+              </>
+            )
+          }
+
         </ul>
+
 
         <div
           className="logout"
-          onClick={handleLogout}
+          onClick={
+            handleLogout
+          }
         >
           ↪ Đăng xuất
         </div>
+
       </aside>
 
+
       <main className="admin-content">
+
         <div className="top-header">
+
           <input
             placeholder="🔍 Tìm kiếm nhanh..."
           />
 
+
           <div className="admin-user">
-            <span>🔔</span>
+
+            <span>
+              🔔
+            </span>
+
 
             <div>
+
               <b>
-                {user?.FullName ||
-                  user?.Email ||
-                  "Tài khoản quản lý"}
+                {
+                  user?.FullName
+                  ||
+                  user?.Email
+                  ||
+                  "Tài khoản quản lý"
+                }
               </b>
 
+
               <small>
-                {role === "STAFF"
-                  ? "Nhân viên"
-                  : "Quản trị viên"}
+
+                {
+                  role === "STAFF"
+                    ? "Nhân viên"
+                    : "Quản trị viên"
+                }
+
               </small>
+
             </div>
+
           </div>
+
         </div>
+
 
         <Outlet
           context={{
@@ -207,10 +360,12 @@ function AdminLayout() {
             isAdmin,
           }}
         />
+
       </main>
+
     </div>
   );
 }
 
-export default AdminLayout;
 
+export default AdminLayout;
