@@ -146,14 +146,16 @@ function Booking() {
     }
 
     let active = true;
+    setSelectedSlot(null);
 
 
     const loadAvailability =
-      async () => {
+      async (showLoading = true) => {
         try {
-          setLoading(true);
+          if (showLoading) {
+            setLoading(true);
+          }
           setError("");
-          setSelectedSlot(null);
 
           const data =
             await getFieldAvailability(
@@ -178,7 +180,7 @@ function Booking() {
             "Không thể tải lịch sân."
           );
         } finally {
-          if (active) {
+          if (active && showLoading) {
             setLoading(false);
           }
         }
@@ -186,10 +188,15 @@ function Booking() {
 
 
     loadAvailability();
+    const refreshInterval = window.setInterval(
+      () => loadAvailability(false),
+      30_000
+    );
 
 
     return () => {
       active = false;
+      window.clearInterval(refreshInterval);
     };
   }, [
     fieldId,

@@ -4,7 +4,7 @@ info:
   description: "Tài liệu API Hệ thống Quản lý Sân bóng"
   version: "1.0.0"
 servers:
-  - url: "http://127.0.0.1:5000"
+  - url: "http://127.0.0.1:5001"
     description: "Local Server"
 
 paths:
@@ -462,6 +462,131 @@ paths:
           description: "Trả về hồ sơ tài khoản trong token"
         '401':
           description: "Access token thiếu, sai hoặc hết hạn"
+    # ------------------------------------
+  # UC06 - Deposit
+  # ------------------------------------
+
+  /api/bookings/{bookingId}/deposit:
+
+    get:
+      tags:
+        - Payments
+
+      summary: "UC06 - Lấy thông tin đặt cọc của booking"
+
+      security:
+        - BearerAuth: []
+
+      parameters:
+
+        - name: bookingId
+          in: path
+          required: true
+
+          schema:
+            type: integer
+
+      responses:
+
+        '200':
+          description: "Thông tin đặt cọc"
+
+        '401':
+          description: "Thiếu/sai token"
+
+        '404':
+          description: "Booking không tồn tại hoặc không thuộc customer"
+
+
+    post:
+      tags:
+        - Payments
+
+      summary: "UC06 - Tạo giao dịch đặt cọc VietQR demo"
+
+      description: >
+        Amount do Backend tính từ Booking.TotalAmount;
+        không nhận Amount từ client.
+
+      security:
+        - BearerAuth: []
+
+      parameters:
+
+        - name: bookingId
+          in: path
+          required: true
+
+          schema:
+            type: integer
+
+      responses:
+
+        '201':
+          description: "Tạo Payment DEPOSIT/PENDING thành công"
+
+        '409':
+          description: "Duplicate hoặc booking không thể đặt cọc"
+
+        '410':
+          description: "Quá hạn đặt cọc"
+
+
+  /api/payments/{paymentId}/demo-status:
+
+    patch:
+      tags:
+        - Payments
+
+      summary: "UC06 - Mô phỏng kết quả giao dịch"
+
+      security:
+        - BearerAuth: []
+
+      parameters:
+
+        - name: paymentId
+          in: path
+          required: true
+
+          schema:
+            type: integer
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+
+              type: object
+
+              required:
+                - status
+
+              properties:
+
+                status:
+                  type: string
+
+                  enum:
+                    - SUCCESS
+                    - FAILED
+                    - EXPIRED
+
+      responses:
+
+        '200':
+          description: "Cập nhật trạng thái demo thành công"
+
+        '400':
+          description: "Status không hợp lệ"
+
+        '409':
+          description: "Payment đã kết thúc hoặc quá hạn"
 
 components:
   securitySchemes:

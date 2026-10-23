@@ -141,6 +141,18 @@ def row_to_booking(row):
                 row.TotalAmount or 0
             ),
 
+        "PaidAmount":
+            float(
+                getattr(row, "PaidAmount", 0) or 0
+            ),
+
+        "RemainingAmount":
+            max(
+                float(row.TotalAmount or 0)
+                - float(getattr(row, "PaidAmount", 0) or 0),
+                0,
+            ),
+
         "Status":
             str(
                 row.Status or ""
@@ -158,7 +170,15 @@ def row_to_booking(row):
         # PAYMENT-01 sẽ tích hợp sau.
 
         "PaymentStatus":
-            None,
+            str(
+                getattr(
+                    row,
+                    "PaymentStatus",
+                    "",
+                )
+                or ""
+            ).strip().upper()
+            or None,
     }
 
 
@@ -229,8 +249,10 @@ def booking_select_sql():
 
             U.FullName,
             U.Phone,
-            U.Email
+            U.Email,
 
+            LatestPayment.PaymentStatus,
+            PaymentTotals.PaidAmount
         FROM Bookings B
 
         INNER JOIN FootballFields F
@@ -238,6 +260,33 @@ def booking_select_sql():
 
         INNER JOIN Users U
             ON B.UserID = U.UserID
+        OUTER APPLY
+            (
+                SELECT TOP 1
+                    P.Status AS PaymentStatus
+
+                FROM Payments P
+
+                WHERE P.BookingID = B.BookingID
+                AND P.PaymentType = 'DEPOSIT'
+
+                ORDER BY
+                    P.PaymentID DESC
+            ) LatestPayment
+        OUTER APPLY
+            (
+                SELECT
+                    SUM(
+                        CASE
+                            WHEN UPPER(LTRIM(RTRIM(P.Status))) = 'SUCCESS'
+                            THEN P.Amount
+                            ELSE 0
+                        END
+                    ) AS PaidAmount
+                FROM Payments P
+                WHERE P.BookingID = B.BookingID
+                  AND P.PaymentType = 'DEPOSIT'
+            ) PaymentTotals
     """
 
 

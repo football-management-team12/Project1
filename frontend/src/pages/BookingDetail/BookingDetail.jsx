@@ -20,6 +20,9 @@ import {
 import Navbar
   from "../../components/Navbar/Navbar";
 
+import DepositPanel
+  from "../../components/DepositPanel/DepositPanel";
+
 import {
   getCustomerBookingDetail,
 } from "../../services/booking_service";
@@ -169,6 +172,16 @@ function BookingDetail() {
     )
       .trim()
       .toUpperCase();
+
+
+  const refreshBooking = async () => {
+    const result = await getCustomerBookingDetail(
+      user.UserID,
+      bookingId,
+    );
+
+    setBooking(result);
+  };
 
 
   useEffect(
@@ -609,39 +622,46 @@ function BookingDetail() {
 
                   </div>
 
+                  <div className="booking-detail-row">
 
-                  <div className="booking-detail-payment">
+                    <ReceiptText size={19} />
 
-                    <span>
-                      Trạng thái thanh toán
-                    </span>
+                    <div>
+                      <span>Đã đặt cọc</span>
+                      <strong className="booking-detail-payment-amount booking-detail-paid">
+                        {formatMoney(booking.PaidAmount)}đ
+                      </strong>
+                    </div>
 
+                  </div>
 
-                    <strong>
+                  <div className="booking-detail-row">
 
-                      {
-                        booking.PaymentStatus ||
-                        "Chưa có thông tin thanh toán"
-                      }
+                    <ReceiptText size={19} />
 
-                    </strong>
-
-
-                    {
-                      !booking.PaymentStatus && (
-
-                        <small>
-                          Chức năng thanh toán sẽ được tích hợp ở PAYMENT-01.
-                        </small>
-
-                      )
-                    }
+                    <div>
+                      <span>Còn phải thanh toán</span>
+                      <strong className="booking-detail-payment-amount booking-detail-remaining">
+                        {formatMoney(booking.RemainingAmount)}đ
+                      </strong>
+                    </div>
 
                   </div>
 
                 </section>
 
               </div>
+
+
+              {
+                !["CANCELLED", "COMPLETED"].includes(normalizedStatus) && (
+                  <DepositPanel
+                    bookingId={booking.BookingID}
+                    bookingStatus={booking.Status}
+                    onPaymentChanged={refreshBooking}
+                  />
+                )
+              }
 
 
               <section className="booking-detail-customer">
