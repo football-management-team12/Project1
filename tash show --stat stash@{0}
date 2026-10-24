@@ -1,0 +1,9 @@
+stash@{0}: On fix/T123-72-uc02-login-regression: WIP UC02 before T123-120
+stash@{1}: On develop: local changes before pulling latest develop
+stash@{2}: On feature/T123-72-uc02-auth-role: workspace changes before switching to develop
+stash@{3}: On fix/T123-29-api-test: WIP before T123-98
+stash@{4}: On feature/T123-56-BOOKING-02: T123-29 restore api-test
+stash@{5}: On feature/T123-56-BOOKING-02: unrelated local changes
+stash@{6}: On feature/deploy: backup before rename commit 22
+stash@{7}: On feature/BE-05-field-management: temp BE05 before pull develop
+stash@{8}: On develop: temp database changes
