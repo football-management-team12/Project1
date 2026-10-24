@@ -27,3 +27,6 @@ __pycache__/
 venv/
 .env
 backend/.env
+
+/.worktrees/
+/tash show --stat stash@{0}
