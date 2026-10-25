@@ -29,3 +29,7 @@ venv/
 # Ignore Postman workspace local resources path configuration
 .postman/
 resources.yaml
+backend/.env
+
+/.worktrees/
+/tash show --stat stash@{0}

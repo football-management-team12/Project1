@@ -1,3 +1,5 @@
+import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,7 +11,19 @@ from flasgger import Swagger
 
 app = Flask(__name__)
 
-CORS(app)
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": [
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+            ],
+            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+        }
+    },
+)
 
 
 # ============================================================
@@ -21,7 +35,7 @@ from routes.field import field_bp
 from routes.booking import booking_bp
 from routes.customer_booking import customer_booking_bp
 from routes.user import get_my_profile, user_bp
-
+from routes.payment import payment_bp
 
 swagger = Swagger(
     app,
@@ -58,7 +72,10 @@ app.register_blueprint(
     url_prefix="/api/users"
 )
 
-
+app.register_blueprint(
+    payment_bp,
+    url_prefix="/api"
+)
 # Legacy profile path retained for the login/profile integration contract.
 app.add_url_rule(
     "/api/user/profile",
@@ -81,6 +98,6 @@ if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
-        port=5000,
+        port=int(os.environ.get("PORT", "5001")),
         debug=True
     )

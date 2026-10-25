@@ -1,6 +1,9 @@
+// In development, use Vite's same-origin /api proxy to avoid browser CORS
+// preflight requests. Production can still use an explicitly configured API URL.
 const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:5000"
+  import.meta.env.DEV
+    ? ""
+    : import.meta.env.VITE_API_URL || ""
 ).replace(/\/$/, "");
 
 const ACCESS_TOKEN_KEY =

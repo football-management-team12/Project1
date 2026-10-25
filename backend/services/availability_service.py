@@ -1,4 +1,7 @@
 # ============================================================
+import os
+
+
 # AVAILABILITY SERVICE
 # Dùng cho:
 # - BE-05: kiểm tra lịch sân trống
@@ -14,6 +17,28 @@ CANCELLED_STATUSES = {
     "DA HUY",
     "ĐÃ HỦY"
 }
+
+
+def expire_pending_bookings(cursor):
+    """Release reservations whose deposit window has elapsed."""
+    try:
+        deadline_minutes = int(
+            os.getenv("DEPOSIT_DEADLINE_MINUTES", "10")
+        )
+    except (TypeError, ValueError):
+        deadline_minutes = 10
+
+    deadline_minutes = max(deadline_minutes, 1)
+    cursor.execute(
+        """
+        UPDATE Bookings
+        SET Status = 'CANCELLED'
+        WHERE UPPER(LTRIM(RTRIM(Status))) = 'PENDING'
+          AND CreatedAt IS NOT NULL
+          AND DATEADD(MINUTE, ?, CreatedAt) <= GETDATE()
+        """,
+        deadline_minutes,
+    )
 
 
 # ============================================================

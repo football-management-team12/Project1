@@ -224,6 +224,10 @@
     word-break: break-word;
 }
 
+.booking-detail-grid strong.booking-payment-paid {
+    color: #0b9b4b;
+}
+
 
 .booking-detail-close {
     margin-left: 0 !important;
