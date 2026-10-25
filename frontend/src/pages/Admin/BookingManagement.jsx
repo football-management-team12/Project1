@@ -1,157 +1,129 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useOutletContext } from "react-router-dom";
 
-import {
-  useOutletContext,
-} from "react-router-dom";
+import SettlementPanel from "../../components/SettlementPanel/SettlementPanel";
 
 import {
   getAllBookings,
   getBookingDetail,
   updateBookingStatus,
 } from "../../services/booking_service";
+
 import "./BookingManagement.css";
-const BOOKING_STATUS = {
-  PENDING: {
-    label: "Chờ xác nhận",
-    className:
-      "booking-status-pending",
-  },
 
-  CONFIRMED: {
-    label: "Đã xác nhận",
-    className:
-      "booking-status-confirmed",
-  },
 
-  CANCELLED: {
-    label: "Đã hủy",
-    className:
-      "booking-status-cancelled",
-  },
+const LABELS = {
+  PENDING: [
+    "Chờ xác nhận",
+    "booking-status-pending"
+  ],
 
-  COMPLETED: {
-    label: "Hoàn thành",
-    className:
-      "booking-status-completed",
-  },
+  CONFIRMED: [
+    "Đã xác nhận",
+    "booking-status-confirmed"
+  ],
+
+  COMPLETED: [
+    "Hoàn thành",
+    "booking-status-completed"
+  ],
+
+  CANCELLED: [
+    "Đã hủy",
+    "booking-status-cancelled"
+  ],
 };
 
-function BookingManagement() {
-  const { user } =
-    useOutletContext();
 
-  const [bookings, setBookings] =
-    useState([]);
+const money = (value) =>
+  `${Number(value || 0).toLocaleString("vi-VN")}đ`;
 
-  const [
-    bookingLoading,
-    setBookingLoading,
-  ] = useState(true);
 
-  const [
-    bookingSearch,
-    setBookingSearch,
-  ] = useState("");
+function StatusBadge({ status }) {
+  const [label, css] =
+    LABELS[String(status || "").toUpperCase()] ||
+    [status || "Không xác định", "booking-status-default"];
 
-  const [
-    bookingStatus,
-    setBookingStatus,
-  ] = useState("");
+  return (
+    <span className={`booking-status-badge ${css}`}>
+      {label}
+    </span>
+  );
+}
 
-  const [
-    updatingBookingID,
-    setUpdatingBookingID,
-  ] = useState(null);
 
-  const [
-    selectedBooking,
-    setSelectedBooking,
-  ] = useState(null);
+export default function BookingManagement() {
+  const { user } = useOutletContext();
 
-  const [
-    bookingDetailLoading,
-    setBookingDetailLoading,
-  ] = useState(false);
+  const isAdmin =
+    String(user?.Role || "").toUpperCase() === "ADMIN";
+
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  const [updatingId, setUpdatingId] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+
+
+  // ======================================================
+  // LOAD BOOKINGS
+  // ======================================================
 
   const loadBookings = async () => {
-    if (!user?.UserID) {
-      return;
-    }
+    if (!user?.UserID) return;
+
+    setLoading(true);
 
     try {
-      setBookingLoading(true);
-
-      const result =
-        await getAllBookings(
-          user.UserID
-        );
+      const result = await getAllBookings(user.UserID);
 
       setBookings(
-        Array.isArray(
-          result?.Bookings
-        )
+        Array.isArray(result?.Bookings)
           ? result.Bookings
           : []
       );
-    } catch (error) {
-      console.error(
-        "LOAD BOOKINGS ERROR:",
-        error
+
+    } catch (err) {
+      alert(
+        err.message || "Không thể tải danh sách đặt sân"
       );
 
-      alert(
-        error.message ||
-        "Không thể tải danh sách đặt sân"
-      );
     } finally {
-      setBookingLoading(false);
+      setLoading(false);
     }
   };
 
+
   useEffect(() => {
-    if (!user?.UserID) {
-      return undefined;
-    }
+    if (!user?.UserID) return undefined;
 
     let active = true;
 
+    setLoading(true);
+
     getAllBookings(user.UserID)
       .then((result) => {
-        if (!active) {
-          return;
+        if (active) {
+          setBookings(
+            Array.isArray(result?.Bookings)
+              ? result.Bookings
+              : []
+          );
         }
-
-        setBookings(
-          Array.isArray(
-            result?.Bookings
-          )
-            ? result.Bookings
-            : []
-        );
       })
-      .catch((error) => {
-        if (!active) {
-          return;
+      .catch((err) => {
+        if (active) {
+          alert(
+            err.message || "Không tải được booking"
+          );
         }
-
-        console.error(
-          "LOAD BOOKINGS ERROR:",
-          error
-        );
-
-        alert(
-          error.message ||
-          "Không thể tải danh sách đặt sân"
-        );
       })
       .finally(() => {
-        if (active) {
-          setBookingLoading(false);
-        }
+        if (active) setLoading(false);
       });
 
     return () => {
@@ -159,271 +131,170 @@ function BookingManagement() {
     };
   }, [user?.UserID]);
 
-  const bookingStats =
-    useMemo(() => ({
-      total:
-        bookings.length,
 
-      pending:
-        bookings.filter(
-          (booking) =>
-            booking.Status ===
-            "PENDING"
-        ).length,
+  // ======================================================
+  // SEARCH / FILTER
+  // ======================================================
 
-      confirmed:
-        bookings.filter(
-          (booking) =>
-            booking.Status ===
-            "CONFIRMED"
-        ).length,
+  const filtered = useMemo(() => {
+    const word = search.trim().toLowerCase();
 
-      completed:
-        bookings.filter(
-          (booking) =>
-            booking.Status ===
-            "COMPLETED"
-        ).length,
-    }), [bookings]);
+    return bookings.filter((row) => {
+      const fullText = [
+        row.BookingID,
+        row.CustomerName,
+        row.Phone,
+        row.Email,
+        row.FieldName,
+        row.FieldType,
+        row.BookingDate
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-  const filteredBookings =
-    useMemo(() => {
-      const keyword =
-        bookingSearch
-          .trim()
-          .toLowerCase();
-
-      return bookings.filter(
-        (booking) => {
-          const searchable = [
-            booking.BookingID,
-
-            booking.CustomerName,
-
-            booking.Phone,
-
-            booking.Email,
-
-            booking.FieldName,
-
-            booking.FieldType,
-
-            booking.BookingDate,
-          ]
-            .filter(
-              (value) =>
-                value !== null &&
-                value !== undefined
-            )
-            .join(" ")
-            .toLowerCase();
-
-          const matchKeyword =
-            !keyword ||
-            searchable.includes(
-              keyword
-            );
-
-          const matchStatus =
-            !bookingStatus ||
-            booking.Status ===
-              bookingStatus;
-
-          return (
-            matchKeyword &&
-            matchStatus
-          );
-        }
+      return (
+        (!word || fullText.includes(word)) &&
+        (!filterStatus || row.Status === filterStatus)
       );
-    }, [
-      bookings,
-      bookingSearch,
-      bookingStatus,
-    ]);
+    });
+  }, [bookings, search, filterStatus]);
 
-  const formatPrice = (value) =>
-    Number(
-      value || 0
-    ).toLocaleString("vi-VN");
 
-  const handleBookingStatus =
-    async (
-      booking,
-      newStatus
-    ) => {
-      if (!user?.UserID) {
-        alert(
-          "Không xác định được tài khoản quản lý booking"
-        );
+  const stats = useMemo(() => ({
+    total: bookings.length,
 
-        return;
-      }
+    pending: bookings.filter(
+      (b) => b.Status === "PENDING"
+    ).length,
 
-      const statusMeta =
-        BOOKING_STATUS[newStatus];
+    confirmed: bookings.filter(
+      (b) => b.Status === "CONFIRMED"
+    ).length,
 
-      const label =
-        statusMeta?.label ||
-        newStatus;
+    completed: bookings.filter(
+      (b) => b.Status === "COMPLETED"
+    ).length,
 
-      const confirmed =
-        window.confirm(
-          `Bạn có chắc muốn chuyển đơn #${booking.BookingID} sang "${label}"?`
-        );
+  }), [bookings]);
 
-      if (!confirmed) {
-        return;
-      }
 
-      try {
-        setUpdatingBookingID(
-          booking.BookingID
-        );
+  // ======================================================
+  // VIEW BOOKING DETAIL
+  // ======================================================
 
-        await updateBookingStatus(
-          booking.BookingID,
+  const viewBooking = async (bookingId) => {
+    setDetailLoading(true);
 
-          newStatus,
+    try {
+      const detail = await getBookingDetail(bookingId);
 
-          user.UserID
-        );
+      setSelectedBooking(detail);
 
-        await loadBookings();
+    } catch (err) {
+      alert(
+        err.message || "Không thể xem chi tiết booking"
+      );
 
-        if (
-          selectedBooking?.BookingID ===
-          booking.BookingID
-        ) {
-          const updatedDetail =
-            await getBookingDetail(
-              booking.BookingID
-            );
-
-          setSelectedBooking(
-            updatedDetail
-          );
-        }
-
-        alert(
-          "Cập nhật trạng thái đơn thành công"
-        );
-      } catch (error) {
-        console.error(
-          "UPDATE BOOKING STATUS ERROR:",
-          error
-        );
-
-        alert(
-          error.message ||
-          "Không thể cập nhật trạng thái đơn"
-        );
-      } finally {
-        setUpdatingBookingID(null);
-      }
-    };
-
-  const handleViewBooking =
-    async (bookingID) => {
-      try {
-        setBookingDetailLoading(
-          true
-        );
-
-        const detail =
-          await getBookingDetail(
-            bookingID
-          );
-
-        setSelectedBooking(detail);
-      } catch (error) {
-        console.error(
-          "GET BOOKING DETAIL ERROR:",
-          error
-        );
-
-        alert(
-          error.message ||
-          "Không thể tải chi tiết booking"
-        );
-      } finally {
-        setBookingDetailLoading(
-          false
-        );
-      }
-    };
-
-  const renderBookingStatus = (
-    statusValue
-  ) => {
-    const normalized =
-      String(statusValue || "")
-        .trim()
-        .toUpperCase();
-
-    const meta =
-      BOOKING_STATUS[
-        normalized
-      ] || {
-        label:
-          normalized ||
-          "Không xác định",
-
-        className:
-          "booking-status-default",
-      };
-
-    return (
-      <span
-        className={`booking-status-badge ${meta.className}`}
-      >
-        {meta.label}
-      </span>
-    );
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
-  const renderBookingActions = (
-    booking
-  ) => {
+
+  // ======================================================
+  // UPDATE BOOKING STATUS
+  // ======================================================
+
+  const changeStatus = async (booking, nextStatus) => {
+    const label =
+      LABELS[nextStatus]?.[0] || nextStatus;
+
+    const accepted = window.confirm(
+      `Chuyển booking #${booking.BookingID} sang "${label}"?`
+    );
+
+    if (!accepted) return;
+
+    setUpdatingId(booking.BookingID);
+
+    try {
+      await updateBookingStatus(
+        booking.BookingID,
+        nextStatus,
+        user.UserID
+      );
+
+      await loadBookings();
+
+      if (
+        selectedBooking?.BookingID === booking.BookingID
+      ) {
+        setSelectedBooking(
+          await getBookingDetail(booking.BookingID)
+        );
+      }
+
+    } catch (err) {
+      alert(
+        err.message || "Không thể cập nhật trạng thái"
+      );
+
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+
+  // ======================================================
+  // UC09 - REFRESH AFTER PAYMENT CONFIRMATION
+  // ======================================================
+
+  const onPaid = async () => {
+    if (!selectedBooking) return;
+
+    await loadBookings();
+
+    const detail = await getBookingDetail(
+      selectedBooking.BookingID
+    );
+
+    setSelectedBooking(detail);
+  };
+
+
+  // ======================================================
+  // ACTION BUTTONS
+  // ======================================================
+
+  const actions = (booking) => {
     const busy =
-      updatingBookingID ===
-      booking.BookingID;
+      updatingId === booking.BookingID;
 
     return (
       <div className="booking-actions">
+
         <button
           type="button"
           className="booking-action-btn booking-action-detail"
-          disabled={
-            busy ||
-            bookingDetailLoading
-          }
-          onClick={() =>
-            handleViewBooking(
-              booking.BookingID
-            )
-          }
+          disabled={busy || detailLoading}
+          onClick={() => viewBooking(booking.BookingID)}
         >
           Chi tiết
         </button>
 
-        {booking.Status ===
-          "PENDING" && (
+
+        {booking.Status === "PENDING" && (
           <>
             <button
               type="button"
               className="booking-action-btn booking-action-confirm"
               disabled={busy}
               onClick={() =>
-                handleBookingStatus(
-                  booking,
-
-                  "CONFIRMED"
-                )
+                changeStatus(booking, "CONFIRMED")
               }
             >
-              {busy
-                ? "Đang xử lý..."
-                : "Xác nhận"}
+              Xác nhận
             </button>
 
             <button
@@ -431,11 +302,7 @@ function BookingManagement() {
               className="booking-action-btn booking-action-cancel"
               disabled={busy}
               onClick={() =>
-                handleBookingStatus(
-                  booking,
-
-                  "CANCELLED"
-                )
+                changeStatus(booking, "CANCELLED")
               }
             >
               Hủy đơn
@@ -443,24 +310,18 @@ function BookingManagement() {
           </>
         )}
 
-        {booking.Status ===
-          "CONFIRMED" && (
+
+        {booking.Status === "CONFIRMED" && (
           <>
             <button
               type="button"
               className="booking-action-btn booking-action-complete"
               disabled={busy}
               onClick={() =>
-                handleBookingStatus(
-                  booking,
-
-                  "COMPLETED"
-                )
+                changeStatus(booking, "COMPLETED")
               }
             >
-              {busy
-                ? "Đang xử lý..."
-                : "Hoàn thành"}
+              Hoàn thành
             </button>
 
             <button
@@ -468,407 +329,279 @@ function BookingManagement() {
               className="booking-action-btn booking-action-cancel"
               disabled={busy}
               onClick={() =>
-                handleBookingStatus(
-                  booking,
-
-                  "CANCELLED"
-                )
+                changeStatus(booking, "CANCELLED")
               }
             >
               Hủy đơn
             </button>
           </>
         )}
+
       </div>
     );
   };
 
+
+  // ======================================================
+  // BOOKING DETAIL FIELDS
+  // ======================================================
+
+  const detailFields = selectedBooking ? [
+    [
+      "Khách hàng",
+      selectedBooking.CustomerName ||
+        `User #${selectedBooking.UserID}`
+    ],
+    [
+      "Số điện thoại",
+      selectedBooking.Phone || "Chưa cập nhật"
+    ],
+    [
+      "Email",
+      selectedBooking.Email || "Chưa cập nhật"
+    ],
+    [
+      "Sân",
+      selectedBooking.FieldName ||
+        `Sân #${selectedBooking.FieldID}`
+    ],
+    [
+      "Loại sân",
+      selectedBooking.FieldType || "Chưa cập nhật"
+    ],
+    [
+      "Địa điểm",
+      selectedBooking.Location || "Chưa cập nhật"
+    ],
+    [
+      "Ngày đặt",
+      selectedBooking.BookingDate
+    ],
+    [
+      "Khung giờ",
+      `${selectedBooking.StartTime} - ${selectedBooking.EndTime}`
+    ],
+    [
+      "Tổng tiền",
+      money(selectedBooking.TotalAmount)
+    ],
+    [
+      "Đã thu",
+      money(selectedBooking.PaidAmount)
+    ],
+    [
+      "Còn lại",
+      money(selectedBooking.RemainingAmount)
+    ]
+  ] : [];
+
+
   return (
     <>
+
+      {/* HEADER */}
+
       <div className="title-row">
-        <h1>
-          QUẢN LÝ ĐẶT SÂN
-        </h1>
+        <h1>QUẢN LÝ ĐẶT SÂN</h1>
 
         <button
-          type="button"
           className="add-btn"
-          disabled={bookingLoading}
+          type="button"
+          disabled={loading}
           onClick={loadBookings}
         >
-          {bookingLoading
-            ? "Đang tải..."
-            : "↻ Làm mới"}
+          {loading ? "Đang tải..." : "Làm mới"}
         </button>
       </div>
 
+
+      {/* STATISTICS */}
+
       <div className="cards">
-        <div className="card">
-          <p>
-            Tổng số đơn
-          </p>
-
-          <h2>
-            {bookingStats.total}
-          </h2>
-        </div>
-
-        <div className="card">
-          <p>
-            Chờ xác nhận
-          </p>
-
-          <h2>
-            {bookingStats.pending}
-          </h2>
-        </div>
-
-        <div className="card">
-          <p>
-            Đã xác nhận
-          </p>
-
-          <h2>
-            {bookingStats.confirmed}
-          </h2>
-        </div>
-
-        <div className="card">
-          <p>
-            Hoàn thành
-          </p>
-
-          <h2>
-            {bookingStats.completed}
-          </h2>
-        </div>
+        {[
+          ["Tổng số đơn", stats.total],
+          ["Chờ xác nhận", stats.pending],
+          ["Đã xác nhận", stats.confirmed],
+          ["Hoàn thành", stats.completed]
+        ].map(([title, count]) => (
+          <div className="card" key={title}>
+            <p>{title}</p>
+            <h2>{count}</h2>
+          </div>
+        ))}
       </div>
 
+
+      {/* FILTER */}
+
       <div className="filter">
+
         <input
-          placeholder="🔍 Mã đơn, tên khách hàng, sân, SĐT..."
-          value={bookingSearch}
-          onChange={(event) =>
-            setBookingSearch(
-              event.target.value
-            )
-          }
+          aria-label="Tìm booking"
+          placeholder="Mã đơn, khách hàng, sân, SĐT..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
 
         <select
-          value={bookingStatus}
-          onChange={(event) =>
-            setBookingStatus(
-              event.target.value
-            )
-          }
+          aria-label="Lọc trạng thái"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
         >
           <option value="">
             Tất cả trạng thái
           </option>
 
-          <option value="PENDING">
-            Chờ xác nhận
-          </option>
-
-          <option value="CONFIRMED">
-            Đã xác nhận
-          </option>
-
-          <option value="CANCELLED">
-            Đã hủy
-          </option>
-
-          <option value="COMPLETED">
-            Hoàn thành
-          </option>
+          {Object.entries(LABELS).map(
+            ([value, label]) => (
+              <option key={value} value={value}>
+                {label[0]}
+              </option>
+            )
+          )}
         </select>
+
       </div>
+
+
+      {/* BOOKING TABLE */}
 
       <div className="table-box booking-table-box">
         <table>
+
           <thead>
             <tr>
               <th>Mã đơn</th>
-
               <th>Khách hàng</th>
-
               <th>Sân</th>
-
               <th>Ngày</th>
-
               <th>Khung giờ</th>
-
               <th>Tổng tiền</th>
-
               <th>Trạng thái</th>
-
               <th>Thao tác</th>
             </tr>
           </thead>
 
+
           <tbody>
-            {bookingLoading ? (
+            {loading || filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan="8"
                   className="booking-empty-cell"
+                  colSpan="8"
                 >
-                  Đang tải danh sách booking...
+                  {loading
+                    ? "Đang tải booking..."
+                    : "Không có booking"}
                 </td>
               </tr>
-            ) : filteredBookings.length ===
-              0 ? (
-              <tr>
-                <td
-                  colSpan="8"
-                  className="booking-empty-cell"
-                >
-                  Không có booking
-                </td>
-              </tr>
+
             ) : (
-              filteredBookings.map(
-                (booking) => (
-                  <tr
-                    key={
-                      booking.BookingID
-                    }
-                  >
-                    <td>
-                      <strong>
-                        #{booking.BookingID}
-                      </strong>
-                    </td>
+              filtered.map((b) => (
+                <tr key={b.BookingID}>
 
-                    <td>
-                      <strong>
-                        {booking.CustomerName ||
-                          `User #${booking.UserID}`}
-                      </strong>
+                  <td>
+                    <strong>#{b.BookingID}</strong>
+                  </td>
 
-                      {booking.Phone && (
-                        <>
-                          <br />
+                  <td>
+                    <strong>
+                      {b.CustomerName || `User #${b.UserID}`}
+                    </strong>
+                    <br />
+                    <small>{b.Phone || b.Email || ""}</small>
+                  </td>
 
-                          <small>
-                            {booking.Phone}
-                          </small>
-                        </>
-                      )}
+                  <td>
+                    {b.FieldName || `Sân #${b.FieldID}`}
+                    <br />
+                    <small>{b.FieldType || ""}</small>
+                  </td>
 
-                      {!booking.Phone &&
-                        booking.Email && (
-                          <>
-                            <br />
+                  <td>{b.BookingDate}</td>
 
-                            <small>
-                              {booking.Email}
-                            </small>
-                          </>
-                        )}
-                    </td>
+                  <td>
+                    {b.StartTime} - {b.EndTime}
+                  </td>
 
-                    <td>
-                      {booking.FieldName ||
-                        `Sân #${booking.FieldID}`}
+                  <td>
+                    <strong>{money(b.TotalAmount)}</strong>
+                  </td>
 
-                      {booking.FieldType && (
-                        <>
-                          <br />
+                  <td>
+                    <StatusBadge status={b.Status} />
+                  </td>
 
-                          <small>
-                            {booking.FieldType}
-                          </small>
-                        </>
-                      )}
-                    </td>
+                  <td>{actions(b)}</td>
 
-                    <td>
-                      {booking.BookingDate}
-                    </td>
-
-                    <td>
-                      {booking.StartTime}
-
-                      {" - "}
-
-                      {booking.EndTime}
-                    </td>
-
-                    <td>
-                      <strong>
-                        {formatPrice(
-                          booking.TotalAmount
-                        )}
-                        đ
-                      </strong>
-                    </td>
-
-                    <td>
-                      {renderBookingStatus(
-                        booking.Status
-                      )}
-                    </td>
-
-                    <td>
-                      {renderBookingActions(
-                        booking
-                      )}
-                    </td>
-                  </tr>
-                )
-              )
+                </tr>
+              ))
             )}
           </tbody>
+
         </table>
       </div>
 
+
+      {/* BOOKING DETAIL MODAL */}
+
       {selectedBooking && (
         <div className="modal">
-          <div className="modal-content booking-detail-modal">
+
+          <div
+            className="modal-content booking-detail-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Chi tiết booking ${selectedBooking.BookingID}`}
+          >
+
             <div className="booking-detail-header">
               <h2>
-                Chi tiết đơn #
-                {selectedBooking.BookingID}
+                Chi tiết đơn #{selectedBooking.BookingID}
               </h2>
 
-              {renderBookingStatus(
-                selectedBooking.Status
-              )}
+              <StatusBadge
+                status={selectedBooking.Status}
+              />
             </div>
+
 
             <div className="booking-detail-grid">
-              <div>
-                <span>
-                  Khách hàng
-                </span>
-
-                <strong>
-                  {selectedBooking.CustomerName ||
-                    `User #${selectedBooking.UserID}`}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Số điện thoại
-                </span>
-
-                <strong>
-                  {selectedBooking.Phone ||
-                    "Chưa cập nhật"}
-                </strong>
-              </div>
-
-              <div>
-                <span>Email</span>
-
-                <strong>
-                  {selectedBooking.Email ||
-                    "Chưa cập nhật"}
-                </strong>
-              </div>
-
-              <div>
-                <span>Sân</span>
-
-                <strong>
-                  {selectedBooking.FieldName ||
-                    `Sân #${selectedBooking.FieldID}`}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Loại sân
-                </span>
-
-                <strong>
-                  {selectedBooking.FieldType ||
-                    "Chưa cập nhật"}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Địa điểm
-                </span>
-
-                <strong>
-                  {selectedBooking.Location ||
-                    "Chưa cập nhật"}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Ngày đặt
-                </span>
-
-                <strong>
-                  {selectedBooking.BookingDate}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Khung giờ
-                </span>
-
-                <strong>
-                  {selectedBooking.StartTime}
-
-                  {" - "}
-
-                  {selectedBooking.EndTime}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Tổng tiền
-                </span>
-
-                <strong>
-                  {formatPrice(
-                    selectedBooking.TotalAmount
-                  )}
-                  đ
-                </strong>
-              </div>
-
-              <div>
-                <span>Đã đặt cọc</span>
-
-                <strong className="booking-payment-paid">
-                  {formatPrice(selectedBooking.PaidAmount)}đ
-                </strong>
-              </div>
-
-              <div>
-                <span>Còn phải thanh toán</span>
-
-                <strong>
-                  {formatPrice(selectedBooking.RemainingAmount)}đ
-                </strong>
-              </div>
+              {detailFields.map(([name, value]) => (
+                <div key={name}>
+                  <span>{name}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))}
             </div>
+
+
+            {/* UC09: Chỉ ADMIN được xác nhận */}
+
+            {isAdmin && (
+              <SettlementPanel
+                bookingId={selectedBooking.BookingID}
+                mode="admin"
+                refreshKey={
+                  `${selectedBooking.Status}-${selectedBooking.PaidAmount}`
+                }
+                onPaymentConfirmed={onPaid}
+              />
+            )}
+
 
             <button
               type="button"
               className="cancel-btn booking-detail-close"
-              onClick={() =>
-                setSelectedBooking(null)
-              }
+              onClick={() => setSelectedBooking(null)}
             >
               Đóng
             </button>
+
           </div>
         </div>
       )}
+
     </>
   );
 }
-
-export default BookingManagement;
