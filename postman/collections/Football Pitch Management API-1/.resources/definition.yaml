@@ -2,4 +2,9 @@ $kind: collection
 name: Football Pitch Management API
 description: Tài liệu API Hệ thống Quản lý Sân bóng
 variables:
-  baseUrl: http://127.0.0.1:5000
+  - key: baseUrl
+    value: http://127.0.0.1:5000
+    disabled: false
+  - key: json_web_token_0w89
+    secret: true
+    disabled: false

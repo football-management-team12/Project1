@@ -17,4 +17,6 @@ body:
     \"password\": \"Abc@1234\"\r
 
     }"
+auth:
+  type: noauth
 order: 1000
