@@ -1,4 +1,5 @@
 $kind: http-request
+name: Đăng kí thất bại với số điện thoại sai định dạng
 description: ""
 url: "{{baseUrl}}/api/auth/register"
 method: POST
@@ -9,11 +10,11 @@ body:
   type: json
   content: |-
     {
-      "fullName": "Nguyen Van A",
-      "username": "nguyenvana",
-      "email": "a@example.com",
-      "phone": "0901234567",
-      "password": "P@ssw0rd"
+    "fullName": "Nguyen Van A",
+    "username": "test_user11",
+    "email": "test11@example.com",
+    "phone": "09ABC12345",
+    "password": "P@ssw0rd"
     }
   $type: |-
     {
@@ -50,5 +51,5 @@ body:
       ]
     }
 settings: {}
-examples: ./.resources/Đăng ký tài khoản CUSTOMER.resources/examples
-order: 1000
+examples: .resources/Đăng kí thất bại với số điện thoại sai định d.resources/examples
+order: 3161

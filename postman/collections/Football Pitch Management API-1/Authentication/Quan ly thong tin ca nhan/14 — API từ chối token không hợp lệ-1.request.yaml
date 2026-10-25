@@ -1,0 +1,20 @@
+$kind: http-request
+name: 14 — API từ chối token không hợp lệ
+url: "{{baseUrl}}/api/users/me"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \    \"fullName\": \"Unauthorized Update\",\r
+
+    \    \"email\": \"test13@example.com\",\r
+
+    \    \"phone\": \"0901233566\"\r
+
+    }\r\n"
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token_0w89}}"
+order: 2376
