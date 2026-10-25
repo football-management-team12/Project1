@@ -1,251 +1,367 @@
-/* =========================================================
-   BOOKING MANAGEMENT
-========================================================= */
 
+/* =========================================
+   BOOKING MANAGEMENT - UC09
+========================================= */
 
-/* =========================================================
-   TABLE
-========================================================= */
+/* DANH SACH DAT SAN */
 
 .booking-table-box {
-    overflow-x: auto;
+  overflow-x: auto;
 }
-
 
 .booking-empty-cell {
-    text-align: center;
-
-    color: #64748b;
-
-    padding: 30px 20px !important;
+  text-align: center;
+  color: #64748b;
+  padding: 30px 20px !important;
 }
 
-
-/* =========================================================
-   STATUS BADGE
-========================================================= */
+/* TRANG THAI BOOKING */
 
 .booking-status-badge {
-    display: inline-block;
-
-    padding: 6px 11px;
-
-    border-radius: 999px;
-
-    font-size: 12px;
-
-    font-weight: 700;
-
-    white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
 }
-
 
 .booking-status-pending {
-    background: #fef3c7;
-
-    color: #b45309;
+  background: #fef3c7;
+  color: #b45309;
 }
-
 
 .booking-status-confirmed {
-    background: #dcfce7;
-
-    color: #15803d;
+  background: #dcfce7;
+  color: #15803d;
 }
-
 
 .booking-status-cancelled {
-    background: #fee2e2;
-
-    color: #dc2626;
+  background: #fee2e2;
+  color: #dc2626;
 }
-
 
 .booking-status-completed {
-    background: #dbeafe;
-
-    color: #1d4ed8;
+  background: #dbeafe;
+  color: #1d4ed8;
 }
-
 
 .booking-status-default {
-    background: #e2e8f0;
-
-    color: #475569;
+  background: #e2e8f0;
+  color: #475569;
 }
 
-
-/* =========================================================
-   ACTIONS
-========================================================= */
+/* CAC NUT THAO TAC */
 
 .booking-actions {
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 7px;
-
-    min-width: 220px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  min-width: 220px;
 }
-
 
 .booking-action-btn {
-    border: none;
-
-    border-radius: 8px;
-
-    padding: 8px 11px;
-
-    cursor: pointer;
-
-    font-size: 12px;
-
-    font-weight: 700;
-
-    transition: .2s;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
 }
-
 
 .booking-action-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
-
-    opacity: .9;
+  transform: translateY(-1px);
+  opacity: 0.9;
 }
-
 
 .booking-action-btn:disabled {
-    opacity: .55;
-
-    cursor: not-allowed;
+  opacity: 0.55;
+  cursor: not-allowed;
 }
-
 
 .booking-action-detail {
-    background: #e2e8f0;
-
-    color: #334155;
+  background: #e2e8f0;
+  color: #334155;
 }
-
 
 .booking-action-confirm {
-    background: #00875a;
-
-    color: white;
+  background: #00875a;
+  color: #fff;
 }
-
 
 .booking-action-complete {
-    background: #2563eb;
-
-    color: white;
+  background: #2563eb;
+  color: #fff;
 }
-
 
 .booking-action-cancel {
-    background: #fee2e2;
-
-    color: #dc2626;
+  background: #fee2e2;
+  color: #dc2626;
 }
 
+/* =========================================
+   FIX MODAL CHI TIET BOOKING
+========================================= */
 
-/* =========================================================
-   DETAIL MODAL
-========================================================= */
+/* Phu toan man hinh */
 
-.booking-detail-modal {
-    width: min(
-        700px,
-        calc(100vw - 40px)
-    ) !important;
+.modal:has(> .booking-detail-modal) {
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+  overflow: hidden;
+
+  background: rgba(15, 23, 42, 0.55);
 }
 
+/* Modal nam gon trong chieu cao man hinh */
 
-.booking-detail-header {
-    display: flex;
+.modal > .booking-detail-modal,
+.modal-content.booking-detail-modal {
+  box-sizing: border-box;
 
-    align-items: center;
+  width: min(760px, 100%) !important;
+  max-width: 100% !important;
 
-    justify-content: space-between;
+  max-height: calc(100vh - 40px) !important;
+  max-height: calc(100dvh - 40px) !important;
 
-    gap: 16px;
+  margin: 0 auto;
+  padding: 24px !important;
 
-    margin-bottom: 22px;
+  border-radius: 16px;
+  background: #fff;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  overscroll-behavior: contain;
+
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+
+  box-shadow:
+    0 24px 70px rgba(15, 23, 42, 0.28);
 }
 
+/* =========================================
+   HEADER MODAL
+========================================= */
 
-.booking-detail-header h2 {
-    margin: 0 !important;
+/* Giu tieu de khi cuon */
+
+.booking-detail-modal .booking-detail-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  gap: 12px;
+
+  margin: 0 0 16px;
+  padding: 16px 0 14px;
+
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
 }
 
+.booking-detail-modal .booking-detail-header h2 {
+  margin: 0 !important;
 
-.booking-detail-grid {
-    display: grid;
+  color: #065f46;
 
-    grid-template-columns:
-        repeat(
-            2,
-            minmax(0, 1fr)
-        );
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.35;
 
-    gap: 14px;
+  overflow-wrap: anywhere;
 }
 
+/* =========================================
+   THONG TIN BOOKING
+========================================= */
 
-.booking-detail-grid > div {
-    display: flex;
+.booking-detail-modal .booking-detail-grid {
+  display: grid;
 
-    flex-direction: column;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
 
-    gap: 5px;
-
-    padding: 13px 14px;
-
-    background: #f8fafc;
-
-    border: 1px solid #e2e8f0;
-
-    border-radius: 10px;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
+.booking-detail-modal .booking-detail-grid > div {
+  display: flex;
+  flex-direction: column;
 
-.booking-detail-grid span {
-    font-size: 12px;
+  gap: 5px;
+  min-width: 0;
 
-    color: #64748b;
+  padding: 11px 13px;
+
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
 }
 
+.booking-detail-modal .booking-detail-grid span {
+  color: #64748b;
 
-.booking-detail-grid strong {
-    font-size: 14px;
-
-    color: #0f172a;
-
-    word-break: break-word;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
-.booking-detail-grid strong.booking-payment-paid {
-    color: #0b9b4b;
+.booking-detail-modal .booking-detail-grid strong {
+  color: #0f172a;
+
+  font-size: 14px;
+  line-height: 1.45;
+
+  overflow-wrap: anywhere;
 }
 
-
-.booking-detail-close {
-    margin-left: 0 !important;
+.booking-detail-modal
+.booking-detail-grid
+strong.booking-payment-paid {
+  color: #0b9b4b;
 }
 
+/* =========================================
+   UC09 - THANH TOAN TAI SAN
+========================================= */
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
+.booking-detail-modal .settlement-panel {
+  margin-top: 14px;
+  padding: 18px;
+
+  border: 1px solid #d7e4dc;
+  border-radius: 12px;
+
+  background: #fff;
+}
+
+.booking-detail-modal .settlement-head h3 {
+  margin: 0;
+}
+
+.booking-detail-modal .settlement-numbers p {
+  gap: 10px;
+  padding: 9px 0;
+}
+
+.booking-detail-modal .settlement-confirm,
+.booking-detail-modal .settlement-refresh {
+  max-width: 100%;
+  min-height: 38px;
+}
+
+/* =========================================
+   NUT DONG MODAL
+========================================= */
+
+.booking-detail-modal .booking-detail-close {
+  display: block;
+
+  width: auto;
+  min-width: 110px;
+
+  margin: 18px 0 0 auto !important;
+  padding: 10px 18px;
+
+  border: 0;
+  border-radius: 9px;
+
+  cursor: pointer;
+}
+
+/* =========================================
+   MAN HINH LAPTOP THAP
+========================================= */
+
+@media (max-height: 740px) {
+  .modal:has(> .booking-detail-modal) {
+    padding: 12px;
+  }
+
+  .modal > .booking-detail-modal,
+  .modal-content.booking-detail-modal {
+    max-height: calc(100vh - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    padding: 16px !important;
+  }
+
+  .booking-detail-modal .booking-detail-header {
+    top: 0;
+    padding-top: 12px;
+  }
+
+  .booking-detail-modal .booking-detail-grid {
+    gap: 8px;
+  }
+
+  .booking-detail-modal
+  .booking-detail-grid > div {
+    padding: 9px 11px;
+  }
+}
+
+/* =========================================
+   MOBILE RESPONSIVE
+========================================= */
 
 @media (max-width: 700px) {
+  .modal:has(> .booking-detail-modal) {
+    padding: 10px;
+  }
 
-    .booking-detail-grid {
-        grid-template-columns: 1fr;
-    }
+  .modal > .booking-detail-modal,
+  .modal-content.booking-detail-modal {
+    width: 100% !important;
 
+    max-height: calc(100vh - 20px) !important;
+    max-height: calc(100dvh - 20px) !important;
 
-    .booking-actions {
-        min-width: 170px;
-    }
+    padding: 15px !important;
+    border-radius: 12px;
+  }
+
+  .booking-detail-modal .booking-detail-header {
+    top: 0;
+    padding-top: 10px;
+  }
+
+  .booking-detail-modal .booking-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .booking-detail-modal .settlement-panel {
+    padding: 13px;
+  }
+
+  .booking-detail-modal .settlement-numbers p {
+    align-items: flex-start;
+  }
+
+  .booking-actions {
+    min-width: 170px;
+  }
 }
