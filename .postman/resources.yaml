@@ -4,6 +4,8 @@ workspace:
 localResources:
   specs:
     - ../backend/swagger.yaml
+  
+
 resourceNameMappings:
   specs:
     - ../backend/swagger.yaml: Football Pitch Management API
