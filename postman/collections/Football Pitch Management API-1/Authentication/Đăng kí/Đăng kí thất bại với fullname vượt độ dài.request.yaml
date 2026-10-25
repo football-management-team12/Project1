@@ -1,0 +1,34 @@
+$kind: http-request
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"fullName\": \"{invalid_fullname}\",\r
+
+    \  \"username\": \"{test12@example.com}\",\r
+
+    \  \"email\": \"test12@example.com\",\r
+
+    \  \"phone\": \"0901234537\",\r
+
+    \  \"password\": \"Password123!\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: ""
+    language: text/javascript
+  - type: beforeRequest
+    code: "// Tạo chuỗi 'a' lặp lại 55 lần (vượt quá 50 ký tự)\r
+
+      const longFullname = \"a\".repeat(55); \r
+
+      \r
+
+      // Đưa vào biến môi trường hoặc biến cục bộ của request\r
+
+      pm.environment.set(\"invalid_fullname\", longFullname);"
+    language: text/javascript
+order: 17000

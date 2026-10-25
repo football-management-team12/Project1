@@ -26,6 +26,9 @@ __pycache__/
 *.pyc
 venv/
 .env
+# Ignore Postman workspace local resources path configuration
+.postman/
+resources.yaml
 backend/.env
 
 /.worktrees/

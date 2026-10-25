@@ -13,4 +13,4 @@ auth:
     token: "{{bearerToken}}"
 settings: {}
 examples: ./.resources/Lấy thông tin tài khoản hiện tại.resources/examples
-order: 3000
+order: 7000

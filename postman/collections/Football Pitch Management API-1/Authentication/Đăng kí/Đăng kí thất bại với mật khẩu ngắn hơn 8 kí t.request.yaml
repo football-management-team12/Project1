@@ -1,0 +1,20 @@
+$kind: http-request
+name: Đăng kí thất bại với mật khẩu ngắn hơn 8 kí tự
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"fullName\": \"Nguyen Van A\",\r
+
+    \  \"username\": \"test_user12\",\r
+
+    \  \"email\": \"test12@example.com\",\r
+
+    \  \"phone\": \"0901234567\",\r
+
+    \  \"password\": \"Abc@123\"\r
+
+    }"
+order: 18000

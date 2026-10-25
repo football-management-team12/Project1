@@ -1,0 +1,54 @@
+$kind: http-request
+description: ""
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+    "fullName": "Nguyen Van B",
+    "username": "newuser10",
+    "email": "a@example.com",
+    "phone": "0901234568",
+    "password": "P@ssw0rd"
+    }
+  $type: |-
+    {
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "type": "string",
+          "example": "Nguyen Van A"
+        },
+        "username": {
+          "type": "string",
+          "example": "nguyenvana"
+        },
+        "email": {
+          "type": "string",
+          "example": "a@example.com",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "example": "0901234567"
+        },
+        "password": {
+          "type": "string",
+          "example": "P@ssw0rd"
+        }
+      },
+      "required": [
+        "fullName",
+        "username",
+        "email",
+        "phone",
+        "password"
+      ]
+    }
+settings: {}
+examples: .resources/Đăng kí thất bại với Email đã tồn tại.resources/examples
+order: 5000

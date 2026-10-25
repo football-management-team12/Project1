@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+body:
+  type: html
+  content: "{\r
+
+    \  \"fullName\": \"Nguyen Van Test\",\r
+
+    \  \"username\": \"test_user_05\",\r
+
+    \  \"email\": \"test05@example.com\",\r
+
+    \  \"phone\": \"0912345681\",\r
+
+    \  \"password\": \"Test@123456\"\r
+
+    }"
+settings:
+  disabledSystemHeaders:
+    - content-type
+order: 12000

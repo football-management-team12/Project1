@@ -1,0 +1,20 @@
+$kind: http-request
+name: Đăng ký thất bại với mật khẩu không đủ độ phức tạp
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"fullName\": \"Nguyen Van Test\",\r
+
+    \  \"username\": \"test_user_04\",\r
+
+    \  \"email\": \"test04@example.com\",\r
+
+    \  \"phone\": \"0912345680\",\r
+
+    \  \"password\": \"12345678\"\r
+
+    }"
+order: 10617

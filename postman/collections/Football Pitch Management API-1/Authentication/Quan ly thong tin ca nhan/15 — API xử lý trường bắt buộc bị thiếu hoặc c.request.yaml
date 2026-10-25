@@ -1,0 +1,16 @@
+$kind: http-request
+name: 15 — API xử lý trường bắt buộc bị thiếu hoặc có giá trị null
+url: "{{baseUrl}}/api/users/me"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"email\": \"customer_a_new@example.com\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 11000

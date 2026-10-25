@@ -1,0 +1,71 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/auth/register"
+  method: POST
+  headers:
+    Content-Type: application/json
+    Accept: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "fullName": "Nguyen Van A",
+        "username": "nguyenvana12",
+        "email": "a12@example.com",
+        "phone": "0901234567",
+        "password": "P@ssw0rd1"
+      }
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Đăng ký thành công",
+        "user": {
+          "userId": 123,
+          "username": "nguyenvana",
+          "email": "a@example.com",
+          "role": "CUSTOMER"
+        }
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Đăng ký thành công"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "integer",
+                "example": 123
+              },
+              "username": {
+                "type": "string",
+                "example": "nguyenvana"
+              },
+              "email": {
+                "type": "string",
+                "example": "a@example.com"
+              },
+              "role": {
+                "type": "string",
+                "example": "CUSTOMER"
+              }
+            }
+          }
+        }
+      }
+order: 1000
