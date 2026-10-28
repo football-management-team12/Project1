@@ -1,0 +1,88 @@
+name: Sync Frontend to Vercel Fork
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-frontend-to-vercel
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'develop'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tested source code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          path: source
+          persist-credentials: false
+
+      - name: Checkout Vercel fork
+        uses: actions/checkout@v4
+        with:
+          repository: Thfnh/Deploy
+          ref: main
+          token: ${{ secrets.FRONTEND_SYNC_TOKEN }}
+          path: fork
+          persist-credentials: true
+
+      - name: Validate frontend directory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "source/frontend/package.json" ]; then
+            echo "ERROR: source/frontend/package.json not found."
+            exit 1
+          fi
+
+          if [ ! -d "fork/frontend" ]; then
+            echo "ERROR: fork/frontend does not exist."
+            exit 1
+          fi
+
+      - name: Sync frontend files only
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rsync -av --delete \
+            --exclude='node_modules/' \
+            --exclude='dist/' \
+            --exclude='build/' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='.vercel/' \
+            source/frontend/ fork/frontend/
+
+      - name: Commit and push if changed
+        working-directory: fork
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- frontend; then
+            echo "Frontend is already up to date."
+            exit 0
+          fi
+
+          git add frontend/
+
+          git commit -m "chore: sync frontend from Project1 develop"
+
+          git push origin HEAD:main
