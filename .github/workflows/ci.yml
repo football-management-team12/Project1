@@ -11,7 +11,13 @@ on:
       - develop
       - main
 
+
 jobs:
+
+  # =========================================================
+  # FRONTEND
+  # =========================================================
+
   frontend:
     runs-on: ubuntu-latest
 
@@ -34,6 +40,11 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+
+  # =========================================================
+  # BACKEND
+  # =========================================================
+
   backend:
     runs-on: ubuntu-latest
 
@@ -54,6 +65,11 @@ jobs:
         working-directory: backend
         run: python -m py_compile app.py
 
+
+  # =========================================================
+  # DOCKER
+  # =========================================================
+
   docker:
     runs-on: ubuntu-latest
 
@@ -63,3 +79,65 @@ jobs:
 
       - name: Build Docker images
         run: docker compose build
+
+
+  # =========================================================
+  # API TEST
+  # =========================================================
+
+  api-test:
+    runs-on: ubuntu-latest
+    needs: [backend, docker]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Newman and OpenAPI Converter
+        run: npm install -g newman openapi-to-postmanv2
+
+      - name: Start Services with Docker
+        run: |
+          docker compose up -d --build
+          sleep 10
+
+          echo "===== CONTAINER STATUS ====="
+          docker compose ps
+
+          echo "===== CONTAINER LOGS ====="
+          docker compose logs --no-color
+
+      - name: Check Backend API
+        run: |
+          echo "Checking backend..."
+
+          for i in {1..20}; do
+            if curl -f http://127.0.0.1:5000/api/fields/; then
+              echo "Backend is ready"
+              exit 0
+            fi
+
+            echo "Waiting for backend..."
+            sleep 3
+          done
+
+          echo "Backend is not reachable"
+
+          docker compose ps
+          docker compose logs --no-color
+
+          exit 1
+
+      - name: Convert Swagger to Postman Collection & Run Tests
+        run: |
+          openapi2postmanv2 -s backend/swagger.yaml -o converted_collection.json -p
+          newman run converted_collection.json
+
+      - name: Stop Services
+        if: always()
+        run: docker compose down
