@@ -1,0 +1,9 @@
+$kind: http-request
+name: 06 – Lấy thông tin đặt cọc với Booking ID sai định dạng
+url: "{{baseUrl}}/api/bookings/abc/deposit"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 6000

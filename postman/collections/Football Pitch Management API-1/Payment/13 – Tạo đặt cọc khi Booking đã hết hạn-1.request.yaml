@@ -1,0 +1,9 @@
+$kind: http-request
+name: 13 – Tạo đặt cọc khi Booking đã hết hạn
+url: "{{baseUrl}}/api/bookings/7/deposit"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 15000

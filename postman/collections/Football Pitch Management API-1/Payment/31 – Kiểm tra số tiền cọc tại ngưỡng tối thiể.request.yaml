@@ -1,0 +1,9 @@
+$kind: http-request
+name: 31 – Kiểm tra số tiền cọc tại ngưỡng tối thiểu
+url: "{{baseUrl}}/api/bookings/15/deposit"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 10000

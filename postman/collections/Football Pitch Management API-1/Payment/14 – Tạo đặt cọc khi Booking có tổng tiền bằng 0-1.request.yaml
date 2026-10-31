@@ -1,0 +1,9 @@
+$kind: http-request
+name: 14 – Tạo đặt cọc khi Booking có tổng tiền bằng 0
+url: "{{baseUrl}}/api/bookings/7/deposit"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 16000
