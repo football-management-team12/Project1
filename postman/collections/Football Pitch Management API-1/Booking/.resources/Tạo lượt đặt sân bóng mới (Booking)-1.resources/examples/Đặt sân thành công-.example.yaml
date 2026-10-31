@@ -4,19 +4,15 @@ request:
   url: "{{baseUrl}}/api/bookings/"
   method: POST
   headers:
-    - key: Content-Type
-      value: application/json
-    - key: Accept
-      value: application/json
-    - key: Authorization
-      value: Bearer <token>
-      description: "Added as a part of security scheme: bearer"
+    Content-Type: application/json
+    Accept: application/json
+    Authorization: Bearer <token>
   body:
     type: json
     content: |-
       {
         "FieldID": 1,
-        "BookingDate": "2026-10-05",
+        "BookingDate": "2026-11-3",
         "PriceID": 101,
         "Note": "Cần chuẩn bị sẵn 2 bộ áo lưới"
       }
@@ -32,7 +28,7 @@ response:
         "message": "Booking created successfully",
         "booking": {
           "BookingID": 50,
-          "UserID": 1,
+          "UserID": 8,
           "FieldID": 1,
           "FieldName": "Sân 7 A1",
           "BookingDate": "2026-10-05",

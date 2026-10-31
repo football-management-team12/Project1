@@ -1,0 +1,12 @@
+$kind: http-request
+name: 29 – Không cho đổi trạng thái cuối sang trạng thái khác
+url: "{{baseUrl}}/api/payments/19 /demo-status"
+method: PATCH
+body:
+  type: json
+  content: "{\r\n    \"status\":\"FAILED\"\r\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 30583

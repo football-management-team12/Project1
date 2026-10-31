@@ -1,0 +1,9 @@
+$kind: http-request
+name: 16 – Không tạo khoản cọc trùng khi gửi request lặp lại
+url: "{{baseUrl}}/api/bookings/7/deposit"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 18000

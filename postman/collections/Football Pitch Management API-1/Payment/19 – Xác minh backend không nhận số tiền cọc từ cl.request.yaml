@@ -1,0 +1,12 @@
+$kind: http-request
+name: 19 – Xác minh backend không nhận số tiền cọc từ client
+url: "{{baseUrl}}/api/bookings/12/deposit"
+method: POST
+body:
+  type: json
+  content: "{\r\n    \"amount\": 1\r\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 21000

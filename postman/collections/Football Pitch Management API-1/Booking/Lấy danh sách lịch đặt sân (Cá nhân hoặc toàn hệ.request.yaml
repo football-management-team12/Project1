@@ -43,5 +43,6 @@ auth:
   credentials:
     token: "{{bearerToken}}"
 settings: {}
-examples: ./.resources/Lấy danh sách lịch đặt sân (Cá nhân hoặc toàn hệ.resources/examples
-order: 2000
+examples: ./.resources/Lấy danh sách lịch đặt sân (Cá nhân hoặc toàn
+  hệ.resources/examples
+order: 3000

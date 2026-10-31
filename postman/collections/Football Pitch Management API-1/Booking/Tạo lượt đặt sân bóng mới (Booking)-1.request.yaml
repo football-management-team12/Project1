@@ -1,4 +1,5 @@
 $kind: http-request
+name: Tạo lượt đặt sân bóng mới (Booking)
 description: ""
 url: "{{baseUrl}}/api/bookings/"
 method: POST
@@ -47,5 +48,5 @@ auth:
   credentials:
     token: "{{bearerToken}}"
 settings: {}
-examples: ./.resources/Tạo lượt đặt sân bóng mới (Booking).resources/examples
-order: 1000
+examples: ./.resources/Tạo lượt đặt sân bóng mới (Booking)-1.resources/examples
+order: 1525

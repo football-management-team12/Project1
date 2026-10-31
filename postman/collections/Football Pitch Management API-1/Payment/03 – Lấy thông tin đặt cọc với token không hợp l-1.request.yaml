@@ -1,0 +1,9 @@
+$kind: http-request
+name: 03 – Lấy thông tin đặt cọc với token không hợp lệ
+url: "{{baseUrl}}/api/bookings/4/deposit"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: '"{{json_web_token_1b4y}}"'
+order: 4000
