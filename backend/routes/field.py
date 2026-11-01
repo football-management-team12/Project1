@@ -16,6 +16,7 @@ from services.availability_service import (
 from services.jwt_service import (
     jwt_required,
     role_required,
+    current_user_id,
 )
 
 
@@ -70,6 +71,8 @@ def get_fields():
 
             LEFT JOIN FieldPrices P
                 ON F.FieldID = P.FieldID
+
+            WHERE F.IsArchived = 0
 
             ORDER BY
                 F.FieldID,
@@ -196,6 +199,9 @@ def update_field_price(
             or {}
         )
 
+        if not isinstance(data, dict):
+            return jsonify({"message": "Body phải là JSON object"}), 400
+
         start_time = data.get(
             "StartTime"
         )
@@ -225,10 +231,17 @@ def update_field_price(
                     "Thiếu StartTime, EndTime hoặc Price"
             }), 400
 
-        # Validation giá âm chi tiết thuộc task
-        # quản lý sân / T123-105.
-        #
-        # Ở UC02 chỉ bảo vệ quyền gọi API này.
+        # UC15/T123-105: Chặn giá âm và khung giờ không hợp lệ.
+        from services.field_management_service import (
+            FieldManagementError,
+            validate_slot,
+            ensure_no_active_bookings,
+            require_active_admin,
+        )
+        try:
+            start_time, end_time, price = validate_slot(data)
+        except FieldManagementError as exc:
+            return jsonify({"message": exc.message, "code": exc.code}), exc.status
 
         conn = get_connection()
 
@@ -240,25 +253,48 @@ def update_field_price(
             }), 500
 
         cursor = conn.cursor()
+        cursor.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+        try:
+            require_active_admin(cursor, current_user_id())
+        except FieldManagementError as exc:
+            conn.rollback()
+            return jsonify({"message": exc.message, "code": exc.code}), exc.status
+        cursor.execute(
+            """SELECT FieldID, IsArchived FROM dbo.FootballFields
+               WITH (UPDLOCK, HOLDLOCK) WHERE FieldID=?""",
+            field_id
+        )
+        current_field = cursor.fetchone()
+        if current_field is None:
+            conn.rollback()
+            return jsonify({"message": "Không tìm thấy sân bóng"}), 404
+        if current_field.IsArchived:
+            conn.rollback()
+            return jsonify({"message": "Không thể đổi giá sân đã lưu trữ"}), 409
 
+        try:
+            ensure_no_active_bookings(cursor, field_id)
+        except FieldManagementError as exc:
+            conn.rollback()
+            return jsonify({"message": exc.message, "code": exc.code}), exc.status
 
-        sql = """
-            UPDATE FieldPrices
-
-            SET
-                StartTime = ?,
-                EndTime = ?,
-                Price = ?
-
-            WHERE FieldID = ?
-        """
+        # Legacy API không nhận PriceID: tránh ghi đè tất cả
+        # khung giờ khi một sân có nhiều mức giá.
+        cursor.execute(
+            "SELECT COUNT(*) FROM dbo.FieldPrices WHERE FieldID=?",
+            field_id
+        )
+        if int(cursor.fetchone()[0]) != 1:
+            conn.rollback()
+            return jsonify({
+                "message": "Sân có nhiều khung giá. Hãy dùng API /api/admin/fields/<id>/prices/<price_id>"
+            }), 409
 
         cursor.execute(
-            sql,
-            start_time,
-            end_time,
-            price,
-            field_id
+            """UPDATE dbo.FieldPrices
+               SET StartTime=?, EndTime=?, Price=?
+               WHERE FieldID=?""",
+            start_time, end_time, price, field_id
         )
 
         if cursor.rowcount == 0:
@@ -409,6 +445,7 @@ def get_field_availability(
             FROM FootballFields
 
             WHERE FieldID = ?
+              AND IsArchived = 0
             """,
             field_id
         )
@@ -779,6 +816,8 @@ def get_all_fields_availability():
                 Status
 
             FROM FootballFields
+
+            WHERE IsArchived = 0
 
             ORDER BY FieldID
             """

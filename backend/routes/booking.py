@@ -434,8 +434,6 @@ def create_booking():
             "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"
         )
 
-        expire_pending_bookings(cursor)
-
         # ====================================================
         # CHECK USER
         # ====================================================
@@ -503,9 +501,10 @@ def create_booking():
                 FieldName,
                 FieldType,
                 Location,
-                Status
+                Status,
+                IsArchived
 
-            FROM FootballFields
+            FROM FootballFields WITH (UPDLOCK, HOLDLOCK)
 
             WHERE FieldID = ?
             """,
@@ -522,6 +521,15 @@ def create_booking():
                 "message":
                     "Không tìm thấy sân bóng"
             }), 404
+
+        # UC15 - Sân lưu trữ vẫn tồn tại cho lịch sử booking,
+        # nhưng tuyệt đối không cho tạo booking mới.
+        if bool(field.IsArchived):
+            conn.rollback()
+            return jsonify({
+                "message": "Sân đã được lưu trữ, không thể đặt mới",
+                "code": "FIELD_ARCHIVED"
+            }), 409
 
         field_status = str(
             field.Status or ""
@@ -541,6 +549,10 @@ def create_booking():
         #
         # Không tin giá frontend gửi.
         # ====================================================
+
+        # UC15: lock the field before touching bookings, matching archive/status
+        # operations so concurrent booking and archive use the same lock order.
+        expire_pending_bookings(cursor)
 
         cursor.execute(
             """
