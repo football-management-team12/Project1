@@ -18,6 +18,9 @@ from routes.payment import payment_bp
 from routes.uc09 import uc09_bp
 from routes.cancellation import cancellation_bp
 
+# UC15 - Quản lý sân bóng
+from routes.field_management import field_management_bp
+
 
 app = Flask(__name__)
 
@@ -55,9 +58,16 @@ app.register_blueprint(
     url_prefix="/api/auth"
 )
 
+# API sân công khai, giữ nguyên
 app.register_blueprint(
     field_bp,
     url_prefix="/api/fields"
+)
+
+# UC15 - API quản trị sân
+app.register_blueprint(
+    field_management_bp,
+    url_prefix="/api/admin/fields"
 )
 
 app.register_blueprint(
@@ -87,7 +97,7 @@ app.register_blueprint(
     url_prefix="/api"
 )
 
-# UC07 - Hủy đơn và ADMIN duyệt yêu cầu
+# UC07 - Hủy đơn và ADMIN duyệt yêu cầu, giữ nguyên
 app.register_blueprint(
     cancellation_bp,
     url_prefix="/api"

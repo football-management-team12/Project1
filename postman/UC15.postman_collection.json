@@ -1,0 +1,1034 @@
+{
+  "info": {
+    "name": "UC15 - Field management (T123-74)",
+    "description": "Manual UC15 API requests (no scripts/assertion events). Import a copy, set tokens and fixture IDs, then send selected requests. Do not run the collection as one sequential scenario: negative, rollback and race groups have different preconditions. JWT variables must contain real valid tokens for the stated role/status. Rollback requires a controlled SQL fault in a separate QA database; concurrency requires parallel sessions. Never inject faults into a shared/live database. Responses and SQL evidence must be recorded by Tester T123-137. No DELETE endpoint is in scope. FieldType accepts only 5 player, 7 player, 11 player.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5001"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "fieldId",
+      "value": ""
+    },
+    {
+      "key": "priceId",
+      "value": ""
+    },
+    {
+      "key": "customerToken",
+      "value": ""
+    },
+    {
+      "key": "otherCustomerToken",
+      "value": ""
+    },
+    {
+      "key": "inactiveAdminToken",
+      "value": ""
+    },
+    {
+      "key": "expiredAdminToken",
+      "value": ""
+    },
+    {
+      "key": "secondAdminToken",
+      "value": ""
+    },
+    {
+      "key": "fieldWithBookingId",
+      "value": ""
+    },
+    {
+      "key": "activeBookingId",
+      "value": ""
+    },
+    {
+      "key": "bookingDate",
+      "value": ""
+    },
+    {
+      "key": "bookingStartTime",
+      "value": "06:00"
+    },
+    {
+      "key": "bookingEndTime",
+      "value": "07:00"
+    },
+    {
+      "key": "archivedFieldId",
+      "value": ""
+    },
+    {
+      "key": "nonArchivedFieldId",
+      "value": ""
+    },
+    {
+      "key": "historicalBookingId",
+      "value": ""
+    },
+    {
+      "key": "missingFieldId",
+      "value": "2147483647"
+    },
+    {
+      "key": "overlapStartTime",
+      "value": "06:00"
+    },
+    {
+      "key": "overlapEndTime",
+      "value": "07:00"
+    },
+    {
+      "key": "raceFieldId",
+      "value": ""
+    },
+    {
+      "key": "raceBookingId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - List all fields",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/fields"
+      }
+    },
+    {
+      "name": "02 - List non-archived fields",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/fields?archived=0"
+      }
+    },
+    {
+      "name": "03 - List archived fields",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/fields?archived=1"
+      }
+    },
+    {
+      "name": "04 - Field detail and prices",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}"
+      }
+    },
+    {
+      "name": "05 - Create field (copy returned FieldID to fieldId)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/admin/fields",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"FieldName\": \"UC15 review field\",\n  \"FieldType\": \"5 player\",\n  \"Location\": \"Review location\",\n  \"Image\": \"\",\n  \"Status\": \"AVAILABLE\"\n}"
+        }
+      }
+    },
+    {
+      "name": "06 - Update field",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"FieldName\": \"UC15 review field updated\",\n  \"Location\": \"Updated location\"\n}"
+        }
+      }
+    },
+    {
+      "name": "07 - Set maintenance",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/status",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"Status\":\"MAINTENANCE\"}"
+        }
+      }
+    },
+    {
+      "name": "08 - Set available",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/status",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"Status\":\"AVAILABLE\"}"
+        }
+      }
+    },
+    {
+      "name": "09 - Archive field (409 if active bookings exist)",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/archive"
+      }
+    },
+    {
+      "name": "10 - Restore field (preserve status and archive metadata)",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/restore"
+      }
+    },
+    {
+      "name": "11 - Add price (copy result.PriceID to priceId)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/prices",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"StartTime\": \"06:00\",\n  \"EndTime\": \"07:00\",\n  \"Price\": 300000\n}"
+        }
+      }
+    },
+    {
+      "name": "12 - Update one price",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/prices/{{priceId}}",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"StartTime\": \"06:00\",\n  \"EndTime\": \"07:00\",\n  \"Price\": 350000\n}"
+        }
+      }
+    },
+    {
+      "name": "Authorization - prepare valid role/status fixtures",
+      "item": [
+        {
+          "name": "Missing JWT - expect 401",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/fields",
+            "description": "No Authorization header. No database changes.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Malformed JWT - expect 401",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/fields",
+            "description": "Deliberately invalid token; not an expired-token substitute.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "intentionally-invalid-token",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Expired JWT - expect 401",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/fields",
+            "description": "Set expiredAdminToken to a genuinely expired signed token.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{expiredAdminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "CUSTOMER denied - expect 403",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/fields",
+            "description": "Set customerToken to a valid CUSTOMER token; an empty/invalid token gives 401.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inactive ADMIN denied - expect 403",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/fields",
+            "description": "Use a valid ADMIN token whose user is INACTIVE in the QA database. Do not deactivate a real account.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{inactiveAdminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Legacy price also checks ACTIVE - expect 403",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/fields/price/{{fieldId}}",
+            "description": "Use a real fieldId and valid inactiveAdminToken; verify prices are unchanged.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{inactiveAdminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"StartTime\": \"{{bookingStartTime}}\",\n  \"EndTime\": \"{{bookingEndTime}}\",\n  \"Price\": 300000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validation - valid active ADMIN token required",
+      "item": [
+        {
+          "name": "Unsupported FieldType on create - expect 400",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/fields",
+            "description": "9 player is outside the supported enum; no field is inserted.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"FieldName\": \"UC15 review field\",\n  \"FieldType\": \"9 player\",\n  \"Location\": \"Review location\",\n  \"Image\": \"\",\n  \"Status\": \"AVAILABLE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Unsupported FieldType on update - expect 400",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}",
+            "description": "Existing non-archived field; compare FieldType before/after.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"FieldType\": \"9 player\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Missing required field - expect 400",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/fields",
+            "description": "Missing FieldName; no field is inserted.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"FieldType\": \"5 player\",\n  \"Location\": \"Review location\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Array body - expect 400",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/fields",
+            "description": "JSON must be an object.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Name longer than SQL limit - expect 400",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/fields",
+            "description": "101 ASCII characters exceed NVARCHAR(100).",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"FieldName\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\n  \"FieldType\": \"5 player\",\n  \"Location\": \"Review location\",\n  \"Image\": \"\",\n  \"Status\": \"AVAILABLE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Negative price - expect 400",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/prices",
+            "description": "Use a field without active bookings; verify price rows unchanged.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"StartTime\": \"{{bookingStartTime}}\",\n  \"EndTime\": \"{{bookingEndTime}}\",\n  \"Price\": -1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Zero price - expect 400",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/prices",
+            "description": "Use a field without active bookings.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"StartTime\": \"{{bookingStartTime}}\",\n  \"EndTime\": \"{{bookingEndTime}}\",\n  \"Price\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Too many price decimals - expect 400",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/prices",
+            "description": "Do not silently round 0.001 to zero.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"StartTime\": \"{{bookingStartTime}}\",\n  \"EndTime\": \"{{bookingEndTime}}\",\n  \"Price\": 0.001\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Invalid time - expect 400",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/prices",
+            "description": "25:00 is outside valid local time.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"StartTime\": \"25:00\",\n  \"EndTime\": \"{{bookingEndTime}}\",\n  \"Price\": 300000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "End before start - expect 400",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/prices",
+            "description": "EndTime must be greater than StartTime.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"StartTime\": \"08:00\",\n  \"EndTime\": \"07:00\",\n  \"Price\": 300000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Price overlap - prepare existing intervals first",
+      "item": [
+        {
+          "name": "Duplicate interval - expect 409",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/prices",
+            "description": "Set overlapStartTime/overlapEndTime to an existing slot on fieldId with no active bookings. Expect PRICE_SLOT_OVERLAP.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"StartTime\": \"{{overlapStartTime}}\",\n  \"EndTime\": \"{{overlapEndTime}}\",\n  \"Price\": 300000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update into another interval - expect 409",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}/prices/{{priceId}}",
+            "description": "priceId must be a different slot from the existing overlap interval. Confirm both rows remain unchanged.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"StartTime\": \"{{overlapStartTime}}\",\n  \"EndTime\": \"{{overlapEndTime}}\",\n  \"Price\": 350000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Archive with real PENDING and CONFIRMED booking - manual scenario",
+      "item": [
+        {
+          "name": "Prepare booking - expect 201 PENDING",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/bookings/",
+            "description": "Use a dedicated AVAILABLE field with the exact price slot, a future date, and the owning CUSTOMER token. Copy Booking.BookingID to activeBookingId. Ensure the deposit deadline has not elapsed.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"FieldID\": \"{{fieldWithBookingId}}\",\n  \"BookingDate\": \"{{bookingDate}}\",\n  \"StartTime\": \"{{bookingStartTime}}\",\n  \"EndTime\": \"{{bookingEndTime}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Baseline booking - expect 200",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookings/{{activeBookingId}}",
+            "description": "Capture booking status, field, date, times, total and paid amounts. Field and booking must match fixture variables."
+          }
+        },
+        {
+          "name": "Baseline financial summary - expect 200",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookings/{{activeBookingId}}/settlement",
+            "description": "Record financial summary and compare SQL Bookings/Payments/Invoices before and after blocked Archive."
+          }
+        },
+        {
+          "name": "Archive PENDING field - expect 409",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldWithBookingId}}/archive",
+            "description": "Booking must still be PENDING and future/ongoing. Expect ACTIVE_BOOKINGS; IsArchived, booking and financial records must be unchanged."
+          }
+        },
+        {
+          "name": "After blocked PENDING - booking unchanged",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookings/{{activeBookingId}}",
+            "description": "Compare with baseline; do not merely check HTTP status."
+          }
+        },
+        {
+          "name": "After blocked PENDING - payments unchanged",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookings/{{activeBookingId}}/settlement",
+            "description": "Compare amounts/status/invoice with baseline, and compare SQL Payments/Invoices rows."
+          }
+        },
+        {
+          "name": "Prepare CONFIRMED state - expect 200",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/bookings/{{activeBookingId}}/status",
+            "description": "Run only for the dedicated PENDING fixture; record this intentional change as the next baseline.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Status\": \"CONFIRMED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Baseline CONFIRMED booking",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookings/{{activeBookingId}}",
+            "description": "Record CONFIRMED state before the next Archive attempt."
+          }
+        },
+        {
+          "name": "Archive CONFIRMED field - expect 409",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldWithBookingId}}/archive",
+            "description": "Expect ACTIVE_BOOKINGS for the same future/ongoing booking; no cancellation or financial change."
+          }
+        },
+        {
+          "name": "After blocked CONFIRMED - booking unchanged",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookings/{{activeBookingId}}",
+            "description": "Must remain CONFIRMED and retain original slot/amounts."
+          }
+        },
+        {
+          "name": "After blocked CONFIRMED - payments unchanged",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookings/{{activeBookingId}}/settlement",
+            "description": "Financial summary and SQL payment/invoice values must match baseline."
+          }
+        },
+        {
+          "name": "Field still not archived",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldWithBookingId}}",
+            "description": "IsArchived must remain false after both 409 responses."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Retries and historical data - separate fixtures",
+      "item": [
+        {
+          "name": "Archive repeated - expect 409",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/fields/{{archivedFieldId}}/archive",
+            "description": "Use an already archived fixture. Expect ALREADY_ARCHIVED and unchanged last-archive metadata."
+          }
+        },
+        {
+          "name": "Restore repeated - expect 409",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/fields/{{nonArchivedFieldId}}/restore",
+            "description": "Use a non-archived fixture. Expect NOT_ARCHIVED and unchanged status/metadata."
+          }
+        },
+        {
+          "name": "Unknown field - expect 404",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/fields/{{missingFieldId}}",
+            "description": "Use a confirmed unused positive field ID."
+          }
+        },
+        {
+          "name": "Archived booking history - expect 200",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/customer-bookings/me/{{historicalBookingId}}",
+            "description": "Use an owning CUSTOMER token and an old booking on an archived field. FieldName and original amounts remain readable.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Archived deposit history - expect 200",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookings/{{historicalBookingId}}/deposit",
+            "description": "Use a real successful deposit fixture with its original payment reference. Confirm no payment is replaced.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Archived settlement history - expect 200",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookings/{{historicalBookingId}}/settlement",
+            "description": "Compare deposit, invoice and remaining amounts.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Other customer history denied - expect 404",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/customer-bookings/me/{{historicalBookingId}}",
+            "description": "Use a valid token for another CUSTOMER; do not expose booking or bank information.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherCustomerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rollback - requires a controlled SQL fault in QA only",
+      "item": [
+        {
+          "name": "Rollback baseline",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}",
+            "description": "Record field details and price rows before the next request."
+          }
+        },
+        {
+          "name": "Update during injected SQL failure - expect 500",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}",
+            "description": "Only send after Tester configures a controlled SQL error/trigger on this dedicated fixture in an isolated QA database. The API has no fault-injection parameter. Without that setup this is an ordinary successful PUT, not a rollback test.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"FieldName\": \"UC15_ROLLBACK_REVIEW\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Rollback verification",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/fields/{{fieldId}}",
+            "description": "After the controlled 500 response, compare every field/price with the baseline and SQL. Remove the QA-only fault setup afterwards."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Concurrency - send from parallel sessions, not sequential runner",
+      "item": [
+        {
+          "name": "Archive session A",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/fields/{{raceFieldId}}/archive",
+            "description": "Dedicated non-archived field with no active bookings. Send concurrently with session B; one 200 and one 409, then compare SQL and metadata."
+          }
+        },
+        {
+          "name": "Archive session B",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/fields/{{raceFieldId}}/archive",
+            "description": "Use a second valid ACTIVE ADMIN token and send concurrently with session A.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{secondAdminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Booking side of Archive vs Booking",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/bookings/",
+            "description": "Use a separate fresh AVAILABLE race field with the matching price. Send concurrently with Archive. Allowed outcomes: booking 201 + archive 409 OR archive 200 + booking 409; not both 200/201.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"FieldID\": \"{{raceFieldId}}\",\n  \"BookingDate\": \"{{bookingDate}}\",\n  \"StartTime\": \"{{bookingStartTime}}\",\n  \"EndTime\": \"{{bookingEndTime}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Archive side of Archive vs Booking",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/fields/{{raceFieldId}}/archive",
+            "description": "Send concurrently with the booking request. Compare both responses and final field/booking/payment rows."
+          }
+        },
+        {
+          "name": "Race final field state",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/fields/{{raceFieldId}}",
+            "description": "Compare IsArchived with the two competing responses; no valid booking may be accepted on an archived field."
+          }
+        },
+        {
+          "name": "Race final booking state",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookings/{{raceBookingId}}",
+            "description": "If booking succeeded, copy Booking.BookingID into raceBookingId. Verify slot/status; skip if no booking was created."
+          }
+        }
+      ]
+    }
+  ]
+}

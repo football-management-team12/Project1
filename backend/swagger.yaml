@@ -9,6 +9,352 @@ servers:
     description: "Local Server"
 
 paths:
+
+  # =========================================================
+  # UC15 - ADMIN FIELD MANAGEMENT
+  # =========================================================
+
+  /api/admin/fields:
+    get:
+      tags:
+        - UC15 - Field Management
+      summary: Danh sách sân cho ADMIN
+      description: |
+        ADMIN có thể xem cả sân đang hoạt động,
+        đang bảo trì và đã lưu trữ.
+        archived=0: chưa lưu trữ.
+        archived=1: đã lưu trữ.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: archived
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        '200':
+          description: Danh sách sân
+        '401':
+          description: Chưa đăng nhập
+        '403':
+          description: Không phải ADMIN
+
+    post:
+      tags:
+        - UC15 - Field Management
+      summary: Thêm sân bóng mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - FieldName
+                - FieldType
+                - Location
+              properties:
+                FieldName:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  example: "Sân bóng số 5"
+                FieldType:
+                  type: string
+                  minLength: 1
+                  maxLength: 30
+                  enum: [5 player, 7 player, 11 player]
+                  example: "5 player"
+                Location:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  example: "Hà Nội"
+                Image:
+                  type: string
+                  maxLength: 255
+                  example: ""
+                Status:
+                  type: string
+                  enum:
+                    - AVAILABLE
+                    - MAINTENANCE
+                  example: AVAILABLE
+      responses:
+        '201':
+          description: Thêm sân thành công
+        '400':
+          description: Dữ liệu không hợp lệ
+        '401':
+          description: Thiếu hoặc sai JWT
+        '403':
+          description: Không có quyền ADMIN
+
+  /api/admin/fields/{field_id}:
+    parameters:
+      - name: field_id
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    get:
+      tags:
+        - UC15 - Field Management
+      summary: Chi tiết sân và bảng giá
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Chi tiết sân
+        '404':
+          description: Không tìm thấy sân
+
+    put:
+      tags:
+        - UC15 - Field Management
+      summary: Sửa thông tin sân
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                FieldName:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  example: "Sân số 5 - Mới"
+                FieldType:
+                  type: string
+                  minLength: 1
+                  maxLength: 30
+                  enum: [5 player, 7 player, 11 player]
+                  example: "5 player"
+                Location:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  example: "Hà Nội"
+                Image:
+                  type: string
+                  maxLength: 255
+                  example: ""
+      responses:
+        '200':
+          description: Cập nhật thành công
+        '400':
+          description: Dữ liệu không hợp lệ
+        '404':
+          description: Không tìm thấy sân
+        '409':
+          description: Sân đã được lưu trữ
+
+  /api/admin/fields/{field_id}/status:
+    patch:
+      tags:
+        - UC15 - Field Management
+      summary: Đổi trạng thái sân
+      description: |
+        Chuyển giữa AVAILABLE và MAINTENANCE.
+        Không áp dụng cho sân đã Archive.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - Status
+              properties:
+                Status:
+                  type: string
+                  enum:
+                    - AVAILABLE
+                    - MAINTENANCE
+                  example: MAINTENANCE
+      responses:
+        '200':
+          description: Đổi trạng thái thành công
+        '400':
+          description: Trạng thái không hợp lệ
+        '404':
+          description: Không tìm thấy sân
+        '409':
+          description: Sân đang có booking hoặc đã Archive
+
+  /api/admin/fields/{field_id}/archive:
+    patch:
+      tags:
+        - UC15 - Field Management
+      summary: Lưu trữ sân bóng
+      description: |
+        Soft Archive - KHÔNG xóa sân.
+        Đặt IsArchived = 1 và ghi ArchivedAt/ArchivedBy.
+        Booking và lịch sử thanh toán vẫn được giữ nguyên.
+        Sân có booking hiệu lực sẽ không thể Archive.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lưu trữ thành công
+        '401':
+          description: Thiếu JWT
+        '403':
+          description: Không phải ADMIN
+        '404':
+          description: Không tìm thấy sân
+        '409':
+          description: |
+            Có booking hiệu lực hoặc sân đã được lưu trữ
+
+  /api/admin/fields/{field_id}/restore:
+    patch:
+      tags:
+        - UC15 - Field Management
+      summary: Khôi phục sân đã lưu trữ
+      description: |
+        Đặt IsArchived = 0.
+        Giữ nguyên Status của sân.
+        Giữ ArchivedAt/ArchivedBy của lần lưu trữ gần nhất.
+        Không xóa hoặc thay đổi booking.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Khôi phục thành công
+        '404':
+          description: Không tìm thấy sân
+        '409':
+          description: Sân chưa được lưu trữ
+
+  /api/admin/fields/{field_id}/prices:
+    post:
+      tags:
+        - UC15 - Field Management
+      summary: Thêm khung giá sân
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - StartTime
+                - EndTime
+                - Price
+              properties:
+                StartTime:
+                  type: string
+                  example: "06:00"
+                EndTime:
+                  type: string
+                  example: "07:00"
+                Price:
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+                  maximum: 999999999
+                  multipleOf: 0.01
+                  example: 300000
+      responses:
+        '201':
+          description: Thêm khung giá thành công
+        '400':
+          description: Giá hoặc thời gian không hợp lệ
+        '409':
+          description: |
+            Trùng khung giờ, có booking hiệu lực
+            hoặc sân đã lưu trữ
+
+  /api/admin/fields/{field_id}/prices/{price_id}:
+    parameters:
+      - name: field_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: price_id
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    put:
+      tags:
+        - UC15 - Field Management
+      summary: Cập nhật một khung giá
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - StartTime
+                - EndTime
+                - Price
+              properties:
+                StartTime:
+                  type: string
+                  example: "17:00"
+                EndTime:
+                  type: string
+                  example: "18:00"
+                Price:
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+                  maximum: 999999999
+                  multipleOf: 0.01
+                  example: 450000
+      responses:
+        '200':
+          description: Cập nhật thành công
+        '400':
+          description: Giá hoặc thời gian không hợp lệ
+        '404':
+          description: Không tìm thấy sân hoặc khung giá
+        '409':
+          description: Không được phép thay đổi
+
   /api/auth/register:
     post:
       tags:

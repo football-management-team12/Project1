@@ -1,49 +1,478 @@
-/* =========================================================
-   FIELD MANAGEMENT
-========================================================= */
 
+/* ============================================================
+   UC15 - FIELD MANAGEMENT
+   File: frontend/src/pages/Admin/FieldManagement.css
+============================================================ */
 
-/* =========================================================
-   FIELD TIME
-========================================================= */
-
-.admin-content .time {
-    font-weight: 600;
-
-    color: #00563f;
-
-    white-space: nowrap;
+.fm-page {
+  width: 100%;
+  min-width: 0;
+  color: #1e293b;
 }
 
-
-/* =========================================================
-   FIELD STATUS
-========================================================= */
-
-.admin-content .status {
-    display: inline-block;
-
-    padding: 7px 15px;
-
-    border-radius: 30px;
-
-    font-size: 13px;
-
-    font-weight: 700;
-
-    white-space: nowrap;
+.fm-page * {
+  box-sizing: border-box;
 }
 
+/* HEADER */
 
-.admin-content .status.available {
-    background: #dcfce7;
-
-    color: #15803d;
+.fm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
+.fm-header h1 {
+  margin: 0 0 8px;
+  font-size: 27px;
+  font-weight: 800;
+  color: #064e3b;
+}
 
-.admin-content .status.maintenance {
-    background: #fee2e2;
+.fm-header p {
+  color: #64748b;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
 
-    color: #dc2626;
+.fm-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* BUTTONS */
+
+.fm-page .fm-btn {
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: 0.2s ease;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.fm-page .fm-btn:hover:not(:disabled) {
+  filter: brightness(0.96);
+  transform: translateY(-1px);
+}
+
+.fm-page .fm-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fm-btn-primary {
+  background: #047857;
+  color: white;
+}
+
+.fm-btn-outline {
+  background: white;
+  border-color: #cbd5e1 !important;
+  color: #334155;
+}
+
+.fm-btn-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.fm-btn-archive {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.fm-btn-restore {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* NOTICES */
+
+.fm-notice {
+  padding: 13px 16px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.fm-notice-success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.fm-notice-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.fm-notice button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* STATS */
+
+.fm-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.fm-stat {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+}
+
+.fm-stat span {
+  color: #64748b;
+  font-size: 13px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.fm-stat strong {
+  display: block;
+  font-size: 29px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fm-stat-green strong {
+  color: #15803d;
+}
+
+.fm-stat-orange strong {
+  color: #d97706;
+}
+
+.fm-stat-gray strong {
+  color: #64748b;
+}
+
+/* FILTERS */
+
+.fm-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.fm-filters input,
+.fm-filters select {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 11px 13px;
+  font-size: 14px;
+  color: #334155;
+  min-width: 165px;
+  outline: none;
+}
+
+.fm-filters input {
+  flex: 1;
+  min-width: 220px;
+}
+
+.fm-filters input:focus,
+.fm-filters select:focus {
+  border-color: #059669;
+}
+
+/* TABLE */
+
+.fm-table-box {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+}
+
+.fm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.fm-table th {
+  text-align: left;
+  padding: 16px 14px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+  white-space: nowrap;
+  font-weight: 750;
+}
+
+.fm-table td {
+  border-top: 1px solid #e2e8f0;
+  padding: 15px 14px;
+  vertical-align: middle;
+}
+
+.fm-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.fm-table td strong {
+  color: #0f172a;
+}
+
+.fm-empty {
+  padding: 40px !important;
+  text-align: center;
+  color: #64748b;
+}
+
+/* STATUS */
+
+.fm-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 30px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.fm-available {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.fm-maintenance {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.fm-archived {
+  color: #475569;
+  background: #e2e8f0;
+}
+
+/* ROW ACTIONS */
+
+.fm-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.fm-actions .fm-btn {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+/* MODAL */
+
+.fm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgb(15 23 42 / 58%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.fm-modal {
+  background: white;
+  border-radius: 16px;
+  width: min(100%, 520px);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 25px;
+  box-shadow: 0 24px 70px rgb(15 23 42 / 20%);
+}
+
+.fm-modal-wide {
+  width: min(100%, 850px);
+}
+
+.fm-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.fm-modal-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #064e3b;
+}
+
+.fm-modal-header p {
+  color: #64748b;
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.fm-modal-header > button {
+  border: none;
+  background: #f1f5f9;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 23px;
+  cursor: pointer;
+  color: #475569;
+}
+
+.fm-modal form > label,
+.fm-price-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.fm-modal input,
+.fm-modal select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 11px 12px;
+  font-size: 14px;
+  color: #0f172a;
+  font-family: inherit;
+  background: white;
+  outline: none;
+}
+
+.fm-modal input:focus,
+.fm-modal select:focus {
+  border-color: #059669;
+}
+
+.fm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.fm-price-list {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.fm-price-list .fm-table th,
+.fm-price-list .fm-table td {
+  padding: 12px;
+}
+
+.fm-price-form {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 20px;
+}
+
+.fm-price-form h3 {
+  margin: 0 0 20px;
+  font-size: 17px;
+  color: #064e3b;
+}
+
+.fm-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fm-form-grid label {
+  margin-bottom: 0;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1100px) {
+  .fm-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fm-header {
+    flex-direction: column;
+  }
+
+  .fm-header-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  .fm-header h1 {
+    font-size: 22px;
+  }
+
+  .fm-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .fm-stat {
+    padding: 15px;
+  }
+
+  .fm-stat strong {
+    font-size: 24px;
+  }
+
+  .fm-filters {
+    flex-direction: column;
+  }
+
+  .fm-filters input,
+  .fm-filters select {
+    width: 100%;
+  }
+
+  .fm-modal {
+    padding: 18px;
+  }
+
+  .fm-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fm-actions {
+    min-width: 180px;
+  }
 }
