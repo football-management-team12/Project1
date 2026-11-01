@@ -115,6 +115,32 @@ paths:
   # 2. API Fields (routes/field.py)
   # ------------------------------------
   /api/fields/:
+    post:
+      tags: [UC15 - Field Management]
+      summary: "UC15 - ADMIN tạo sân mới"
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [FieldName, FieldType, Location]
+              properties:
+                FieldName: {type: string, maxLength: 150}
+                FieldType: {type: string, maxLength: 50}
+                Location: {type: string, maxLength: 255}
+                Image: {type: string, maxLength: 500}
+                Status: {type: string, enum: [AVAILABLE, MAINTENANCE]}
+                Prices:
+                  type: array
+                  items: {$ref: '#/components/schemas/UC15PriceInput'}
+      responses:
+        '201': {description: "Tạo sân thành công"}
+        '400': {description: "Dữ liệu không hợp lệ"}
+        '401': {description: "Thiếu hoặc sai JWT"}
+        '403': {description: "Chỉ ADMIN ACTIVE"}
+        '409': {description: "Các khung giờ bị chồng lấn"}
     get:
       tags:
         - Fields
@@ -899,6 +925,124 @@ paths:
         '409':
 
           description: "Email hoặc số điện thoại đã tồn tại"
+  # UC15: separate ADMIN CRUD routes; public availability unchanged.
+  /api/fields/{field_id}:
+    parameters:
+      - name: field_id
+        in: path
+        required: true
+        schema: {type: integer, minimum: 1}
+    get:
+      tags: [UC15 - Field Management]
+      summary: "ADMIN xem chi tiết sân và tất cả khung giá"
+      security: [{BearerAuth: []}]
+      responses:
+        '200': {description: "Thông tin sân và Prices"}
+        '401': {description: "Thiếu hoặc sai JWT"}
+        '403': {description: "Chỉ ADMIN ACTIVE"}
+        '404': {description: "Sân không tồn tại"}
+    put:
+      tags: [UC15 - Field Management]
+      summary: "ADMIN sửa tên, loại sân, địa điểm, hình ảnh"
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                FieldName: {type: string}
+                FieldType: {type: string}
+                Location: {type: string}
+                Image: {type: string}
+      responses:
+        '200': {description: "Đã cập nhật thông tin sân"}
+        '400': {description: "Input không hợp lệ"}
+        '401': {description: "Thiếu JWT"}
+        '403': {description: "Sai quyền"}
+        '404': {description: "Sân không tồn tại"}
+    delete:
+      tags: [UC15 - Field Management]
+      summary: "Xóa sân chưa có booking, hoặc ngừng hoạt động sân có lịch sử"
+      security: [{BearerAuth: []}]
+      responses:
+        '200': {description: "Đã xóa hoặc chuyển MAINTENANCE nếu còn lịch sử"}
+        '403': {description: "Sai quyền"}
+        '404': {description: "Sân không tồn tại"}
+        '409': {description: "Sân có booking đang hiệu lực"}
+
+  /api/fields/{field_id}/status:
+    patch:
+      tags: [UC15 - Field Management]
+      summary: "ADMIN mở sân / bảo trì"
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: field_id, in: path, required: true, schema: {type: integer}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [Status]
+              properties:
+                Status: {type: string, enum: [AVAILABLE, MAINTENANCE]}
+      responses:
+        '200': {description: "Đổi trạng thái thành công"}
+        '400': {description: "Trạng thái sai"}
+        '403': {description: "Sai quyền"}
+        '404': {description: "Sân không tồn tại"}
+        '409': {description: "Sân còn booking hiệu lực"}
+
+  /api/fields/{field_id}/prices:
+    post:
+      tags: [UC15 - Field Management]
+      summary: "ADMIN thêm khung giá"
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: field_id, in: path, required: true, schema: {type: integer}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UC15PriceInput'}
+      responses:
+        '201': {description: "Đã thêm khung giá"}
+        '400': {description: "Giá âm, giờ sai"}
+        '403': {description: "Sai quyền"}
+        '404': {description: "Sân không tồn tại"}
+        '409': {description: "Trùng khung giờ hoặc có booking đang hiệu lực"}
+
+  /api/fields/{field_id}/prices/{price_id}:
+    parameters:
+      - {name: field_id, in: path, required: true, schema: {type: integer}}
+      - {name: price_id, in: path, required: true, schema: {type: integer}}
+    put:
+      tags: [UC15 - Field Management]
+      summary: "ADMIN sửa khung giờ và giá"
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UC15PriceInput'}
+      responses:
+        '200': {description: "Đã sửa giá"}
+        '400': {description: "Giá âm, giờ sai"}
+        '403': {description: "Sai quyền"}
+        '404': {description: "Không tìm thấy giá"}
+        '409': {description: "Chồng khung giờ/booking đang hiệu lực"}
+    delete:
+      tags: [UC15 - Field Management]
+      summary: "ADMIN xóa khung giá"
+      security: [{BearerAuth: []}]
+      responses:
+        '200': {description: "Đã xóa khung giá"}
+        '403': {description: "Sai quyền"}
+        '404': {description: "Không tìm thấy giá"}
+        '409': {description: "Sân còn booking đang hiệu lực"}
+
 components:
   securitySchemes:
     BearerAuth:
@@ -907,6 +1051,13 @@ components:
       bearerFormat: JWT
 
   schemas:
+    UC15PriceInput:
+      type: object
+      required: [StartTime, EndTime, Price]
+      properties:
+        StartTime: {type: string, example: "06:00"}
+        EndTime: {type: string, example: "07:30"}
+        Price: {type: number, exclusiveMinimum: 0, example: 300000}
     UserProfile:
       type: object
       properties:
