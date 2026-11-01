@@ -47,3 +47,20 @@
 
     color: #dc2626;
 }
+
+/* UC15 isolated admin styles - retains existing Admin.css layout. */
+.uc15-toolbar { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0 20px; }
+.uc15-toolbar input, .uc15-toolbar select { min-width:145px; flex:1; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; }
+.uc15-toolbar button, .uc15-actions button { cursor:pointer; border:1px solid #cbd5e1; padding:8px 12px; border-radius:7px; }
+.uc15-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.uc15-danger { background:#fff1f2; color:#b91c1c; }
+.uc15-error { padding:12px; color:#b91c1c; background:#fff1f2; border-radius:8px; }
+.uc15-success { padding:12px; color:#166534; background:#f0fdf4; border-radius:8px; }
+.uc15-price-row { white-space:nowrap; margin-bottom:4px; }
+.uc15-modal { width:min(650px,calc(100vw - 32px)); max-height:calc(100vh - 40px); overflow-y:auto; }
+.uc15-modal h3 { margin-top:18px; }
+.uc15-form { display:grid; gap:12px; margin:14px 0; }
+.uc15-form label { display:grid; gap:6px; font-weight:600; color:#334155; }
+.uc15-form input, .uc15-form select { width:100%; box-sizing:border-box; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; }
+.uc15-price-entry { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:10px 0; border-bottom:1px solid #e2e8f0; }
+.uc15-actions button:disabled, .uc15-toolbar button:disabled { opacity:.5; cursor:not-allowed; }
