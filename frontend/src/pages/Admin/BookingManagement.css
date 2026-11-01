@@ -106,6 +106,298 @@
   color: #dc2626;
 }
 
+/* Cancellation requests */
+
+.uc07-admin-requests {
+  margin: 24px 0;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgb(15 23 42 / 4%);
+}
+
+.cancellation-requests-heading,
+.cancellation-request-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cancellation-requests-heading h2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  color: #0f172a;
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.cancellation-requests-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 7px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: #fff3d6;
+  color: #995b08;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cancellation-requests-list {
+  display: grid;
+  gap: 16px;
+}
+
+.cancellation-requests-list:not(:empty) {
+  margin-top: 20px;
+}
+
+.cancellation-request-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.cancellation-request-customer {
+  min-width: 0;
+}
+
+.cancellation-request-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.cancellation-request-customer > p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.cancellation-request-info {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.5fr);
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.cancellation-request-label {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.cancellation-request-reason > p {
+  margin: 8px 0 0;
+  color: #1e293b;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cancellation-request-reason > .cancellation-request-time {
+  margin-top: 12px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.cancellation-request-deposit {
+  padding: 14px 16px;
+  border: 1px solid #d1eadc;
+  border-radius: 10px;
+  background: #f3faf6;
+}
+
+.cancellation-request-deposit strong {
+  display: block;
+  margin-top: 6px;
+  color: #00875a;
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+.cancellation-request-deposit p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.cancellation-request-review {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #edf1f5;
+}
+
+.cancellation-request-note {
+  flex: 1 1 340px;
+  min-width: 0;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cancellation-request-note textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 76px;
+  margin-top: 8px;
+  padding: 11px 13px;
+  border: 1px solid #d9e1e9;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 400;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cancellation-request-note textarea::placeholder {
+  color: #77869a;
+}
+
+.cancellation-request-note textarea:focus {
+  outline: none;
+  border-color: #00875a;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgb(0 135 90 / 12%);
+}
+
+.cancellation-request-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.uc07-admin-requests .cancellation-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 7px;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 9px 15px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.cancellation-btn svg {
+  flex-shrink: 0;
+}
+
+.uc07-admin-requests .cancellation-btn-refresh,
+.uc07-admin-requests .cancellation-btn-detail {
+  border-color: #dce4ec;
+  background: #fff;
+  color: #475569;
+}
+
+.uc07-admin-requests .cancellation-btn-refresh:hover:not(:disabled),
+.uc07-admin-requests .cancellation-btn-detail:hover:not(:disabled) {
+  border-color: #b8d5c6;
+  background: #f0f8f4;
+  color: #006c48;
+}
+
+.uc07-admin-requests .cancellation-btn-approve {
+  border-color: #00875a;
+  background: #00875a;
+  color: #fff;
+}
+
+.uc07-admin-requests .cancellation-btn-approve:hover:not(:disabled) {
+  border-color: #006c48;
+  background: #006c48;
+}
+
+.uc07-admin-requests .cancellation-btn-reject {
+  border-color: #fecaca;
+  background: #fff5f5;
+  color: #b91c1c;
+}
+
+.uc07-admin-requests .cancellation-btn-reject:hover:not(:disabled) {
+  border-color: #fca5a5;
+  background: #fee2e2;
+}
+
+.uc07-admin-requests .cancellation-btn:focus-visible {
+  outline: 3px solid #8acbb3;
+  outline-offset: 3px;
+}
+
+.uc07-admin-requests .cancellation-btn:disabled,
+.cancellation-request-note textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cancellation-requests-empty,
+.cancellation-requests-error {
+  margin: 20px 0 0;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cancellation-requests-empty {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.cancellation-requests-error {
+  background: #fff1f2;
+  color: #b91c1c;
+}
+
+@media (max-width: 760px) {
+  .uc07-admin-requests { padding: 16px; }
+  .cancellation-requests-heading { align-items: flex-start; flex-wrap: wrap; }
+  .cancellation-requests-heading h2 { font-size: 18px; }
+  .cancellation-request-card { padding: 16px; }
+  .cancellation-request-info { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+}
+
+@media (max-width: 480px) {
+  .cancellation-request-heading { align-items: flex-start; }
+  .cancellation-request-title { gap: 8px; }
+  .uc07-admin-requests .cancellation-btn-detail { padding: 8px 10px; }
+  .cancellation-request-actions { width: 100%; }
+  .cancellation-request-actions .cancellation-btn { flex: 1; }
+}
+
 /* =========================================
    FIX MODAL CHI TIET BOOKING
 ========================================= */
@@ -364,4 +656,32 @@ strong.booking-payment-paid {
   .booking-actions {
     min-width: 170px;
   }
+}
+
+.deposit-refunded { color: #00864a; font-size: 13px; margin-top: 6px; }
+
+.booking-refund-details {
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  background: #f0fdf4;
+}
+
+.booking-refund-details h3 { margin: 0 0 16px; }
+.booking-refund-proof label { display: block; margin: 14px 0 6px; font-size: 14px; font-weight: 600; }
+.booking-refund-proof input { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 1px solid #bbd9c9; border-radius: 8px; background: #fff; font: inherit; font-size: 14px; }
+.booking-refund-proof button { margin-top: 16px; }
+.booking-refund-error { color: #b91c1c; }
+.booking-refund-grid { display: grid; gap: 14px; margin: 0; }
+.booking-refund-grid dt { color: #64748b; font-size: 14px; margin-bottom: 4px; }
+.booking-refund-grid dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.booking-refund-grid button {
+  margin-left: 12px;
+  padding: 4px 8px;
+  border: 1px solid #a7d8ba;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  color: #166534;
 }

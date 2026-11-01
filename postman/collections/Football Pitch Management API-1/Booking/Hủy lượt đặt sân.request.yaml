@@ -1,7 +1,7 @@
 $kind: http-request
 description: ""
 url: "{{baseUrl}}/api/bookings/:booking_id/cancel"
-method: PUT
+method: POST
 headers:
   Content-Type: application/json
   Accept: application/json

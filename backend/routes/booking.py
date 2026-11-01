@@ -1,3 +1,4 @@
+
 from datetime import date, datetime
 
 from flask import Blueprint, jsonify, request
@@ -131,6 +132,7 @@ def row_to_booking(row):
         "TotalAmount": float(
             row.TotalAmount or 0
         ),
+        "RefundedAmount": float(getattr(row, "RefundedAmount", 0) or 0),
         "PaidAmount": float(
             getattr(row, "PaidAmount", 0) or 0
         ),
@@ -231,7 +233,8 @@ def get_booking_row(
             U.FullName,
             U.Phone,
             U.Email,
-            PaymentTotals.PaidAmount
+            PaymentTotals.PaidAmount,
+            (SELECT R.Amount FROM dbo.BookingDepositRefunds R WHERE R.BookingID = B.BookingID) AS RefundedAmount
 
         FROM Bookings B
 
@@ -977,7 +980,11 @@ def get_all_bookings():
 
                 U.FullName,
                 U.Phone,
-                U.Email
+                U.Email,
+                (SELECT COALESCE(SUM(P.Amount), 0) FROM Payments P
+                 WHERE P.BookingID = B.BookingID AND P.PaymentType = 'DEPOSIT'
+                 AND UPPER(LTRIM(RTRIM(P.Status))) = 'SUCCESS') AS PaidAmount,
+                (SELECT R.Amount FROM dbo.BookingDepositRefunds R WHERE R.BookingID = B.BookingID) AS RefundedAmount
 
             FROM Bookings B
 
@@ -1173,6 +1180,24 @@ def update_booking_status(
             )
             or ""
         ).strip().upper()
+
+        # ====================================================
+        # UC07 - KHÔNG HỦY TRỰC TIẾP QUA API CẬP NHẬT TRẠNG THÁI
+        #
+        # Booking CANCELLED phải thông qua service UC07
+        # để kiểm tra quyền, transaction và ghi lịch sử.
+        # Không ảnh hưởng CONFIRMED hay COMPLETED.
+        # ====================================================
+
+        if new_status == "CANCELLED":
+
+            return jsonify({
+                "message": (
+                    "Dùng UC07 cancellation API để hủy, "
+                    "không PATCH status"
+                ),
+                "code": "USE_CANCELLATION_API"
+            }), 409
 
         # ====================================================
         # T123-72

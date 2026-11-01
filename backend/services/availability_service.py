@@ -36,6 +36,10 @@ def expire_pending_bookings(cursor):
         WHERE UPPER(LTRIM(RTRIM(Status))) = 'PENDING'
           AND CreatedAt IS NOT NULL
           AND DATEADD(MINUTE, ?, CreatedAt) <= GETDATE()
+          AND NOT EXISTS (
+              SELECT 1 FROM dbo.BookingCancellationRequests R
+              WHERE R.BookingID = Bookings.BookingID AND R.Status = 'PENDING_REVIEW'
+          )
         """,
         deadline_minutes,
     )

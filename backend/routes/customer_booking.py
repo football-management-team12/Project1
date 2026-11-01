@@ -141,6 +141,7 @@ def row_to_booking(row):
                 row.TotalAmount or 0
             ),
 
+        "RefundedAmount": float(getattr(row, "RefundedAmount", 0) or 0),
         "PaidAmount":
             float(
                 getattr(row, "PaidAmount", 0) or 0
@@ -252,7 +253,8 @@ def booking_select_sql():
             U.Email,
 
             LatestPayment.PaymentStatus,
-            PaymentTotals.PaidAmount
+            PaymentTotals.PaidAmount,
+            (SELECT R.Amount FROM dbo.BookingDepositRefunds R WHERE R.BookingID = B.BookingID) AS RefundedAmount
         FROM Bookings B
 
         INNER JOIN FootballFields F
