@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -19,6 +20,8 @@ import Navbar from "../../components/Navbar/Navbar";
 import DepositPanel from "../../components/DepositPanel/DepositPanel";
 
 import SettlementPanel from "../../components/SettlementPanel/SettlementPanel";
+
+import CancellationPanel from "../../components/CancellationPanel/CancellationPanel";
 
 import {
   getCustomerBookingDetail,
@@ -83,6 +86,7 @@ export default function BookingDetail() {
   const location = useLocation();
 
   const focusHandled = useRef(false);
+  const cancelFocusHandled = useRef(false);
 
   const { bookingId } = useParams();
 
@@ -193,6 +197,33 @@ export default function BookingDetail() {
 
 
   // ======================================================
+  // UC07: FOCUS CANCELLATION PANEL
+  // ======================================================
+
+  useEffect(() => {
+    if (
+      !location.state?.focusCancellation ||
+      !booking ||
+      loading ||
+      cancelFocusHandled.current
+    ) {
+      return;
+    }
+
+    cancelFocusHandled.current = true;
+
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("booking-cancellation-panel")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+    });
+  }, [location.state, booking, loading]);
+
+
+  // ======================================================
   // ROLE GUARD
   // ======================================================
 
@@ -261,10 +292,13 @@ export default function BookingDetail() {
 
             <section className="booking-detail-header">
               <div>
-                <p>BOOKING #{booking.BookingID}</p>
+                <p>
+                  BOOKING #{booking.BookingID}
+                </p>
 
                 <h1>
-                  {booking.FieldName || `Sân ${booking.FieldID}`}
+                  {booking.FieldName ||
+                    `Sân ${booking.FieldID}`}
                 </h1>
 
                 <span>
@@ -289,7 +323,9 @@ export default function BookingDetail() {
             <div className="booking-detail-grid">
 
               <section className="booking-detail-card">
-                <h2>Thông tin đặt sân</h2>
+                <h2>
+                  Thông tin đặt sân
+                </h2>
 
                 <DetailRow
                   Icon={CalendarDays}
@@ -314,7 +350,7 @@ export default function BookingDetail() {
               </section>
 
 
-              {/* CUSTOMER CHỈ XEM THANH TOÁN */}
+              {/* UC09 - CUSTOMER CHỈ XEM THANH TOÁN */}
 
               <SettlementPanel
                 bookingId={booking.BookingID}
@@ -326,7 +362,7 @@ export default function BookingDetail() {
             </div>
 
 
-            {/* UC06 VẪN GIỮ NGUYÊN */}
+            {/* UC06 - ĐẶT CỌC VIETQR */}
 
             {!(
               ["CANCELLED", "COMPLETED"].includes(status)
@@ -341,10 +377,23 @@ export default function BookingDetail() {
             )}
 
 
+            {/* UC07 - YÊU CẦU HỦY ĐẶT SÂN */}
+
+            <div id="booking-cancellation-panel">
+              <CancellationPanel
+                bookingId={booking.BookingID}
+                bookingStatus={booking.Status}
+                onCancelled={refreshBooking}
+              />
+            </div>
+
+
             {/* CUSTOMER INFORMATION */}
 
             <section className="booking-detail-customer">
-              <h2>Thông tin khách hàng</h2>
+              <h2>
+                Thông tin khách hàng
+              </h2>
 
               <div>
                 <p>

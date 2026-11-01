@@ -5,13 +5,10 @@ info:
   version: "1.0.0"
 servers:
   - url: "http://127.0.0.1:5001"
-  
+
     description: "Local Server"
 
 paths:
-  # ------------------------------------
-  # 1. API Authentication (routes/auth.py)
-  # ------------------------------------
   /api/auth/register:
     post:
       tags:
@@ -399,21 +396,23 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /api/bookings/{booking_id}/cancel:
-    put:
-      tags:
-        - Booking
-      summary: "Hủy lượt đặt sân"
-      operationId: cancelBooking
+    post:
+      tags: [Booking]
+      summary: "UC07 - ADMIN hủy trực tiếp (CUSTOMER phải gửi yêu cầu)"
+      operationId: cancelBookingUC07
+      description: |
+        Chỉ ADMIN ACTIVE được hủy booking trực tiếp.
+        CUSTOMER phải gửi yêu cầu qua cancellation-requests.
+        Backend kiểm tra trạng thái booking, thanh toán và
+        ghi lịch sử hủy trong transaction.
+        Không tự động hoàn tiền cọc thành công.
       security:
         - BearerAuth: []
       parameters:
         - name: booking_id
           in: path
           required: true
-          description: "ID lượt đặt sân cần hủy"
-          schema:
-            type: integer
-            example: 50
+          schema: { type: integer, minimum: 1, example: 50 }
       requestBody:
         required: false
         content:
@@ -421,26 +420,20 @@ paths:
             schema:
               type: object
               properties:
-                reason:
-                  type: string
-                  example: "Bận đột xuất không đá được"
+                reason: { type: string, maxLength: 500, example: "Bận đột xuất" }
+              additionalProperties: false
       responses:
         '200':
-          description: "Hủy đặt sân thành công."
+          description: "Hủy booking thành công và lưu lịch sử"
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Booking cancelled successfully"
-        '400':
-          description: "Không thể hủy lượt đặt sân này (ví dụ đã qua giờ đá)."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+              schema: { $ref: '#/components/schemas/CancelBookingResponse' }
+        '400': { description: "Dữ liệu yêu cầu hoặc lý do hủy không hợp lệ" }
+        '401': { description: "Thiếu, sai hoặc hết hạn JWT" }
+        '403': { description: "Không đủ quyền hủy" }
+        '404': { description: "Không tìm thấy booking" }
+        '409': { description: "Booking không còn đủ điều kiện hủy" }
+        '500': { description: "Lỗi xử lý hoặc lỗi cơ sở dữ liệu" }
 
   /api/user/profile:
     get:
@@ -455,6 +448,457 @@ paths:
         '401':
           description: "Access token thiếu, sai hoặc hết hạn"
 
+  /api/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: "Lấy thông tin tài khoản hiện tại qua Auth"
+      operationId: getCurrentUserAuth
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: "Lấy thông tin thành công"
+        '401':
+          description: "Chưa xác thực hoặc Token không hợp lệ"
+        '403':
+          description: "Tài khoản hiện không hoạt động"
+        '404':
+          description: "Không tìm thấy người dùng"
+
+  # ------------------------------------
+  # 2. API Users (routes/user.py)
+  # ------------------------------------
+  /api/bookings/{booking_id}/cancellation-requests:
+    post:
+      tags: [Booking]
+      summary: Khách gửi yêu cầu hủy và tài khoản nhận hoàn cọc
+      description: Khi đã thanh toán cọc thành công, phải gửi đầy đủ ngân hàng, số tài khoản và tên chủ tài khoản. Thông tin chỉ được xem bởi chủ đơn và ADMIN.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: booking_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string, maxLength: 500 }
+                refundAccount: { $ref: '#/components/schemas/RefundAccount' }
+      responses:
+        '201':
+          description: Đã lưu yêu cầu hủy và tài khoản nhận tiền
+        '400':
+          description: Tài khoản nhận hoàn cọc thiếu hoặc không hợp lệ
+        '401':
+          description: Thiếu hoặc sai JWT
+        '403':
+          description: Chỉ CUSTOMER đang hoạt động được gửi yêu cầu
+        '404':
+          description: Không tìm thấy đơn thuộc khách hàng
+        '409':
+          description: Đã có yêu cầu chờ duyệt hoặc đơn không thể hủy
+
+  /api/bookings/{booking_id}/deposit-refund:
+    post:
+      tags: [Booking]
+      summary: ADMIN xác nhận đã hoàn tiền cọc
+      description: Ghi nhận hoàn cọc thủ công cho đơn CANCELLED có cọc SUCCESS. Lưu số tiền, người và thời gian xác nhận; khách xem thông báo trong lịch sử và chi tiết đơn. Không thực hiện chuyển khoản.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: booking_id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [transactionReference, evidenceBase64, evidenceMimeType, evidenceFileName]
+              properties:
+                transactionReference: { type: string, minLength: 3, maxLength: 100 }
+                evidenceBase64: { type: string, format: byte, description: 'Biên lai tối đa 2 MB, base64 thuần không có tiền tố data URI' }
+                evidenceMimeType: { type: string, enum: [image/png, image/jpeg, application/pdf] }
+                evidenceFileName: { type: string, maxLength: 150 }
+      responses:
+        '400':
+          description: Thiếu mã giao dịch hoặc biên lai không hợp lệ
+        '200':
+          description: Đã ghi nhận hoàn cọc
+        '403':
+          description: Chỉ ADMIN đang hoạt động được xác nhận
+        '404':
+          description: Không tìm thấy đơn
+        '409':
+          description: Đã hoàn cọc hoặc đơn không đủ điều kiện
+        '413':
+          description: Biên lai vượt quá 2 MB
+
+  /api/bookings/{booking_id}/deposit-refund/evidence:
+    get:
+      tags: [Booking]
+      summary: Chủ đơn hoặc ADMIN tải biên lai hoàn cọc
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: booking_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Tệp biên lai, Content-Disposition attachment, không cache
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Role không được phép hoặc tài khoản inactive }
+        '404': { description: Không tìm thấy đơn thuộc người dùng hoặc chưa có biên lai }
+
+  /api/bookings/{booking_id}/cancellation:
+    get:
+      tags: [Booking]
+      summary: "UC07 - Kiểm tra điều kiện hủy đơn đặt sân"
+      operationId: getCancellationInfo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1, example: 50 }
+      responses:
+        '200':
+          description: "Thông tin trạng thái booking, quyền hủy và tiền cọc"
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CancellationInfoResponse' }
+        '401': { description: "Thiếu, sai hoặc hết hạn JWT" }
+        '403': { description: "Tài khoản không được phép truy cập" }
+        '404': { description: "Không tìm thấy booking hoặc không thuộc khách hàng" }
+        '500': { description: "Lỗi xử lý hoặc lỗi cơ sở dữ liệu" }
+
+  /api/bookings/{bookingId}/deposit:
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        description: BookingID của CUSTOMER đang đăng nhập.
+        schema: { type: integer, minimum: 1 }
+    get:
+      tags: [Payments]
+      operationId: getBookingDeposit
+      summary: UC06 - Thông tin đặt cọc
+      description: Lấy trạng thái đặt cọc. Nếu quá hạn, booking PENDING và deposit PENDING có thể được chuyển sang CANCELLED/EXPIRED.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Thông tin cọc, trạng thái thanh toán và VietQR
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DepositInfoResponse' }
+        '401': { $ref: '#/components/responses/UC06Unauthorized' }
+        '403': { $ref: '#/components/responses/UC06Forbidden' }
+        '404': { $ref: '#/components/responses/UC06NotFound' }
+        '409': { $ref: '#/components/responses/UC06Conflict' }
+        '500': { $ref: '#/components/responses/UC06ServerError' }
+    post:
+      tags: [Payments]
+      operationId: createBookingDeposit
+      summary: UC06 - Tạo đặt cọc VietQR demo
+      description: Không cần request body. Backend tự tính tiền cọc; không dùng amount/paymentMethod do client truyền.
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Tạo DEPOSIT / VIETQR / PENDING
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreateDepositResponse' }
+        '401': { $ref: '#/components/responses/UC06Unauthorized' }
+        '403': { $ref: '#/components/responses/UC06Forbidden' }
+        '404': { $ref: '#/components/responses/UC06NotFound' }
+        '409': { $ref: '#/components/responses/UC06Conflict' }
+        '410': { $ref: '#/components/responses/UC06Expired' }
+        '500': { $ref: '#/components/responses/UC06ServerError' }
+
+  /api/payments/{paymentId}/demo-status:
+    patch:
+      tags: [Payments]
+      operationId: updateDepositDemoStatus
+      summary: UC06 - Mô phỏng trạng thái giao dịch
+      description: Chỉ hoạt động khi PAYMENT_DEMO_MODE=true. SUCCESS xác nhận booking còn PENDING và chưa quá deadline. FAILED/EXPIRED không xác nhận.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [SUCCESS, FAILED, EXPIRED]
+              additionalProperties: false
+            example: { status: SUCCESS }
+      responses:
+        '200':
+          description: Thay đổi trạng thái demo thành công, hoặc gọi lặp cùng trạng thái
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DemoStatusResponse' }
+        '400': { $ref: '#/components/responses/UC06InvalidStatus' }
+        '401': { $ref: '#/components/responses/UC06Unauthorized' }
+        '403': { $ref: '#/components/responses/UC06Forbidden' }
+        '404': { $ref: '#/components/responses/UC06NotFound' }
+        '409': { $ref: '#/components/responses/UC06Conflict' }
+        '500': { $ref: '#/components/responses/UC06ServerError' }
+
+  /api/admin/cancellation-requests:
+    get:
+      tags: [Booking]
+      summary: "UC07 - ADMIN xem các yêu cầu hủy"
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [PENDING_REVIEW, APPROVED, REJECTED, ALL], default: PENDING_REVIEW }
+      responses:
+        '200': { description: "Danh sách yêu cầu hủy" }
+        '401': { description: "Thiếu/sai JWT" }
+        '403': { description: "Không có quyền ADMIN" }
+
+  /api/admin/cancellation-requests/{request_id}/decision:
+    post:
+      tags: [Booking]
+      summary: "UC07 - ADMIN duyệt hoặc từ chối yêu cầu hủy"
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: request_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [APPROVED, REJECTED] }
+                note: { type: string, maxLength: 500 }
+      responses:
+        '200': { description: "APPROVED -> CANCELLED + audit + release slot; REJECTED -> giữ booking" }
+        '400': { description: "Thiếu note khi từ chối hoặc input sai" }
+        '401': { description: "Thiếu/sai JWT" }
+        '403': { description: "Không phải ADMIN" }
+        '404': { description: "Không có request" }
+        '409': { description: "Đã được xử lý/booking không hợp lệ" }
+        '500': { description: "Lỗi server" }
+
+  /api/users/me:
+
+    get:
+
+      tags:
+        - Users
+
+      summary: "Lấy thông tin cá nhân của người dùng đang đăng nhập"
+
+      operationId: getMyProfile
+
+      security:
+        - BearerAuth: []
+
+      responses:
+
+        '200':
+
+          description: "Lấy thông tin cá nhân thành công"
+
+          content:
+
+            application/json:
+
+              schema:
+
+                type: object
+
+                properties:
+
+                  userId:
+                    type: integer
+                    example: 1
+
+                  fullName:
+                    type: string
+                    example: "Nguyen Van A"
+
+                  username:
+                    type: string
+                    example: "nguyenvana"
+
+                  email:
+                    type: string
+                    format: email
+                    example: "a@example.com"
+
+                  phone:
+                    type: string
+                    example: "0901234567"
+
+                  role:
+                    type: string
+                    example: "CUSTOMER"
+
+                  status:
+                    type: string
+                    example: "ACTIVE"
+
+
+        '401':
+
+          description: "Access token thiếu, sai hoặc hết hạn"
+
+
+        '403':
+
+          description: "Tài khoản không hoạt động"
+
+
+        '404':
+
+          description: "Không tìm thấy người dùng"
+
+
+    put:
+
+      tags:
+        - Users
+
+      summary: "Cập nhật thông tin cá nhân của người dùng đang đăng nhập"
+
+      operationId: updateMyProfile
+
+      security:
+        - BearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+
+              type: object
+
+              required:
+                - fullName
+                - email
+                - phone
+
+              properties:
+
+                fullName:
+                  type: string
+                  example: "Nguyen Van B"
+
+                email:
+                  type: string
+                  format: email
+                  example: "b@example.com"
+
+                phone:
+                  type: string
+                  example: "0907654321"
+
+
+      responses:
+
+        '200':
+
+          description: "Cập nhật thông tin thành công"
+
+          content:
+
+            application/json:
+
+              schema:
+
+                type: object
+
+                properties:
+
+                  success:
+                    type: boolean
+                    example: true
+
+                  message:
+                    type: string
+                    example: "Cập nhật thông tin thành công"
+
+                  user:
+
+                    type: object
+
+                    properties:
+
+                      userId:
+                        type: integer
+                        example: 1
+
+                      fullName:
+                        type: string
+                        example: "Nguyen Van B"
+
+                      username:
+                        type: string
+                        example: "nguyenvana"
+
+                      email:
+                        type: string
+                        example: "b@example.com"
+
+                      phone:
+                        type: string
+                        example: "0907654321"
+
+                      role:
+                        type: string
+                        example: "CUSTOMER"
+
+                      status:
+                        type: string
+                        example: "ACTIVE"
+
+
+        '400':
+
+          description: "Dữ liệu sai hoặc request chứa trường không được phép"
+
+
+        '401':
+
+          description: "Access token thiếu, sai hoặc hết hạn"
+
+
+        '409':
+
+          description: "Email hoặc số điện thoại đã tồn tại"
 components:
   securitySchemes:
     BearerAuth:
@@ -463,7 +907,6 @@ components:
       bearerFormat: JWT
 
   schemas:
-    # ------------------ AUTH SCHEMAS ------------------
     UserProfile:
       type: object
       properties:
@@ -682,196 +1125,167 @@ components:
           type: string
           nullable: true
           example: "?date=2026-10-04"
-  /api/users/me:
-
-    get:
-
-      tags:
-        - Users
-
-      summary: "Lấy thông tin cá nhân của người dùng đang đăng nhập"
-
-      operationId: getMyProfile
-
-      security:
-        - BearerAuth: []
-
-      responses:
-
-        '200':
-
-          description: "Lấy thông tin cá nhân thành công"
-
-          content:
-
-            application/json:
-
-              schema:
-
-                type: object
-
-                properties:
-
-                  userId:
-                    type: integer
-                    example: 1
-
-                  fullName:
-                    type: string
-                    example: "Nguyen Van A"
-
-                  username:
-                    type: string
-                    example: "nguyenvana"
-
-                  email:
-                    type: string
-                    format: email
-                    example: "a@example.com"
-
-                  phone:
-                    type: string
-                    example: "0901234567"
-
-                  role:
-                    type: string
-                    example: "CUSTOMER"
-
-                  status:
-                    type: string
-                    example: "ACTIVE"
-
-
-        '401':
-
-          description: "Access token thiếu, sai hoặc hết hạn"
-
-
-        '403':
-
-          description: "Tài khoản không hoạt động"
-
-
-        '404':
-
-          description: "Không tìm thấy người dùng"
-
-
-    put:
-
-      tags:
-        - Users
-
-      summary: "Cập nhật thông tin cá nhân của người dùng đang đăng nhập"
-
-      operationId: updateMyProfile
-
-      security:
-        - BearerAuth: []
-
-      requestBody:
-
-        required: true
-
-        content:
-
-          application/json:
-
-            schema:
-
-              type: object
-
-              required:
-                - fullName
-                - email
-                - phone
-
-              properties:
-
-                fullName:
-                  type: string
-                  example: "Nguyen Van B"
-
-                email:
-                  type: string
-                  format: email
-                  example: "b@example.com"
-
-                phone:
-                  type: string
-                  example: "0907654321"
-
-
-      responses:
-
-        '200':
-
-          description: "Cập nhật thông tin thành công"
-
-          content:
-
-            application/json:
-
-              schema:
-
-                type: object
-
-                properties:
-
-                  success:
-                    type: boolean
-                    example: true
-
-                  message:
-                    type: string
-                    example: "Cập nhật thông tin thành công"
-
-                  user:
-
-                    type: object
-
-                    properties:
-
-                      userId:
-                        type: integer
-                        example: 1
-
-                      fullName:
-                        type: string
-                        example: "Nguyen Van B"
-
-                      username:
-                        type: string
-                        example: "nguyenvana"
-
-                      email:
-                        type: string
-                        example: "b@example.com"
-
-                      phone:
-                        type: string
-                        example: "0907654321"
-
-                      role:
-                        type: string
-                        example: "CUSTOMER"
-
-                      status:
-                        type: string
-                        example: "ACTIVE"
-
-
-        '400':
-
-          description: "Dữ liệu sai hoặc request chứa trường không được phép"
-
-
-        '401':
-
-          description: "Access token thiếu, sai hoặc hết hạn"
-
-
-        '409':
-
-          description: "Email hoặc số điện thoại đã tồn tại"
-  
+    PublicUser:
+    UC06Error:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+        code: { type: string, description: Có thể không xuất hiện ở lỗi JWT và lỗi server không xác định }
+    DepositBooking:
+      type: object
+      properties:
+        bookingId: { type: integer, example: 1001 }
+        fieldId: { type: integer, example: 2 }
+        bookingDate: { type: string, example: '2026-10-25' }
+        startTime: { type: string, example: '18:00' }
+        endTime: { type: string, example: '19:30' }
+        totalAmount: { type: number, example: 600000 }
+        status: { type: string, example: PENDING }
+        createdAt: { type: string, format: date-time, nullable: true }
+    DepositPayment:
+      type: object
+      properties:
+        paymentId: { type: integer, example: 501 }
+        bookingId: { type: integer, example: 1001 }
+        paymentType: { type: string, example: DEPOSIT }
+        paymentMethod: { type: string, example: VIETQR }
+        amount: { type: number, example: 200000 }
+        status: { type: string, enum: [PENDING, SUCCESS, FAILED, EXPIRED] }
+        reference: { type: string, example: 'BOOKING-1001-DEPOSIT' }
+        deadline: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time, nullable: true }
+        updatedAt: { type: string, format: date-time, nullable: true }
+    DepositVietQr:
+      type: object
+      properties:
+        bankId: { type: string, nullable: true, example: MB }
+        accountNo: { type: string, nullable: true, example: '0000000000' }
+        accountName: { type: string, example: TEAM 12 }
+        amount: { type: number, example: 200000 }
+        content: { type: string, example: 'BOOKING-1001-DEPOSIT' }
+        imageUrl: { type: string, nullable: true, example: 'https://img.vietqr.io/image/MB-0000000000-compact2.png?amount=200000&addInfo=BOOKING-1001-DEPOSIT&accountName=TEAM%2012' }
+    DepositInfoResponse:
+      type: object
+      properties:
+        booking: { $ref: '#/components/schemas/DepositBooking' }
+        depositAmount: { type: number, example: 200000 }
+        depositRate: { type: number, example: 0.3333333333333333 }
+        depositRatio: { type: string, example: '1/3' }
+        depositRoundStep: { type: integer, example: 100000 }
+        depositMinAmount: { type: integer, example: 100000 }
+        deadline: { type: string, format: date-time, nullable: true }
+        isExpired: { type: boolean, example: false }
+        currentPaymentStatus: { type: string, example: NOT_CREATED }
+        payment:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/DepositPayment' }]
+        vietQr: { $ref: '#/components/schemas/DepositVietQr' }
+        demoMode: { type: boolean, example: true }
+    CreateDepositResponse:
+      allOf:
+        - { $ref: '#/components/schemas/DepositPayment' }
+        - type: object
+          properties:
+            depositRatio: { type: string, example: '1/3' }
+            vietQr: { $ref: '#/components/schemas/DepositVietQr' }
+            demoMode: { type: boolean, example: true }
+    DemoStatusResponse:
+      type: object
+      properties:
+        message: { type: string, example: 'Cập nhật trạng thái giao dịch thành công' }
+        payment: { $ref: '#/components/schemas/DepositPayment' }
+    RefundAccount:
+      type: object
+      nullable: true
+      required: [bankName, accountNumber, accountHolder]
+      properties:
+        bankName: { type: string, minLength: 1, maxLength: 100, example: Vietcombank }
+        accountNumber: { type: string, pattern: '^[A-Za-z0-9]{1,34}$', example: '001234567890' }
+        accountHolder: { type: string, minLength: 1, maxLength: 100, example: NGUYEN VAN A }
+    CancellationInfoResponse:
+      type: object
+      properties:
+        bookingId: { type: integer, example: 50 }
+        bookingStatus: { type: string, example: PENDING }
+        canCancel: { type: boolean, example: true }
+        code: { type: string, nullable: true }
+        message: { type: string, example: "Đơn đặt sân đủ điều kiện hủy" }
+        depositPaid: { type: number, example: 100000 }
+        refundStatus: { type: string, nullable: true, example: MANUAL_REVIEW }
+        refundNote: { type: string, nullable: true }
+        refundedAmount: { type: number }
+        refundedAt: { type: string, nullable: true }
+        refundTransactionReference: { type: string, nullable: true }
+        hasRefundEvidence: { type: boolean }
+        refundEvidenceFileName: { type: string, nullable: true }
+        cancellation:
+          type: object
+          nullable: true
+          additionalProperties: true
+        latestRequest:
+          type: object
+          nullable: true
+          properties:
+            refundAccount: { $ref: '#/components/schemas/RefundAccount' }
+          additionalProperties: true
+    CancelBookingResponse:
+      type: object
+      properties:
+        message: { type: string, example: "Hủy booking thành công" }
+        bookingId: { type: integer, example: 50 }
+        oldStatus: { type: string, example: CONFIRMED }
+        status: { type: string, example: CANCELLED }
+        cancelledByRole: { type: string, example: ADMIN }
+        cancellationId: { type: integer, example: 10 }
+        cancelledAt: { type: string, format: date-time }
+        reason: { type: string, nullable: true }
+        releasedSlot: { type: boolean, example: true }
+        depositPaid: { type: number, example: 100000 }
+        refundStatus: { type: string, nullable: true, example: MANUAL_REVIEW }
+        refundNote: { type: string, nullable: true }
+
+    # ------------------ AUTH SCHEMAS ------------------
+  responses:
+    UC06Unauthorized:
+      description: Thiếu, sai hoặc hết hạn JWT (401)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Access token đã hết hạn' }
+    UC06Forbidden:
+      description: Sai role, inactive hoặc demo disabled (403)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Demo payment status đang bị tắt', code: PAYMENT_DEMO_DISABLED }
+    UC06NotFound:
+      description: Booking/payment không tồn tại hoặc khác chủ sở hữu (404)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Không tìm thấy booking hoặc bạn không có quyền thao tác booking này', code: BOOKING_NOT_FOUND }
+    UC06InvalidStatus:
+      description: Status không hợp lệ (400)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Status demo không hợp lệ', code: INVALID_PAYMENT_STATUS }
+    UC06Conflict:
+      description: Trạng thái không thể xử lý, trùng deposit, số tiền sai hoặc payment đã FINAL (409)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Booking đang có giao dịch đặt cọc PENDING', code: DEPOSIT_PENDING_EXISTS }
+    UC06Expired:
+      description: Booking đã quá hạn tạo đặt cọc (410)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Booking đã quá thời hạn đặt cọc', code: DEPOSIT_DEADLINE_EXPIRED }
+    UC06ServerError:
+      description: Lỗi DB hoặc lỗi server (500)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Không thể kết nối database', code: DATABASE_UNAVAILABLE }

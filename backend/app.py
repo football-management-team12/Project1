@@ -1,3 +1,4 @@
+
 import os
 
 from dotenv import load_dotenv
@@ -15,6 +16,7 @@ from routes.customer_booking import customer_booking_bp
 from routes.user import get_my_profile, user_bp
 from routes.payment import payment_bp
 from routes.uc09 import uc09_bp
+from routes.cancellation import cancellation_bp
 
 
 app = Flask(__name__)
@@ -79,13 +81,19 @@ app.register_blueprint(
     url_prefix="/api"
 )
 
-# UC09 - Xác nhận thanh toán tại sân
+# UC09 - Xác nhận thanh toán tại sân, giữ nguyên
 app.register_blueprint(
     uc09_bp,
     url_prefix="/api"
 )
 
-# Đường dẫn profile tương thích phiên bản cũ
+# UC07 - Hủy đơn và ADMIN duyệt yêu cầu
+app.register_blueprint(
+    cancellation_bp,
+    url_prefix="/api"
+)
+
+# Đường dẫn profile phiên bản cũ
 app.add_url_rule(
     "/api/user/profile",
     endpoint="user_profile_legacy",

@@ -806,6 +806,10 @@ def get_deposit_info(
                 SET Status = 'CANCELLED'
                 WHERE BookingID = ?
                   AND UPPER(LTRIM(RTRIM(Status))) = 'PENDING'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM dbo.BookingCancellationRequests R
+                      WHERE R.BookingID = Bookings.BookingID AND R.Status = 'PENDING_REVIEW'
+                  )
                 """,
                 booking_id,
             )
