@@ -11,6 +11,7 @@ from flasgger import Swagger
 
 from routes.auth import auth_bp
 from routes.field import field_bp
+from routes.field_admin import field_admin_bp
 from routes.booking import booking_bp
 from routes.customer_booking import customer_booking_bp
 from routes.user import get_my_profile, user_bp
@@ -57,6 +58,12 @@ app.register_blueprint(
 
 app.register_blueprint(
     field_bp,
+    url_prefix="/api/fields"
+)
+
+# UC15: CRUD admin, không thay thế route public của Field/Availability.
+app.register_blueprint(
+    field_admin_bp,
     url_prefix="/api/fields"
 )
 
