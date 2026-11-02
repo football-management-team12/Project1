@@ -288,12 +288,14 @@
 
 .server-message {
   margin: -10px 0 18px;
-
-  color: #16a34a;
-
+  color: #dc2626;
   font-size: 13px;
   font-weight: 500;
+  text-align: center;
+}
 
+.server-message-center {
+  margin: -16px 0 16px;
   text-align: center;
 }
 
