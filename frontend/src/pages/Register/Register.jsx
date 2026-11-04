@@ -27,7 +27,11 @@ function Register() {
     if (!/^[A-Za-z0-9_]{4,30}$/.test(formData.username.trim())) next.username = "Tên đăng nhập phải gồm 4-30 ký tự chữ, số hoặc dấu gạch dưới.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) next.email = "Email không đúng định dạng.";
     if (!/^0\d{9}$/.test(formData.phone.trim())) next.phone = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.";
-    if (formData.password.length < 8 || formData.password.length > 72) next.password = "Mật khẩu phải có từ 8 đến 72 ký tự.";
+    if ([...formData.password].length < 8 || new TextEncoder().encode(formData.password).length > 72) {
+      next.password = "Mật khẩu phải có ít nhất 8 ký tự và không vượt quá 72 byte UTF-8.";
+    } else if (!/[A-Z]/.test(formData.password) || !/[a-z]/.test(formData.password) || !/[0-9]|[^\p{L}\p{N}_\s]/u.test(formData.password)) {
+      next.password = "Mật khẩu phải có chữ hoa, chữ thường và số hoặc ký tự đặc biệt.";
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -84,6 +88,7 @@ function Register() {
               <input id="register-password" name="password" type={showPassword ? "text" : "password"} placeholder="Tối thiểu 8 ký tự" value={formData.password} onChange={handleChange} autoComplete="new-password" />
               <button type="button" className="register-password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>{showPassword ? <Eye size={19} /> : <EyeOff size={19} />}</button>
             </div>
+            <p>Ít nhất 8 ký tự, có chữ hoa, chữ thường và số hoặc ký tự đặc biệt.</p>
             {errors.password && <p className="form-error">{errors.password}</p>}
           </div>
           {serverMessage && <p className="server-message" role="alert">{serverMessage}</p>}

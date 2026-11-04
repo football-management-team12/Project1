@@ -372,7 +372,12 @@ paths:
                 username: { type: string, example: "nguyenvana" }
                 email: { type: string, format: email, example: "a@example.com" }
                 phone: { type: string, example: "0901234567" }
-                password: { type: string, format: password, example: "P@ssw0rd" }
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  description: "Có chữ hoa ASCII, chữ thường ASCII và số hoặc ký tự đặc biệt; tối đa 72 byte UTF-8."
+                  example: "P@ssw0rd"
       responses:
         '201':
           description: "Đăng ký thành công"
