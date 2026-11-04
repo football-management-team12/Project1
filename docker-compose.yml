@@ -1,5 +1,4 @@
 services:
-<<<<<<< HEAD
   backend:
     build:
       context: ./backend
@@ -26,20 +25,3 @@ services:
 networks:
   football-network:
     external: true
-=======
-  frontend:
-    build:
-      context: ./frontend
-    environment:
-      VITE_API_PROXY_TARGET: http://backend:5001
-    ports:
-      - "5173:5173"
-
-  backend:
-    build:
-      context: ./backend
-    env_file:
-      - ./backend/.env
-    ports:
-      - "5001:5001"
->>>>>>> d686af5791ef08fe83682f60113b74ab4ac62a99
