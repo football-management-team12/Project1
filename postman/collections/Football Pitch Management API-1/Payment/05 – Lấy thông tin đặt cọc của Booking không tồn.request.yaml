@@ -1,0 +1,9 @@
+$kind: http-request
+name: 05 – Lấy thông tin đặt cọc của Booking không tồn tại
+url: "{{baseUrl}}/api/bookings/99999/deposit"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 5000

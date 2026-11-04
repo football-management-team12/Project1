@@ -1,0 +1,100 @@
+$kind: http-example
+name: Đặt sân thành công.
+request:
+  url: "{{baseUrl}}/api/bookings/"
+  method: POST
+  headers:
+    Content-Type: application/json
+    Accept: application/json
+    Authorization: Bearer <token>
+  body:
+    type: json
+    content: |-
+      {
+        "FieldID": 1,
+        "BookingDate": "2026-11-3",
+        "PriceID": 101,
+        "Note": "Cần chuẩn bị sẵn 2 bộ áo lưới"
+      }
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": "Booking created successfully",
+        "booking": {
+          "BookingID": 50,
+          "UserID": 8,
+          "FieldID": 1,
+          "FieldName": "Sân 7 A1",
+          "BookingDate": "2026-10-05",
+          "StartTime": "06:00:00",
+          "EndTime": "07:30:00",
+          "Price": 300000,
+          "Status": "CONFIRMED",
+          "CreatedAt": "2026-10-01T08:30:00Z"
+        }
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Booking created successfully"
+          },
+          "booking": {
+            "type": "object",
+            "properties": {
+              "BookingID": {
+                "type": "integer",
+                "example": 50
+              },
+              "UserID": {
+                "type": "integer",
+                "example": 1
+              },
+              "FieldID": {
+                "type": "integer",
+                "example": 1
+              },
+              "FieldName": {
+                "type": "string",
+                "example": "Sân 7 A1"
+              },
+              "BookingDate": {
+                "type": "string",
+                "example": "2026-10-05",
+                "format": "date"
+              },
+              "StartTime": {
+                "type": "string",
+                "example": "06:00:00"
+              },
+              "EndTime": {
+                "type": "string",
+                "example": "07:30:00"
+              },
+              "Price": {
+                "type": "number",
+                "example": 300000,
+                "format": "float"
+              },
+              "Status": {
+                "type": "string",
+                "example": "CONFIRMED"
+              },
+              "CreatedAt": {
+                "type": "string",
+                "example": "2026-10-01T08:30:00Z",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      }
+order: 1000

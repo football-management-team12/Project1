@@ -21,6 +21,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 5000
+EXPOSE 5001
 
+<<<<<<< HEAD
 CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} app:app"]
+=======
+CMD ["python", "app.py"]
+>>>>>>> d686af5791ef08fe83682f60113b74ab4ac62a99

@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/api/users/me"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"fullName\": \"Admin Updated\",\r
+
+    \  \"email\": \"admin_new@example.com\",\r
+
+    \  \"phone\": \"0987654321\",\r
+
+    \  \"status\": \"INACTIVE\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 12000

@@ -1,0 +1,20 @@
+$kind: http-request
+name: Đăng kí thất bại với username chứa dấu cách với kí tự đặc biệt
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \"fullName\": \"Nguyen Van A\",\r
+
+    \"username\": \"user name@@\",\r
+
+    \"email\": \"test15@example.com\",\r
+
+    \"phone\": \"0901234567\",\r
+
+    \"password\": \"P@ssw0rd\"\r
+
+    }"
+order: 3000

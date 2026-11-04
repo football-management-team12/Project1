@@ -1,0 +1,9 @@
+$kind: http-request
+name: 08 – Lấy thông tin đặt cọc sau khi quá hạn
+url: "{{baseUrl}}/api/bookings/10/deposit"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 8000

@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useMemo,
@@ -283,6 +284,14 @@ function BookingHistory() {
       statusFilter,
     ]
   );
+
+
+  // UC07: chuyển sang trang chi tiết và cuộn tới phần hủy đơn
+  const handleCancelBooking = (bookingId) => {
+    navigate(`/bookings/${bookingId}`, {
+      state: { focusCancellation: true },
+    });
+  };
 
 
   const counts =
@@ -690,6 +699,10 @@ function BookingHistory() {
                       };
 
 
+                    const canRequestCancellation =
+                      status === "PENDING" || status === "CONFIRMED";
+
+
                     return (
 
                       <article
@@ -822,6 +835,9 @@ function BookingHistory() {
                         </div>
 
 
+                        {Number(booking.RefundedAmount) > 0 && (
+                          <p role="status" className="deposit-refunded">Chủ sân đã hoàn {formatMoney(booking.RefundedAmount)}đ tiền cọc cho đơn #{booking.BookingID}.</p>
+                        )}
                         <div className="booking-history-card-bottom">
 
                           <div>
@@ -863,6 +879,17 @@ function BookingHistory() {
                             </strong>
 
                           </div>
+
+
+                          {canRequestCancellation && (
+                            <button
+                              type="button"
+                              className="uc07-history-cancel"
+                              onClick={() => handleCancelBooking(booking.BookingID)}
+                            >
+                              Hủy đơn
+                            </button>
+                          )}
 
 
                           <button

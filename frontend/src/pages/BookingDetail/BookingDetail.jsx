@@ -1,24 +1,27 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+
+import { useEffect, useRef, useState } from "react";
 
 import {
   ArrowLeft,
   CalendarDays,
   Clock3,
   MapPin,
-  ReceiptText,
 } from "lucide-react";
 
 import {
   Navigate,
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
 
-import Navbar
-  from "../../components/Navbar/Navbar";
+import Navbar from "../../components/Navbar/Navbar";
+
+import DepositPanel from "../../components/DepositPanel/DepositPanel";
+
+import SettlementPanel from "../../components/SettlementPanel/SettlementPanel";
+
+import CancellationPanel from "../../components/CancellationPanel/CancellationPanel";
 
 import {
   getCustomerBookingDetail,
@@ -28,706 +31,404 @@ import "./BookingDetail.css";
 
 
 const STATUS_META = {
-
-  PENDING:
-    "Chờ xác nhận",
-
-  CONFIRMED:
-    "Đã xác nhận",
-
-  CANCELLED:
-    "Đã hủy",
-
-  COMPLETED:
-    "Hoàn thành",
-
+  PENDING: "Chờ xác nhận",
+  CONFIRMED: "Đã xác nhận",
+  CANCELLED: "Đã hủy",
+  COMPLETED: "Hoàn thành",
 };
 
 
-const readUser = () => {
-
+function readUser() {
   try {
-
-    const rawUser =
-      localStorage.getItem(
-        "user"
-      );
-
-
-    return rawUser
-      ? JSON.parse(
-          rawUser
-        )
-      : null;
-
-  } catch {
-
-    return null;
-
-  }
-
-};
-
-
-const formatMoney = (
-  value
-) => {
-
-  return new Intl.NumberFormat(
-    "vi-VN"
-  ).format(
-    Number(
-      value || 0
-    )
-  );
-
-};
-
-
-const formatDate = (
-  value
-) => {
-
-  if (!value) {
-
-    return "--";
-
-  }
-
-
-  const date =
-    new Date(
-      `${value}T00:00:00`
+    return JSON.parse(
+      localStorage.getItem("user") || "null"
     );
 
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return value;
-
+  } catch {
+    return null;
   }
+}
 
 
-  return new Intl.DateTimeFormat(
-    "vi-VN"
-  ).format(
-    date
+function formatDate(value) {
+  if (!value) return "--";
+
+  const date = new Date(
+    `${value}T00:00:00`
   );
 
-};
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("vi-VN").format(date);
+}
 
 
-function BookingDetail() {
+function DetailRow({
+  Icon,
+  label,
+  children,
+}) {
+  return (
+    <div className="booking-detail-row">
+      <Icon size={19} />
 
-  const navigate =
-    useNavigate();
-
-
-  const {
-    bookingId,
-  } = useParams();
-
-
-  const [
-    user,
-  ] = useState(
-    readUser
+      <div>
+        <span>{label}</span>
+        <strong>{children}</strong>
+      </div>
+    </div>
   );
+}
 
 
-  const [
-    booking,
-    setBooking,
-  ] = useState(
-    null
-  );
+export default function BookingDetail() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const focusHandled = useRef(false);
+  const cancelFocusHandled = useRef(false);
+
+  const { bookingId } = useParams();
+
+  const [user] = useState(readUser);
+
+  const [booking, setBooking] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const role = String(
+    user?.Role || ""
+  ).toUpperCase();
+
+  const status = String(
+    booking?.Status || ""
+  ).toUpperCase();
 
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(
-    true
-  );
+  // ======================================================
+  // REFRESH BOOKING
+  // ======================================================
+
+  const refreshBooking = async () => {
+    if (!user?.UserID) return;
+
+    const next = await getCustomerBookingDetail(
+      user.UserID,
+      bookingId
+    );
+
+    setBooking(next);
+  };
 
 
-  const [
-    error,
-    setError,
-  ] = useState(
-    ""
-  );
+  // ======================================================
+  // LOAD BOOKING DETAIL
+  // ======================================================
 
+  useEffect(() => {
+    if (
+      !user?.UserID ||
+      !bookingId ||
+      role !== "CUSTOMER"
+    ) {
+      return undefined;
+    }
 
-  const role =
-    String(
-      user?.Role || ""
+    let active = true;
+
+    setLoading(true);
+    setError("");
+
+    getCustomerBookingDetail(
+      user.UserID,
+      bookingId
     )
-      .trim()
-      .toUpperCase();
+      .then((next) => {
+        if (active) {
+          setBooking(next);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setBooking(null);
+
+          setError(
+            err.message || "Không thể tải booking"
+          );
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [user?.UserID, bookingId, role]);
 
 
-  useEffect(
-    () => {
+  // ======================================================
+  // KEEP UC06 DEPOSIT SCROLL
+  // ======================================================
 
-      if (
-        !user?.UserID ||
-        !bookingId ||
-        role !== "CUSTOMER"
-      ) {
+  useEffect(() => {
+    if (
+      !location.state?.focusDeposit ||
+      !booking ||
+      loading ||
+      focusHandled.current
+    ) {
+      return;
+    }
 
-        return;
+    focusHandled.current = true;
 
-      }
-
-
-      let active =
-        true;
-
-
-      const loadDetail =
-        async () => {
-
-          try {
-
-            setLoading(
-              true
-            );
-
-
-            setError(
-              ""
-            );
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("booking-deposit-panel")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+    });
+  }, [location.state, booking, loading]);
 
 
-            const result =
-              await getCustomerBookingDetail(
-                user.UserID,
-                bookingId
-              );
+  // ======================================================
+  // UC07: FOCUS CANCELLATION PANEL
+  // ======================================================
+
+  useEffect(() => {
+    if (
+      !location.state?.focusCancellation ||
+      !booking ||
+      loading ||
+      cancelFocusHandled.current
+    ) {
+      return;
+    }
+
+    cancelFocusHandled.current = true;
+
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("booking-cancellation-panel")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+    });
+  }, [location.state, booking, loading]);
 
 
-            if (!active) {
+  // ======================================================
+  // ROLE GUARD
+  // ======================================================
 
-              return;
-
-            }
-
-
-            setBooking(
-              result
-            );
-
-          } catch (
-            requestError
-          ) {
-
-            if (!active) {
-
-              return;
-
-            }
-
-
-            console.error(
-              "LOAD CUSTOMER BOOKING DETAIL ERROR:",
-              requestError
-            );
-
-
-            setBooking(
-              null
-            );
-
-
-            setError(
-
-              requestError.message ||
-              "Không thể tải chi tiết booking."
-
-            );
-
-          } finally {
-
-            if (active) {
-
-              setLoading(
-                false
-              );
-
-            }
-
-          }
-
-        };
-
-
-      loadDetail();
-
-
-      return () => {
-
-        active =
-          false;
-
-      };
-
-    },
-    [
-      user?.UserID,
-      bookingId,
-      role,
-    ]
-  );
-
-
-  if (
-    role === "ADMIN" ||
-    role === "STAFF"
-  ) {
-
+  if (role === "ADMIN" || role === "STAFF") {
     return (
-
       <Navigate
         to="/admin/bookings"
         replace
       />
-
     );
-
   }
 
-
-  if (
-    role !== "CUSTOMER"
-  ) {
-
+  if (role !== "CUSTOMER") {
     return (
-
       <Navigate
         to="/fields"
         replace
       />
-
     );
-
   }
 
 
-  const normalizedStatus =
-    String(
-      booking?.Status || ""
-    )
-      .trim()
-      .toUpperCase();
-
-
   return (
-
     <>
-
       <Navbar />
-
 
       <main className="booking-detail-page">
 
         <button
           type="button"
           className="booking-detail-back"
-          onClick={
-            () =>
-              navigate(
-                "/bookings"
-              )
-          }
+          onClick={() => navigate("/bookings")}
         >
-
-          <ArrowLeft
-            size={
-              18
-            }
-          />
-
+          <ArrowLeft size={18} />
           Lịch sử đặt sân
-
         </button>
 
 
-        {
-          loading && (
-
-            <section className="booking-detail-state">
-              Đang tải chi tiết booking...
-            </section>
-
-          )
-        }
+        {loading && (
+          <section className="booking-detail-state">
+            Đang tải chi tiết booking...
+          </section>
+        )}
 
 
-        {
-          !loading &&
-          error && (
+        {!loading && error && (
+          <section className="booking-detail-state booking-detail-error">
+            <h1>Không thể mở booking</h1>
 
-            <section className="booking-detail-state booking-detail-error">
+            <p>{error}</p>
 
-              <h1>
-                Không thể mở booking
-              </h1>
-
-
-              <p>
-                {error}
-              </p>
-
-
-              <button
-                type="button"
-                onClick={
-                  () =>
-                    navigate(
-                      "/bookings"
-                    )
-                }
-              >
-                Quay lại lịch sử
-              </button>
-
-            </section>
-
-          )
-        }
+            <button
+              type="button"
+              onClick={() => navigate("/bookings")}
+            >
+              Quay lại lịch sử
+            </button>
+          </section>
+        )}
 
 
-        {
-          !loading &&
-          !error &&
-          booking && (
+        {!loading && !error && booking && (
+          <>
 
-            <>
+            {/* BOOKING HEADER */}
 
-              <section className="booking-detail-header">
+            <section className="booking-detail-header">
+              <div>
+                <p>
+                  BOOKING #{booking.BookingID}
+                </p>
 
-                <div>
+                <h1>
+                  {booking.FieldName ||
+                    `Sân ${booking.FieldID}`}
+                </h1>
 
-                  <p>
-
-                    BOOKING #
-
-                    {
-                      booking.BookingID
-                    }
-
-                  </p>
-
-
-                  <h1>
-
-                    {
-                      booking.FieldName ||
-                      `Sân ${booking.FieldID}`
-                    }
-
-                  </h1>
-
-
-                  <span>
-
-                    {
-                      booking.FieldType ||
-                      "Sân bóng"
-                    }
-
-                  </span>
-
-                </div>
-
-
-                <span
-                  className={`booking-detail-status booking-detail-status-${normalizedStatus.toLowerCase()}`}
-                >
-
-                  {
-                    STATUS_META[
-                      normalizedStatus
-                    ] ||
-                    normalizedStatus ||
-                    "Không xác định"
-                  }
-
+                <span>
+                  {booking.FieldType || "Sân bóng"}
                 </span>
-
-              </section>
-
-
-              <div className="booking-detail-grid">
-
-                <section className="booking-detail-card">
-
-                  <h2>
-                    Thông tin đặt sân
-                  </h2>
-
-
-                  <div className="booking-detail-row">
-
-                    <CalendarDays
-                      size={
-                        19
-                      }
-                    />
-
-
-                    <div>
-
-                      <span>
-                        Ngày đặt
-                      </span>
-
-
-                      <strong>
-
-                        {
-                          formatDate(
-                            booking.BookingDate
-                          )
-                        }
-
-                      </strong>
-
-                    </div>
-
-                  </div>
-
-
-                  <div className="booking-detail-row">
-
-                    <Clock3
-                      size={
-                        19
-                      }
-                    />
-
-
-                    <div>
-
-                      <span>
-                        Khung giờ
-                      </span>
-
-
-                      <strong>
-
-                        {
-                          booking.StartTime
-                        }
-
-                        {" - "}
-
-                        {
-                          booking.EndTime
-                        }
-
-                      </strong>
-
-                    </div>
-
-                  </div>
-
-
-                  <div className="booking-detail-row">
-
-                    <MapPin
-                      size={
-                        19
-                      }
-                    />
-
-
-                    <div>
-
-                      <span>
-                        Địa điểm
-                      </span>
-
-
-                      <strong>
-
-                        {
-                          booking.Location ||
-                          "Chưa cập nhật"
-                        }
-
-                      </strong>
-
-                    </div>
-
-                  </div>
-
-                </section>
-
-
-                <section className="booking-detail-card">
-
-                  <h2>
-                    Thanh toán
-                  </h2>
-
-
-                  <div className="booking-detail-row">
-
-                    <ReceiptText
-                      size={
-                        19
-                      }
-                    />
-
-
-                    <div>
-
-                      <span>
-                        Tổng tiền
-                      </span>
-
-
-                      <strong className="booking-detail-money">
-
-                        {
-                          formatMoney(
-                            booking.TotalAmount
-                          )
-                        }
-
-                        đ
-
-                      </strong>
-
-                    </div>
-
-                  </div>
-
-
-                  <div className="booking-detail-payment">
-
-                    <span>
-                      Trạng thái thanh toán
-                    </span>
-
-
-                    <strong>
-
-                      {
-                        booking.PaymentStatus ||
-                        "Chưa có thông tin thanh toán"
-                      }
-
-                    </strong>
-
-
-                    {
-                      !booking.PaymentStatus && (
-
-                        <small>
-                          Chức năng thanh toán sẽ được tích hợp ở PAYMENT-01.
-                        </small>
-
-                      )
-                    }
-
-                  </div>
-
-                </section>
-
               </div>
 
+              <span
+                className={
+                  `booking-detail-status booking-detail-status-${status.toLowerCase()}`
+                }
+              >
+                {STATUS_META[status] ||
+                  status ||
+                  "Không xác định"}
+              </span>
+            </section>
 
-              <section className="booking-detail-customer">
 
+            {/* BOOKING INFORMATION AND UC09 */}
+
+            <div className="booking-detail-grid">
+
+              <section className="booking-detail-card">
                 <h2>
-                  Thông tin khách hàng
+                  Thông tin đặt sân
                 </h2>
 
+                <DetailRow
+                  Icon={CalendarDays}
+                  label="Ngày đặt"
+                >
+                  {formatDate(booking.BookingDate)}
+                </DetailRow>
 
-                <div>
+                <DetailRow
+                  Icon={Clock3}
+                  label="Khung giờ"
+                >
+                  {booking.StartTime} - {booking.EndTime}
+                </DetailRow>
 
-                  <p>
-
-                    <span>
-                      Họ tên
-                    </span>
-
-
-                    <strong>
-
-                      {
-                        booking.CustomerName ||
-                        user.FullName ||
-                        "--"
-                      }
-
-                    </strong>
-
-                  </p>
-
-
-                  <p>
-
-                    <span>
-                      Email
-                    </span>
-
-
-                    <strong>
-
-                      {
-                        booking.Email ||
-                        user.Email ||
-                        "--"
-                      }
-
-                    </strong>
-
-                  </p>
-
-
-                  <p>
-
-                    <span>
-                      Số điện thoại
-                    </span>
-
-
-                    <strong>
-
-                      {
-                        booking.Phone ||
-                        user.Phone ||
-                        "--"
-                      }
-
-                    </strong>
-
-                  </p>
-
-                </div>
-
+                <DetailRow
+                  Icon={MapPin}
+                  label="Địa điểm"
+                >
+                  {booking.Location || "Chưa cập nhật"}
+                </DetailRow>
               </section>
 
-            </>
 
-          )
-        }
+              {/* UC09 - CUSTOMER CHỈ XEM THANH TOÁN */}
+
+              <SettlementPanel
+                bookingId={booking.BookingID}
+                mode="customer"
+                refreshKey={booking.PaidAmount}
+                onRefresh={refreshBooking}
+              />
+
+            </div>
+
+
+            {/* UC06 - ĐẶT CỌC VIETQR */}
+
+            {!(
+              ["CANCELLED", "COMPLETED"].includes(status)
+            ) && (
+              <div id="booking-deposit-panel">
+                <DepositPanel
+                  bookingId={booking.BookingID}
+                  bookingStatus={booking.Status}
+                  onPaymentChanged={refreshBooking}
+                />
+              </div>
+            )}
+
+
+            {/* UC07 - YÊU CẦU HỦY ĐẶT SÂN */}
+
+            <div id="booking-cancellation-panel">
+              <CancellationPanel
+                bookingId={booking.BookingID}
+                bookingStatus={booking.Status}
+                onCancelled={refreshBooking}
+              />
+            </div>
+
+
+            {/* CUSTOMER INFORMATION */}
+
+            <section className="booking-detail-customer">
+              <h2>
+                Thông tin khách hàng
+              </h2>
+
+              <div>
+                <p>
+                  <span>Họ tên</span>
+                  <strong>
+                    {booking.CustomerName ||
+                      user.FullName ||
+                      "--"}
+                  </strong>
+                </p>
+
+                <p>
+                  <span>Email</span>
+                  <strong>
+                    {booking.Email ||
+                      user.Email ||
+                      "--"}
+                  </strong>
+                </p>
+
+                <p>
+                  <span>Số điện thoại</span>
+                  <strong>
+                    {booking.Phone ||
+                      user.Phone ||
+                      "--"}
+                  </strong>
+                </p>
+              </div>
+            </section>
+
+          </>
+        )}
 
       </main>
-
     </>
-
   );
-
 }
-
-
-export default BookingDetail;

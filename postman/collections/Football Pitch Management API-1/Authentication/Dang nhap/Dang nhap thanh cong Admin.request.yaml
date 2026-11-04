@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{baseUrl}}/api/auth/login"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"account\": \"user1\",\r
+
+    \  \"password\": \"123456\"\r
+
+    }"
+scripts:
+  - type: beforeRequest
+    code: ""
+    language: text/javascript
+  - type: afterResponse
+    code: "var jsonData = pm.response.json();\r
+
+      if (jsonData.accessToken) {\r
+
+      \    pm.environment.set(\"accessToken\", jsonData.accessToken);\r
+
+      \    console.log(\"Đã tự động lưu accessToken thành công!\");\r
+
+      }"
+    language: text/javascript
+order: 1000

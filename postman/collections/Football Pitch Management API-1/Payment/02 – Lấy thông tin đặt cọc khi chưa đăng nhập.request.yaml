@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/4/deposit"
+method: GET
+order: 2000

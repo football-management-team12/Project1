@@ -1,0 +1,12 @@
+$kind: http-request
+name: 23 – Cập nhật trạng thái với giá trị không được hỗ trợ
+url: "{{baseUrl}}/api/payments/18/demo-status"
+method: PATCH
+body:
+  type: json
+  content: "{\r\n  \"status\": \"SUCCESS\"\r\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 25000

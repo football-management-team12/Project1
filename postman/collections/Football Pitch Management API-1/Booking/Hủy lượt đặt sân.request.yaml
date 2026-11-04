@@ -1,7 +1,7 @@
 $kind: http-request
 description: ""
 url: "{{baseUrl}}/api/bookings/:booking_id/cancel"
-method: PUT
+method: POST
 headers:
   Content-Type: application/json
   Accept: application/json
@@ -45,4 +45,4 @@ auth:
     token: "{{bearerToken}}"
 settings: {}
 examples: ./.resources/Hủy lượt đặt sân.resources/examples
-order: 4000
+order: 5000

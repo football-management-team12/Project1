@@ -1,0 +1,9 @@
+$kind: http-request
+name: 07 – Lấy thông tin đặt cọc khi tổng tiền Booking không hợp lệ
+url: "{{baseUrl}}/api/bookings/abc/deposit"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 7000

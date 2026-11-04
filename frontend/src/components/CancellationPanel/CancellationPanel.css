@@ -1,0 +1,129 @@
+
+.uc07-panel {
+  margin-top: 24px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.uc07-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 18px;
+}
+
+.uc07-panel-heading h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  color: #0f172a;
+}
+
+.uc07-panel-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.uc07-panel-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #334155;
+}
+
+.uc07-panel-muted {
+  color: #64748b;
+}
+
+.uc07-panel-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.uc07-panel-refund {
+  margin: 14px 0;
+  padding: 12px;
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  border-radius: 6px;
+  color: #92400e;
+  line-height: 1.6;
+}
+
+.uc07-panel-cancel {
+  margin-top: 18px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #dc2626;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.uc07-panel-cancel:hover {
+  background: #b91c1c;
+}
+
+.uc07-panel-cancel:disabled,
+.uc07-panel-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.uc07-panel-error {
+  padding: 12px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 8px;
+}
+
+.uc07-panel-success {
+  padding: 12px;
+  background: #f0fdf4;
+  color: #15803d;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.uc07-panel-history {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #f1f5f9;
+}
+
+.uc07-panel-history strong {
+  color: #0f172a;
+}
+
+.uc07-panel-history p {
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .uc07-panel {
+    padding: 16px;
+  }
+
+  .uc07-panel-cancel {
+    width: 100%;
+  }
+}

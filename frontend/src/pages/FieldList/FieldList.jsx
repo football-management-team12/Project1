@@ -171,8 +171,13 @@ const FieldList = () => {
       return undefined;
     }
 
-    const loadAvailability = async () => {
-      setAvailabilityLoading(true);
+
+    const loadAvailability = async (showLoading = true) => {
+
+      if (showLoading) {
+        setAvailabilityLoading(true);
+      }
+
       setAvailabilityError("");
       setAvailability(null);
 
@@ -193,15 +198,23 @@ const FieldList = () => {
         }
       } finally {
         if (!cancelled) {
-          setAvailabilityLoading(false);
+
+          if (showLoading) {
+            setAvailabilityLoading(false);
+          }
         }
       }
     };
 
     loadAvailability();
+    const refreshInterval = window.setInterval(
+      () => loadAvailability(false),
+      30_000
+    );
 
     return () => {
       cancelled = true;
+      window.clearInterval(refreshInterval);
     };
   }, [selectedDate]);
 

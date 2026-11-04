@@ -287,6 +287,18 @@
     20px;
 }
 
+.booking-detail-payment-amount {
+  font-size: 16px;
+}
+
+.booking-detail-paid {
+  color: #0b9b4b !important;
+}
+
+.booking-detail-remaining {
+  color: #111827 !important;
+}
+
 
 .booking-detail-payment {
   display:

@@ -1,0 +1,9 @@
+$kind: http-request
+name: 30 – Kiểm tra số tiền cọc theo công thức
+url: "{{baseUrl}}/api/bookings/14/deposit"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 9000

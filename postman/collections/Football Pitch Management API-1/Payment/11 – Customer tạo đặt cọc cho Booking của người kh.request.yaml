@@ -1,0 +1,9 @@
+$kind: http-request
+name: 11 – Customer tạo đặt cọc cho Booking của người khác
+url: "{{baseUrl}}/api/bookings/7/deposit"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 13000

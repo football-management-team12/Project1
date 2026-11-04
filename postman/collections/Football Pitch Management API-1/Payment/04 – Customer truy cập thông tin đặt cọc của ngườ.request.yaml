@@ -1,0 +1,9 @@
+$kind: http-request
+name: 04 – Customer truy cập thông tin đặt cọc của người khác
+url: "{{baseUrl}}/api/bookings/4/deposit"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 3000

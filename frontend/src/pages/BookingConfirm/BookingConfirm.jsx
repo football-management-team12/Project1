@@ -15,6 +15,7 @@ import Navbar from "../../components/Navbar/Navbar";
 
 import {
   createBooking,
+  createDeposit,
 } from "../../services/booking_service";
 
 import "./BookingConfirm.css";
@@ -178,10 +179,30 @@ function BookingConfirm() {
           "bookingDraft"
         );
 
+        const booking = response?.Booking;
 
-        setResult(
-          response
-        );
+        if (booking?.BookingID) {
+          try {
+            await createDeposit(booking.BookingID);
+          } catch {
+            // Booking exists even if payment initialization fails.
+            // The detail page lets the customer retry creating the deposit.
+          }
+
+          navigate(
+            `/bookings/${booking.BookingID}`,
+            {
+              replace: true,
+              state: {
+                focusDeposit: true,
+              },
+            }
+          );
+
+          return;
+        }
+
+        setResult(response);
       } catch (requestError) {
 
         if (

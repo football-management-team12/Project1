@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/api/users/me"
+method: GET
+body:
+  type: json
+  content: ""
+auth:
+  type: noauth
+order: 4000

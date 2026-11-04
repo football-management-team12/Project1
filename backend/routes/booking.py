@@ -1,3 +1,4 @@
+
 from datetime import date, datetime
 
 from flask import Blueprint, jsonify, request
@@ -5,6 +6,7 @@ from flask import Blueprint, jsonify, request
 from database import get_connection
 from services.availability_service import (
     booking_is_cancelled,
+    expire_pending_bookings,
     is_time_overlap,
 )
 from services.jwt_service import (
@@ -130,6 +132,15 @@ def row_to_booking(row):
         "TotalAmount": float(
             row.TotalAmount or 0
         ),
+        "RefundedAmount": float(getattr(row, "RefundedAmount", 0) or 0),
+        "PaidAmount": float(
+            getattr(row, "PaidAmount", 0) or 0
+        ),
+        "RemainingAmount": max(
+            float(row.TotalAmount or 0)
+            - float(getattr(row, "PaidAmount", 0) or 0),
+            0,
+        ),
         "Status": str(
             row.Status or ""
         ).strip().upper(),
@@ -221,7 +232,9 @@ def get_booking_row(
 
             U.FullName,
             U.Phone,
-            U.Email
+            U.Email,
+            PaymentTotals.PaidAmount,
+            (SELECT R.Amount FROM dbo.BookingDepositRefunds R WHERE R.BookingID = B.BookingID) AS RefundedAmount
 
         FROM Bookings B
 
@@ -230,6 +243,21 @@ def get_booking_row(
 
         INNER JOIN Users U
             ON B.UserID = U.UserID
+
+        OUTER APPLY
+        (
+            SELECT
+                SUM(
+                    CASE
+                        WHEN UPPER(LTRIM(RTRIM(P.Status))) = 'SUCCESS'
+                        THEN P.Amount
+                        ELSE 0
+                    END
+                ) AS PaidAmount
+            FROM Payments P
+            WHERE P.BookingID = B.BookingID
+              AND P.PaymentType = 'DEPOSIT'
+        ) PaymentTotals
 
         WHERE B.BookingID = ?
         """,
@@ -473,9 +501,10 @@ def create_booking():
                 FieldName,
                 FieldType,
                 Location,
-                Status
+                Status,
+                IsArchived
 
-            FROM FootballFields
+            FROM FootballFields WITH (UPDLOCK, HOLDLOCK)
 
             WHERE FieldID = ?
             """,
@@ -492,6 +521,15 @@ def create_booking():
                 "message":
                     "Không tìm thấy sân bóng"
             }), 404
+
+        # UC15 - Sân lưu trữ vẫn tồn tại cho lịch sử booking,
+        # nhưng tuyệt đối không cho tạo booking mới.
+        if bool(field.IsArchived):
+            conn.rollback()
+            return jsonify({
+                "message": "Sân đã được lưu trữ, không thể đặt mới",
+                "code": "FIELD_ARCHIVED"
+            }), 409
 
         field_status = str(
             field.Status or ""
@@ -511,6 +549,10 @@ def create_booking():
         #
         # Không tin giá frontend gửi.
         # ====================================================
+
+        # UC15: lock the field before touching bookings, matching archive/status
+        # operations so concurrent booking and archive use the same lock order.
+        expire_pending_bookings(cursor)
 
         cursor.execute(
             """
@@ -950,7 +992,11 @@ def get_all_bookings():
 
                 U.FullName,
                 U.Phone,
-                U.Email
+                U.Email,
+                (SELECT COALESCE(SUM(P.Amount), 0) FROM Payments P
+                 WHERE P.BookingID = B.BookingID AND P.PaymentType = 'DEPOSIT'
+                 AND UPPER(LTRIM(RTRIM(P.Status))) = 'SUCCESS') AS PaidAmount,
+                (SELECT R.Amount FROM dbo.BookingDepositRefunds R WHERE R.BookingID = B.BookingID) AS RefundedAmount
 
             FROM Bookings B
 
@@ -1146,6 +1192,24 @@ def update_booking_status(
             )
             or ""
         ).strip().upper()
+
+        # ====================================================
+        # UC07 - KHÔNG HỦY TRỰC TIẾP QUA API CẬP NHẬT TRẠNG THÁI
+        #
+        # Booking CANCELLED phải thông qua service UC07
+        # để kiểm tra quyền, transaction và ghi lịch sử.
+        # Không ảnh hưởng CONFIRMED hay COMPLETED.
+        # ====================================================
+
+        if new_status == "CANCELLED":
+
+            return jsonify({
+                "message": (
+                    "Dùng UC07 cancellation API để hủy, "
+                    "không PATCH status"
+                ),
+                "code": "USE_CANCELLATION_API"
+            }), 409
 
         # ====================================================
         # T123-72

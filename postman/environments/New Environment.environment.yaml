@@ -3,4 +3,4 @@ values:
   - key: baseUrl
     value: ''
   - key: accessToken
-    value: ''
+    secret: true

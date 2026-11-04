@@ -28,3 +28,10 @@ venv/
 .env.*
 .env
 !.env.example
+# Ignore Postman workspace local resources path configuration
+.postman/
+resources.yaml
+backend/.env
+
+/.worktrees/
+/tash show --stat stash@{0}
