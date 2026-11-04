@@ -1,10 +1,4 @@
-<<<<<<< HEAD
 import os
-=======
-
-import os
-
->>>>>>> d686af5791ef08fe83682f60113b74ab4ac62a99
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,10 +7,9 @@ from flask import Flask
 from flask_cors import CORS
 from flasgger import Swagger
 
-<<<<<<< HEAD
 
 app = Flask(__name__)
-
+#
 debug = os.getenv("DEBUG", "false").strip().lower() in (
     "1", "true", "yes", "on"
 )
@@ -34,8 +27,6 @@ else:
 # BLUEPRINTS
 # ============================================================
 
-=======
->>>>>>> d686af5791ef08fe83682f60113b74ab4ac62a99
 from routes.auth import auth_bp
 from routes.field import field_bp
 from routes.booking import booking_bp
@@ -85,24 +76,18 @@ app.register_blueprint(
     url_prefix="/api/auth"
 )
 
-<<<<<<< HEAD
-=======
 # API sân công khai, giữ nguyên
->>>>>>> d686af5791ef08fe83682f60113b74ab4ac62a99
 app.register_blueprint(
     field_bp,
     url_prefix="/api/fields"
 )
 
-<<<<<<< HEAD
-=======
 # UC15 - API quản trị sân
 app.register_blueprint(
     field_management_bp,
     url_prefix="/api/admin/fields"
 )
 
->>>>>>> d686af5791ef08fe83682f60113b74ab4ac62a99
 app.register_blueprint(
     booking_bp,
     url_prefix="/api/bookings"
@@ -152,7 +137,6 @@ def home():
     }
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     host = os.getenv("APP_HOST", "127.0.0.1")
     port = int(os.getenv("APP_PORT", "5000"))
 
@@ -160,10 +144,4 @@ if __name__ == "__main__":
         host=host,
         port=port,
         debug=debug
-=======
-    app.run(
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", "5001")),
-        debug=True
->>>>>>> d686af5791ef08fe83682f60113b74ab4ac62a99
     )
