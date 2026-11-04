@@ -62,7 +62,15 @@ def register_customer(full_name, username, email, phone, password):
     if not re.fullmatch(r"0\d{9}", phone):
         raise AuthenticationError("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0", 400)
     if len(password) < 8 or len(password.encode("utf-8")) > 72:
-        raise AuthenticationError("Mật khẩu phải có từ 8 đến 72 ký tự", 400)
+        raise AuthenticationError("Mật khẩu phải có ít nhất 8 ký tự và không vượt quá 72 byte UTF-8", 400)
+    if not (
+        re.search(r"[A-Z]", password)
+        and re.search(r"[a-z]", password)
+        and re.search(r"[0-9]|[^\w\s]", password)
+    ):
+        raise AuthenticationError(
+            "Mật khẩu phải có chữ hoa, chữ thường và số hoặc ký tự đặc biệt", 400
+        )
 
     conn = get_connection()
     if conn is None:
