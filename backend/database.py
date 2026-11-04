@@ -13,7 +13,6 @@ from pathlib import Path
 import pyodbc
 from dotenv import load_dotenv
 
-
 _BACKEND_DIR = Path(__file__).resolve().parent
 _PROJECT_DIR = _BACKEND_DIR.parent
 
@@ -24,31 +23,24 @@ load_dotenv(_PROJECT_DIR / ".env", override=False)
 
 
 def _odbc_value(value: str) -> str:
-    """Quote an ODBC connection-string value."""
+    """Quote an ODBC connection-string value, including closing braces."""
     return "{" + value.replace("}", "}}") + "}"
 
 
 def _driver_name() -> str:
     """Select the configured SQL Server ODBC driver when available."""
-    wanted = (
-        os.getenv("DB_DRIVER")
-        or "ODBC Driver 18 for SQL Server"
-    ).strip().strip("{}")
-
+    wanted = (os.getenv("DB_DRIVER") or "ODBC Driver 18 for SQL Server").strip()
+    wanted = wanted.strip("{}")
     available = pyodbc.drivers()
 
     if wanted in available:
         return wanted
 
-    for candidate in (
-        "ODBC Driver 18 for SQL Server",
-        "ODBC Driver 17 for SQL Server",
-    ):
+    # The previous code hardcoded Driver 17. Support computers that only
+    # have Driver 17 or only Driver 18 installed, without changing .env.
+    for candidate in ("ODBC Driver 18 for SQL Server", "ODBC Driver 17 for SQL Server"):
         if candidate in available:
-            print(
-                f"Database notice: {wanted!r} unavailable; "
-                f"using {candidate!r}."
-            )
+            print(f"Database notice: {wanted!r} unavailable; using {candidate!r}.")
             return candidate
 
     raise RuntimeError(
@@ -62,24 +54,16 @@ def get_connection() -> pyodbc.Connection | None:
     try:
         server = (os.getenv("DB_SERVER") or "").strip()
         database = (os.getenv("DB_NAME") or "").strip()
-
         if not server or not database:
             raise ValueError(
                 "DB_SERVER and DB_NAME must be set in backend/.env "
                 "(or the project-root .env)."
             )
 
-        trusted = (
-            (os.getenv("DB_TRUSTED_CONNECTION") or "no")
-            .strip()
-            .lower()
+        trusted = (os.getenv("DB_TRUSTED_CONNECTION") or "no").lower().strip() \
             in {"yes", "true", "1", "on"}
-        )
-
         encrypt = (os.getenv("DB_ENCRYPT") or "yes").strip()
-        trust_cert = (
-            os.getenv("DB_TRUST_SERVER_CERTIFICATE") or "yes"
-        ).strip()
+        trust_cert = (os.getenv("DB_TRUST_SERVER_CERTIFICATE") or "yes").strip()
 
         parts = [
             f"DRIVER={_odbc_value(_driver_name())}",
@@ -94,29 +78,16 @@ def get_connection() -> pyodbc.Connection | None:
         else:
             user = (os.getenv("DB_USER") or "").strip()
             password = os.getenv("DB_PASSWORD") or ""
-
             if not user or not password:
                 raise ValueError(
                     "Set DB_USER and DB_PASSWORD for SQL authentication, "
                     "or use DB_TRUSTED_CONNECTION=yes for Windows authentication."
                 )
+            parts.extend((f"UID={_odbc_value(user)}", f"PWD={_odbc_value(password)}"))
 
-            parts.extend(
-                (
-                    f"UID={_odbc_value(user)}",
-                    f"PWD={_odbc_value(password)}",
-                )
-            )
-
-        return pyodbc.connect(
-            ";".join(parts) + ";",
-            timeout=5,
-        )
+        return pyodbc.connect(";".join(parts) + ";", timeout=5)
 
     except (pyodbc.Error, ValueError, RuntimeError) as exc:
+        # Avoid printing a connection string or its password.
         print(f"Database connection error: {exc}")
-        return None
-
-    except Exception as exc:
-        print(f"Unexpected database error: {exc}")
         return None

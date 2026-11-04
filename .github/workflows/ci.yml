@@ -2,111 +2,78 @@ name: CI
 
 on:
   push:
-    branches:
-      - develop
-      - main
-
+    branches: [develop, main]
   pull_request:
-    branches:
-      - develop
-      - main
+    branches: [develop, main]
+
+permissions:
+  contents: read
 
 jobs:
   frontend:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
+      - run: npm ci
         working-directory: frontend
-        run: npm ci
-
-      - name: Build frontend
+      - run: npm run build
         working-directory: frontend
-        run: npm run build
 
   backend:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install dependencies
+      - run: pip install -r requirements.txt
         working-directory: backend
-        run: pip install -r requirements.txt
-
-      - name: Check backend
+      - name: Compile all Python modules
+        run: python -m compileall -q backend
+      - name: Run backend health tests
         working-directory: backend
-        run: python -m py_compile app.py
+        env:
+          DEBUG: "false"
+        run: python -m unittest discover -s ../tests -p 'test_staging_health.py'
 
   docker:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker images
-        run: docker compose build
+      - uses: actions/checkout@v4
+      - name: Build backend Docker image
+        run: docker compose build backend
 
   api-test:
     runs-on: ubuntu-latest
-    needs: [backend, docker] # Chờ backend và docker build xong mới chạy
-
+    needs: [backend, docker]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      # 1. Cài đặt Newman và công cụ chuyển đổi OpenAPI/Swagger
-      - name: Install Newman and OpenAPI Converter
-        run: npm install -g newman openapi-to-postmanv2
-
-      # 2. Khởi chạy hệ thống bằng Docker Compose
-      - name: Prepare CI environment
+      - name: Install Newman
+        run: npm install -g newman
+      - name: Start backend without production credentials
         run: |
-          cat > .env <<'EOF'
-          DB_DRIVER=ODBC Driver 18 for SQL Server
-          DB_SERVER=football-sql,1433
-          DB_NAME=FootballBookingDB
-          DB_USER=ci_user
-          DB_PASSWORD=ci_dummy_password
-          DB_TRUST_SERVER_CERTIFICATE=yes
-          EOF
-
-          docker network create football-network || true
-
-      - name: Start Services with Docker
+          docker network create football-network
+          docker compose up -d --build backend
+      - name: Wait for health endpoint
         run: |
-          docker network create football-network || true
-          docker compose up -d --build
-          sleep 10
-      # 3. Chuyển đổi backend/swagger.yaml sang Collection & Chạy Test
-      - name: Convert Swagger to Postman Collection & Run Tests
-        run: |
-          openapi2postmanv2 -s backend/swagger.yaml -o converted_collection.json -p
-          newman run converted_collection.json
-
-      # 4. Tắt môi trường Docker
-      - name: Stop Services
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:5000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs backend
+          exit 1
+      - name: Test running API with assertions
+        run: newman run tests/postman/staging-smoke.postman_collection.json --env-var baseUrl=http://127.0.0.1:5000
+      - name: Stop backend
         if: always()
         run: docker compose down

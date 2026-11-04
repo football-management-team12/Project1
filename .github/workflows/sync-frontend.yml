@@ -17,6 +17,8 @@ jobs:
   sync:
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.head_branch == 'develop'
 
     runs-on: ubuntu-latest
@@ -76,12 +78,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          if git diff --quiet -- frontend; then
+          git add -A -- frontend
+
+          if git diff --cached --quiet -- frontend; then
             echo "Frontend is already up to date."
             exit 0
           fi
-
-          git add frontend/
 
           git commit -m "chore: sync frontend from Project1 develop"
 

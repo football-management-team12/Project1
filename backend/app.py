@@ -8,21 +8,9 @@ from flask_cors import CORS
 from flasgger import Swagger
 
 
-app = Flask(__name__)
-#
-debug = os.getenv("DEBUG", "false").strip().lower() in (
-    "1", "true", "yes", "on"
-)
+debug = os.getenv("DEBUG", "false").strip().lower() in ("1", "true", "yes", "on")
 
-frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
-
-if frontend_url:
-    CORS(app, resources={r"/api/*": {"origins": [frontend_url]}})
-else:
-    # Fail-safe: khong mo CORS cho moi origin khi chua cau hinh frontend.
-    CORS(app, resources={r"/api/*": {"origins": []}})
-
-# Import blueprint sau khi co app
+# Import blueprints after the Flask application is configured.
 # ============================================================
 # BLUEPRINTS
 # ============================================================
@@ -42,28 +30,22 @@ from routes.field_management import field_management_bp
 
 app = Flask(__name__)
 
+# Multiple comma-separated frontend origins are supported for staging.
+frontend_origins = [
+    origin.strip().rstrip("/")
+    for origin in os.getenv("FRONTEND_URL", "").split(",")
+    if origin.strip()
+]
+if debug:
+    frontend_origins.extend(["http://localhost:5173", "http://127.0.0.1:5173"])
+
 CORS(
     app,
-    resources={
-        r"/api/*": {
-            "origins": [
-                "http://localhost:5173",
-                "http://127.0.0.1:5173"
-            ],
-            "methods": [
-                "GET",
-                "POST",
-                "PUT",
-                "PATCH",
-                "DELETE",
-                "OPTIONS"
-            ],
-            "allow_headers": [
-                "Content-Type",
-                "Authorization"
-            ]
-        }
-    }
+    resources={r"/api/*": {
+        "origins": frontend_origins,
+        "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+    }},
 )
 
 Swagger(
@@ -132,9 +114,32 @@ app.add_url_rule(
 
 @app.route("/")
 def home():
-    return {
-        "message": "Backend running"
-    }
+    return {"message": "Backend running"}
+
+
+@app.route("/health")
+def health():
+    """Process-level health check; does not require SQL Server."""
+    return {"status": "ok"}, 200
+
+
+@app.route("/ready")
+def ready():
+    """Readiness check requires the application database to be reachable."""
+    from database import get_connection
+
+    connection = get_connection()
+    if connection is None:
+        return {"status": "unavailable"}, 503
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+        return {"status": "ready"}, 200
+    except Exception:
+        return {"status": "unavailable"}, 503
+    finally:
+        connection.close()
 
 if __name__ == "__main__":
     host = os.getenv("APP_HOST", "127.0.0.1")

@@ -35,3 +35,12 @@ backend/.env
 
 /.worktrees/
 /tash show --stat stash@{0}
+# Runtime SQL Server databases, backups and telemetry must not enter Git.
+sqlserver/data/
+sqlserver/backup/
+sqlserver/log/
+*.mdf
+*.ldf
+*.bak
+*.xel
+*.trc

@@ -752,6 +752,7 @@ def get_all_fields_availability():
         )
 
         if not booking_date:
+
             return jsonify({
 
                 "message":
@@ -776,6 +777,7 @@ def get_all_fields_availability():
             )
 
         except ValueError:
+
             return jsonify({
                 "message":
                     "Ngày không đúng định dạng YYYY-MM-DD"
@@ -788,6 +790,7 @@ def get_all_fields_availability():
         conn = get_connection()
 
         if conn is None:
+
             return jsonify({
                 "message":
                     "Không thể kết nối database"
@@ -811,6 +814,7 @@ def get_all_fields_availability():
                 FieldType,
                 Location,
                 Status
+
             FROM FootballFields
 
             WHERE IsArchived = 0
@@ -1086,7 +1090,9 @@ def get_all_fields_availability():
             )
 
             unavailable_count = (
-                len(slots) - available_count
+                len(slots)
+                -
+                available_count
             )
 
             # =================================================
