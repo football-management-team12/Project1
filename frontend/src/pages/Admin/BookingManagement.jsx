@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { Check, Eye, RefreshCw, X } from "lucide-react";
 
 import SettlementPanel from "../../components/SettlementPanel/SettlementPanel";
@@ -838,6 +838,8 @@ export default function BookingManagement() {
             {/* UC09: Chỉ ADMIN được xác nhận */}
 
             {isAdmin && (
+              <>
+              <Link className="ui-button ui-button-secondary" to={`/admin/bookings/${selectedBooking.BookingID}/invoice`}>Xem hóa đơn</Link>
               <SettlementPanel
                 bookingId={selectedBooking.BookingID}
                 mode="admin"
@@ -846,6 +848,7 @@ export default function BookingManagement() {
                 }
                 onPaymentConfirmed={onPaid}
               />
+              </>
             )}
 
 

@@ -1,0 +1,564 @@
+{
+  "info": {
+    "name": "UC08 - Invoice View (read-only)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Use existing test data only. No seed, mutation, login or secret is included. Customer token owns invoiceId and bookingId; customerBToken is a different customer. Set IDs for payment states and missing records."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "invoiceId",
+      "value": ""
+    },
+    {
+      "key": "bookingId",
+      "value": ""
+    },
+    {
+      "key": "customerToken",
+      "value": ""
+    },
+    {
+      "key": "customerBToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "invalidToken",
+      "value": "invalid"
+    },
+    {
+      "key": "expiredToken",
+      "value": ""
+    },
+    {
+      "key": "missingInvoiceId",
+      "value": ""
+    },
+    {
+      "key": "missingBookingId",
+      "value": ""
+    },
+    {
+      "key": "unissuedBookingId",
+      "value": ""
+    },
+    {
+      "key": "unpaidInvoiceId",
+      "value": ""
+    },
+    {
+      "key": "partially_paidInvoiceId",
+      "value": ""
+    },
+    {
+      "key": "paidInvoiceId",
+      "value": ""
+    },
+    {
+      "key": "provisionalBookingId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Customer own invoice",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/invoices/{{invoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Amounts reconcile', () => { pm.expect(data.totalAmount).to.eql(data.paidAmount + data.remainingAmount); pm.expect(data.depositAmount).to.be.at.most(data.paidAmount); });",
+              "pm.test('Payment status', () => pm.expect(data.paymentStatus).to.eql(data.remainingAmount === 0 ? 'PAID' : data.paidAmount > 0 ? 'PARTIALLY_PAID' : 'UNPAID'));",
+              "pm.test('Jira response contract', () => { const data = pm.response.json(); pm.expect(data).to.have.property('paymentStatus'); pm.expect(data.field).to.have.all.keys('fieldId', 'fieldName', 'fieldType', 'location'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer booking invoice",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}/invoice"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Amounts reconcile', () => { pm.expect(data.totalAmount).to.eql(data.paidAmount + data.remainingAmount); pm.expect(data.depositAmount).to.be.at.most(data.paidAmount); });",
+              "pm.test('Payment status', () => pm.expect(data.paymentStatus).to.eql(data.remainingAmount === 0 ? 'PAID' : data.paidAmount > 0 ? 'PARTIALLY_PAID' : 'UNPAID'));",
+              "pm.test('Jira response contract', () => { const data = pm.response.json(); pm.expect(data).to.have.property('paymentStatus'); pm.expect(data.field).to.have.all.keys('fieldId', 'fieldName', 'fieldType', 'location'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin invoice",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/invoices/{{invoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Amounts reconcile', () => { pm.expect(data.totalAmount).to.eql(data.paidAmount + data.remainingAmount); pm.expect(data.depositAmount).to.be.at.most(data.paidAmount); });",
+              "pm.test('Payment status', () => pm.expect(data.paymentStatus).to.eql(data.remainingAmount === 0 ? 'PAID' : data.paidAmount > 0 ? 'PARTIALLY_PAID' : 'UNPAID'));",
+              "pm.test('Jira response contract', () => { const data = pm.response.json(); pm.expect(data).to.have.property('paymentStatus'); pm.expect(data.field).to.have.all.keys('fieldId', 'fieldName', 'fieldType', 'location'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin booking invoice",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}/invoice"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Amounts reconcile', () => { pm.expect(data.totalAmount).to.eql(data.paidAmount + data.remainingAmount); pm.expect(data.depositAmount).to.be.at.most(data.paidAmount); });",
+              "pm.test('Payment status', () => pm.expect(data.paymentStatus).to.eql(data.remainingAmount === 0 ? 'PAID' : data.paidAmount > 0 ? 'PARTIALLY_PAID' : 'UNPAID'));",
+              "pm.test('Jira response contract', () => { const data = pm.response.json(); pm.expect(data).to.have.property('paymentStatus'); pm.expect(data.field).to.have.all.keys('fieldId', 'fieldName', 'fieldType', 'location'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer B cannot access A invoice",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerBToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/invoices/{{invoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer B cannot access A booking invoice",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerBToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}/invoice"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Missing JWT",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "noauth"
+        },
+        "url": "{{baseUrl}}/api/invoices/{{invoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invalid JWT",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{invalidToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/invoices/{{invoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Expired JWT",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{expiredToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/invoices/{{invoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invoice not found",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/invoices/{{missingInvoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Booking not found",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/bookings/{{missingBookingId}}/invoice"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Booking without invoice or successful deposit",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/bookings/{{unissuedBookingId}}/invoice"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "UNPAID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/invoices/{{unpaidInvoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Amounts reconcile', () => { pm.expect(data.totalAmount).to.eql(data.paidAmount + data.remainingAmount); pm.expect(data.depositAmount).to.be.at.most(data.paidAmount); });",
+              "pm.test('Payment status', () => pm.expect(data.paymentStatus).to.eql(data.remainingAmount === 0 ? 'PAID' : data.paidAmount > 0 ? 'PARTIALLY_PAID' : 'UNPAID'));",
+              "pm.test('Expected state', () => pm.expect(data.paymentStatus).to.eql('UNPAID'));",
+              "pm.test('Jira response contract', () => { const data = pm.response.json(); pm.expect(data).to.have.property('paymentStatus'); pm.expect(data.field).to.have.all.keys('fieldId', 'fieldName', 'fieldType', 'location'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PARTIALLY_PAID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/invoices/{{partially_paidInvoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Amounts reconcile', () => { pm.expect(data.totalAmount).to.eql(data.paidAmount + data.remainingAmount); pm.expect(data.depositAmount).to.be.at.most(data.paidAmount); });",
+              "pm.test('Payment status', () => pm.expect(data.paymentStatus).to.eql(data.remainingAmount === 0 ? 'PAID' : data.paidAmount > 0 ? 'PARTIALLY_PAID' : 'UNPAID'));",
+              "pm.test('Expected state', () => pm.expect(data.paymentStatus).to.eql('PARTIALLY_PAID'));",
+              "pm.test('Jira response contract', () => { const data = pm.response.json(); pm.expect(data).to.have.property('paymentStatus'); pm.expect(data.field).to.have.all.keys('fieldId', 'fieldName', 'fieldType', 'location'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PAID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/invoices/{{paidInvoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Amounts reconcile', () => { pm.expect(data.totalAmount).to.eql(data.paidAmount + data.remainingAmount); pm.expect(data.depositAmount).to.be.at.most(data.paidAmount); });",
+              "pm.test('Payment status', () => pm.expect(data.paymentStatus).to.eql(data.remainingAmount === 0 ? 'PAID' : data.paidAmount > 0 ? 'PARTIALLY_PAID' : 'UNPAID'));",
+              "pm.test('Expected state', () => pm.expect(data.paymentStatus).to.eql('PAID'));",
+              "pm.test('Jira response contract', () => { const data = pm.response.json(); pm.expect(data).to.have.property('paymentStatus'); pm.expect(data.field).to.have.all.keys('fieldId', 'fieldName', 'fieldType', 'location'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Successful deposit without issued invoice - provisional view",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/bookings/{{provisionalBookingId}}/invoice"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Amounts reconcile', () => { pm.expect(data.totalAmount).to.eql(data.paidAmount + data.remainingAmount); pm.expect(data.depositAmount).to.be.at.most(data.paidAmount); });",
+              "pm.test('Payment status', () => pm.expect(data.paymentStatus).to.eql(data.remainingAmount === 0 ? 'PAID' : data.paidAmount > 0 ? 'PARTIALLY_PAID' : 'UNPAID'));",
+              "pm.test('Provisional invoice', () => { const data = pm.response.json(); pm.expect(data.isProvisional).to.eql(true); pm.expect(data.invoiceId).to.eql(null); pm.expect(data.depositAmount).to.be.above(0); });",
+              "pm.test('Jira response contract', () => { const data = pm.response.json(); pm.expect(data).to.have.property('paymentStatus'); pm.expect(data.field).to.have.all.keys('fieldId', 'fieldName', 'fieldType', 'location'); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

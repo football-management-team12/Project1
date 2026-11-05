@@ -300,6 +300,9 @@ export default function BookingDetail() {
                   {booking.FieldName ||
                     `Sân ${booking.FieldID}`}
                 </h1>
+                <button type="button" className="ui-button" onClick={() => navigate(`/bookings/${booking.BookingID}/invoice`)}>
+                  Xem hóa đơn
+                </button>
 
                 <span>
                   {booking.FieldType || "Sân bóng"}
