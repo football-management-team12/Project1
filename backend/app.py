@@ -22,6 +22,7 @@ from routes.customer_booking import customer_booking_bp
 from routes.user import get_my_profile, user_bp
 from routes.payment import payment_bp
 from routes.uc09 import uc09_bp
+from routes.invoice import invoice_bp
 from routes.cancellation import cancellation_bp
 
 # UC15 - Quản lý sân bóng
@@ -29,6 +30,7 @@ from routes.field_management import field_management_bp
 
 
 app = Flask(__name__)
+app.register_blueprint(invoice_bp, url_prefix="/api")
 
 # Multiple comma-separated frontend origins are supported for staging.
 frontend_origins = [

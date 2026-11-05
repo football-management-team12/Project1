@@ -5,6 +5,7 @@ import {
 
 import Home
   from "../pages/Home/Home";
+import InvoiceDetail from "../pages/InvoiceDetail/InvoiceDetail";
 
 import Login
   from "../pages/Login/Login";
@@ -57,6 +58,11 @@ function AppRoutes() {
   return (
 
     <Routes>
+      {["/invoices/:invoiceId", "/bookings/:bookingId/invoice"].map((path) => (
+        <Route key={path} path={path} element={
+          <ProtectedRoute allowedRoles={["CUSTOMER", "ADMIN"]}><InvoiceDetail /></ProtectedRoute>
+        } />
+      ))}
 
 
       {/* =====================================================
@@ -244,6 +250,14 @@ function AppRoutes() {
             <BookingManagement />
           }
         />
+
+        {["bookings/:bookingId/invoice", "invoices/:invoiceId"].map((path) => (
+          <Route key={path} path={path} element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <InvoiceDetail adminView />
+            </ProtectedRoute>
+          } />
+        ))}
 
       </Route>
 

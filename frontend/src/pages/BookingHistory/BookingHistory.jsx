@@ -890,6 +890,9 @@ function BookingHistory() {
                               Hủy đơn
                             </button>
                           )}
+                          <button type="button" className="ui-button" onClick={() => navigate(`/bookings/${booking.BookingID}/invoice`)}>
+                            Xem hóa đơn
+                          </button>
 
 
                           <button

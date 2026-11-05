@@ -10,6 +10,348 @@ servers:
 
 paths:
 
+  /api/invoices/{invoiceId}:
+    get:
+      tags:
+      - UC08 - Invoice View
+      operationId: getInvoiceById
+      summary: View issued invoice by ID
+      description: Requires an existing Invoices row. A booking ID or provisional invoice cannot be looked up as an invoice ID. Missing invoice returns 404. Valid Bearer JWT and an ACTIVE SQL Server account are required. CUSTOMER may view only their own booking; ADMIN may view any booking. Total is Bookings.TotalAmount, never the current field price. Paid amount sums SUCCESS DEPOSIT and FINAL_PAYMENT records; remaining = total - paid. UNPAID means zero paid, PARTIALLY_PAID means a positive balance, PAID means zero remaining. UC07 refunds are reported separately from receipts. Archived fields remain visible. GET performs no writes and never issues an invoice. canConfirm is always false; use UC09 for settlement eligibility and cash confirmation.
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: invoiceId
+        in: path
+        required: true
+        description: Existing invoice ID
+        schema:
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: Invoice details and actual payment amounts in VND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Invoice'
+              examples:
+                unpaid:
+                  summary: Unpaid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: CONFIRMED
+                    totalAmount: 500000
+                    depositAmount: 0
+                    paidAmount: 0
+                    remainingAmount: 500000
+                    status: UNPAID
+                    paymentMethod: NOT_RECORDED
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: UNPAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+                partiallyPaid:
+                  summary: Partially paid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: CONFIRMED
+                    totalAmount: 500000
+                    depositAmount: 150000
+                    paidAmount: 150000
+                    remainingAmount: 350000
+                    status: PARTIALLY_PAID
+                    paymentMethod: NOT_RECORDED
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: PARTIALLY_PAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+                paid:
+                  summary: Fully paid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: COMPLETED
+                    totalAmount: 500000
+                    depositAmount: 150000
+                    paidAmount: 500000
+                    remainingAmount: 0
+                    status: PAID
+                    paymentMethod: CASH
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: PAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+        '401':
+          description: Missing, invalid or expired JWT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Missing access token
+        '403':
+          description: Unsupported role, inactive account or invoice belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice access forbidden
+                code: FORBIDDEN
+        '404':
+          description: Invoice or booking not found; or no issued invoice and no successful deposit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice or booking not found
+                code: INVOICE_NOT_FOUND
+        '409':
+          description: Invoice/booking totals or paid amounts are inconsistent, or payment data is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice total does not match booking
+                code: INVOICE_MISMATCH
+        '500':
+          description: SQL Server unavailable or unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Database unavailable
+                code: DB_UNAVAILABLE
+  /api/bookings/{bookingId}/invoice:
+    get:
+      tags:
+      - UC08 - Invoice View
+      operationId: getBookingInvoice
+      summary: View booking invoice or provisional invoice
+      description: 'Without an Invoices row, a positive SUCCESS deposit returns a provisional view: invoiceId=null, isProvisional=true, createdDate=null. Without an issued invoice or successful deposit, returns 404. An issued invoice has isProvisional=false. Valid Bearer JWT and an ACTIVE SQL Server account are required. CUSTOMER may view only their own booking; ADMIN may view any booking. Total is Bookings.TotalAmount, never the current field price. Paid amount sums SUCCESS DEPOSIT and FINAL_PAYMENT records; remaining = total - paid. UNPAID means zero paid, PARTIALLY_PAID means a positive balance, PAID means zero remaining. UC07 refunds are reported separately from receipts. Archived fields remain visible. GET performs no writes and never issues an invoice. canConfirm is always false; use UC09 for settlement eligibility and cash confirmation.'
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: bookingId
+        in: path
+        required: true
+        description: Booking ID
+        schema:
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: Invoice details and actual payment amounts in VND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Invoice'
+              examples:
+                provisional:
+                  summary: Provisional invoice after successful deposit
+                  value:
+                    bookingId: 7021
+                    invoiceId: null
+                    isProvisional: true
+                    bookingStatus: CONFIRMED
+                    totalAmount: 500000
+                    depositAmount: 150000
+                    paidAmount: 150000
+                    remainingAmount: 350000
+                    status: PARTIALLY_PAID
+                    paymentMethod: NOT_RECORDED
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: null
+                    refundedAmount: 0
+                    paymentStatus: PARTIALLY_PAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+                unpaid:
+                  summary: Unpaid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: CONFIRMED
+                    totalAmount: 500000
+                    depositAmount: 0
+                    paidAmount: 0
+                    remainingAmount: 500000
+                    status: UNPAID
+                    paymentMethod: NOT_RECORDED
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: UNPAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+                partiallyPaid:
+                  summary: Partially paid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: CONFIRMED
+                    totalAmount: 500000
+                    depositAmount: 150000
+                    paidAmount: 150000
+                    remainingAmount: 350000
+                    status: PARTIALLY_PAID
+                    paymentMethod: NOT_RECORDED
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: PARTIALLY_PAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+                paid:
+                  summary: Fully paid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: COMPLETED
+                    totalAmount: 500000
+                    depositAmount: 150000
+                    paidAmount: 500000
+                    remainingAmount: 0
+                    status: PAID
+                    paymentMethod: CASH
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: PAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+        '401':
+          description: Missing, invalid or expired JWT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Missing access token
+        '403':
+          description: Unsupported role, inactive account or invoice belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice access forbidden
+                code: FORBIDDEN
+        '404':
+          description: Invoice or booking not found; or no issued invoice and no successful deposit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice or booking not found
+                code: INVOICE_NOT_FOUND
+        '409':
+          description: Invoice/booking totals or paid amounts are inconsistent, or payment data is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice total does not match booking
+                code: INVOICE_MISMATCH
+        '500':
+          description: SQL Server unavailable or unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Database unavailable
+                code: DB_UNAVAILABLE
+
   # =========================================================
   # UC15 - ADMIN FIELD MANAGEMENT
   # =========================================================
@@ -1258,6 +1600,154 @@ components:
       bearerFormat: JWT
 
   schemas:
+    UC08Invoice:
+      type: object
+      required:
+      - invoiceId
+      - isProvisional
+      - bookingId
+      - bookingStatus
+      - fieldId
+      - fieldName
+      - fieldType
+      - location
+      - bookingDate
+      - startTime
+      - endTime
+      - createdDate
+      - totalAmount
+      - depositAmount
+      - paidAmount
+      - remainingAmount
+      - refundedAmount
+      - status
+      - paymentMethod
+      - canConfirm
+      - paymentStatus
+      - field
+      properties:
+        invoiceId:
+          type: integer
+          nullable: true
+          description: Issued invoice ID; null for a provisional invoice.
+        isProvisional:
+          type: boolean
+          description: True when there is no Invoices row but a positive successful deposit exists. GET never inserts a row.
+        bookingId:
+          type: integer
+        bookingStatus:
+          type: string
+          description: Booking status stored in SQL Server.
+        fieldId:
+          type: integer
+          description: Compatibility alias of field.fieldId. Use the nested field object for UC08.
+        fieldName:
+          type: string
+          nullable: true
+          description: Compatibility alias of field.fieldName. Use the nested field object for UC08.
+        fieldType:
+          type: string
+          nullable: true
+          description: Compatibility alias of field.fieldType. Use the nested field object for UC08.
+        location:
+          type: string
+          nullable: true
+          description: Compatibility alias of field.location. Use the nested field object for UC08.
+        bookingDate:
+          type: string
+          format: date
+        startTime:
+          type: string
+          example: '18:00'
+        endTime:
+          type: string
+          example: '19:00'
+        createdDate:
+          type: string
+          nullable: true
+          description: SQL Server invoice creation timestamp as serialized by the API; null for provisional invoices or missing source date.
+          example: '2026-11-06 10:00:00'
+        totalAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Stored booking total in VND.
+        depositAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Total successful deposits in VND.
+        paidAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Total successful DEPOSIT and FINAL_PAYMENT receipts in VND.
+        remainingAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Total minus paid amount in VND.
+        refundedAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: UC07 deposit refund in VND, reported separately from original receipts.
+        status:
+          type: string
+          enum:
+          - UNPAID
+          - PARTIALLY_PAID
+          - PAID
+          description: Compatibility alias of paymentStatus used by UC09; use paymentStatus for UC08.
+        paymentMethod:
+          type: string
+          enum:
+          - CASH
+          - NOT_RECORDED
+          description: CASH when a successful FINAL_PAYMENT exists; otherwise NOT_RECORDED, even after a deposit.
+        canConfirm:
+          type: boolean
+          enum:
+          - false
+          description: Always false in UC08; use UC09 for cash confirmation and eligibility.
+        paymentStatus:
+          type: string
+          enum:
+          - UNPAID
+          - PARTIALLY_PAID
+          - PAID
+          description: Canonical UC08 payment status required by T123-63.
+        field:
+          type: object
+          required:
+          - fieldId
+          - fieldName
+          - fieldType
+          - location
+          properties:
+            fieldId:
+              type: integer
+            fieldName:
+              type: string
+              nullable: true
+            fieldType:
+              type: string
+              nullable: true
+            location:
+              type: string
+              nullable: true
+    UC08Error:
+      type: object
+      required:
+      - message
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+          description: Optional business error code. JWT/role decorator errors and generic server errors may contain message only.
+          example: INVOICE_NOT_FOUND
+
     UserProfile:
       type: object
       properties:

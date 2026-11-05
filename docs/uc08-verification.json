@@ -1,0 +1,889 @@
+{
+  "checkedAt": "2026-11-05T18:37:59.812235+00:00",
+  "mode": "Real SQL Server with Flask test client; SELECT only",
+  "fixtures": [
+    {
+      "bookingId": 5010,
+      "invoiceId": null,
+      "archivedField": false,
+      "sqlTotal": 300000.0,
+      "sqlPaid": 100000.0,
+      "sqlRemaining": 200000.0,
+      "response": {
+        "bookingId": 5010,
+        "invoiceId": null,
+        "bookingStatus": "CONFIRMED",
+        "totalAmount": 300000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 100000.0,
+        "remainingAmount": 200000.0,
+        "status": "PARTIALLY_PAID",
+        "paymentMethod": "NOT_RECORDED",
+        "canConfirm": false,
+        "isProvisional": true,
+        "paymentStatus": "PARTIALLY_PAID",
+        "field": {
+          "fieldId": 1007,
+          "fieldName": "Sân 2",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1007,
+        "fieldName": "Sân 2",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-10-24",
+        "startTime": "06:00",
+        "endTime": "16:00",
+        "createdDate": null,
+        "refundedAmount": 0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 5011,
+      "invoiceId": null,
+      "archivedField": false,
+      "sqlTotal": 400000.0,
+      "sqlPaid": 100000.0,
+      "sqlRemaining": 300000.0,
+      "response": {
+        "bookingId": 5011,
+        "invoiceId": null,
+        "bookingStatus": "CONFIRMED",
+        "totalAmount": 400000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 100000.0,
+        "remainingAmount": 300000.0,
+        "status": "PARTIALLY_PAID",
+        "paymentMethod": "NOT_RECORDED",
+        "canConfirm": false,
+        "isProvisional": true,
+        "paymentStatus": "PARTIALLY_PAID",
+        "field": {
+          "fieldId": 1007,
+          "fieldName": "Sân 2",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1007,
+        "fieldName": "Sân 2",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-10-24",
+        "startTime": "16:00",
+        "endTime": "18:00",
+        "createdDate": null,
+        "refundedAmount": 0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 5012,
+      "invoiceId": null,
+      "archivedField": false,
+      "sqlTotal": 300000.0,
+      "sqlPaid": 100000.0,
+      "sqlRemaining": 200000.0,
+      "response": {
+        "bookingId": 5012,
+        "invoiceId": null,
+        "bookingStatus": "CONFIRMED",
+        "totalAmount": 300000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 100000.0,
+        "remainingAmount": 200000.0,
+        "status": "PARTIALLY_PAID",
+        "paymentMethod": "NOT_RECORDED",
+        "canConfirm": false,
+        "isProvisional": true,
+        "paymentStatus": "PARTIALLY_PAID",
+        "field": {
+          "fieldId": 1007,
+          "fieldName": "Sân 2",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1007,
+        "fieldName": "Sân 2",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-10-25",
+        "startTime": "06:00",
+        "endTime": "16:00",
+        "createdDate": null,
+        "refundedAmount": 0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 5013,
+      "invoiceId": null,
+      "archivedField": false,
+      "sqlTotal": 350000.0,
+      "sqlPaid": 100000.0,
+      "sqlRemaining": 250000.0,
+      "response": {
+        "bookingId": 5013,
+        "invoiceId": null,
+        "bookingStatus": "CONFIRMED",
+        "totalAmount": 350000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 100000.0,
+        "remainingAmount": 250000.0,
+        "status": "PARTIALLY_PAID",
+        "paymentMethod": "NOT_RECORDED",
+        "canConfirm": false,
+        "isProvisional": true,
+        "paymentStatus": "PARTIALLY_PAID",
+        "field": {
+          "fieldId": 1006,
+          "fieldName": "Sân 1",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1006,
+        "fieldName": "Sân 1",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-10-27",
+        "startTime": "16:00",
+        "endTime": "18:00",
+        "createdDate": null,
+        "refundedAmount": 0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 5016,
+      "invoiceId": null,
+      "archivedField": false,
+      "sqlTotal": 400000.0,
+      "sqlPaid": 100000.0,
+      "sqlRemaining": 300000.0,
+      "response": {
+        "bookingId": 5016,
+        "invoiceId": null,
+        "bookingStatus": "CONFIRMED",
+        "totalAmount": 400000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 100000.0,
+        "remainingAmount": 300000.0,
+        "status": "PARTIALLY_PAID",
+        "paymentMethod": "NOT_RECORDED",
+        "canConfirm": false,
+        "isProvisional": true,
+        "paymentStatus": "PARTIALLY_PAID",
+        "field": {
+          "fieldId": 1007,
+          "fieldName": "Sân 2",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1007,
+        "fieldName": "Sân 2",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-10-25",
+        "startTime": "16:00",
+        "endTime": "18:00",
+        "createdDate": null,
+        "refundedAmount": 0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 5017,
+      "invoiceId": 3,
+      "archivedField": false,
+      "sqlTotal": 500000.0,
+      "sqlPaid": 500000.0,
+      "sqlRemaining": 0.0,
+      "response": {
+        "bookingId": 5017,
+        "invoiceId": 3,
+        "bookingStatus": "COMPLETED",
+        "totalAmount": 500000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 500000.0,
+        "remainingAmount": 0.0,
+        "status": "PAID",
+        "paymentMethod": "CASH",
+        "canConfirm": false,
+        "isProvisional": false,
+        "paymentStatus": "PAID",
+        "field": {
+          "fieldId": 1007,
+          "fieldName": "Sân 2",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1007,
+        "fieldName": "Sân 2",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-10-24",
+        "startTime": "18:00",
+        "endTime": "22:00",
+        "createdDate": "2026-10-25 16:51:23.370000",
+        "refundedAmount": 0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 5022,
+      "invoiceId": 2,
+      "archivedField": false,
+      "sqlTotal": 500000.0,
+      "sqlPaid": 500000.0,
+      "sqlRemaining": 0.0,
+      "response": {
+        "bookingId": 5022,
+        "invoiceId": 2,
+        "bookingStatus": "COMPLETED",
+        "totalAmount": 500000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 500000.0,
+        "remainingAmount": 0.0,
+        "status": "PAID",
+        "paymentMethod": "CASH",
+        "canConfirm": false,
+        "isProvisional": false,
+        "paymentStatus": "PAID",
+        "field": {
+          "fieldId": 1007,
+          "fieldName": "Sân 2",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1007,
+        "fieldName": "Sân 2",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-10-25",
+        "startTime": "18:00",
+        "endTime": "22:00",
+        "createdDate": "2026-10-25 09:14:45.987000",
+        "refundedAmount": 0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 6020,
+      "invoiceId": null,
+      "archivedField": false,
+      "sqlTotal": 350000.0,
+      "sqlPaid": 100000.0,
+      "sqlRemaining": 250000.0,
+      "response": {
+        "bookingId": 6020,
+        "invoiceId": null,
+        "bookingStatus": "CANCELLED",
+        "totalAmount": 350000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 100000.0,
+        "remainingAmount": 250000.0,
+        "status": "PARTIALLY_PAID",
+        "paymentMethod": "NOT_RECORDED",
+        "canConfirm": false,
+        "isProvisional": true,
+        "paymentStatus": "PARTIALLY_PAID",
+        "field": {
+          "fieldId": 1006,
+          "fieldName": "Sân 1",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1006,
+        "fieldName": "Sân 1",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-11-13",
+        "startTime": "06:00",
+        "endTime": "16:00",
+        "createdDate": null,
+        "refundedAmount": 100000.0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 6021,
+      "invoiceId": null,
+      "archivedField": false,
+      "sqlTotal": 350000.0,
+      "sqlPaid": 100000.0,
+      "sqlRemaining": 250000.0,
+      "response": {
+        "bookingId": 6021,
+        "invoiceId": null,
+        "bookingStatus": "CANCELLED",
+        "totalAmount": 350000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 100000.0,
+        "remainingAmount": 250000.0,
+        "status": "PARTIALLY_PAID",
+        "paymentMethod": "NOT_RECORDED",
+        "canConfirm": false,
+        "isProvisional": true,
+        "paymentStatus": "PARTIALLY_PAID",
+        "field": {
+          "fieldId": 1006,
+          "fieldName": "Sân 1",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1006,
+        "fieldName": "Sân 1",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-11-02",
+        "startTime": "06:00",
+        "endTime": "16:00",
+        "createdDate": null,
+        "refundedAmount": 100000.0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 6023,
+      "invoiceId": 1002,
+      "archivedField": false,
+      "sqlTotal": 350000.0,
+      "sqlPaid": 350000.0,
+      "sqlRemaining": 0.0,
+      "response": {
+        "bookingId": 6023,
+        "invoiceId": 1002,
+        "bookingStatus": "COMPLETED",
+        "totalAmount": 350000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 350000.0,
+        "remainingAmount": 0.0,
+        "status": "PAID",
+        "paymentMethod": "CASH",
+        "canConfirm": false,
+        "isProvisional": false,
+        "paymentStatus": "PAID",
+        "field": {
+          "fieldId": 1006,
+          "fieldName": "Sân 1",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1006,
+        "fieldName": "Sân 1",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-11-01",
+        "startTime": "06:00",
+        "endTime": "16:00",
+        "createdDate": "2026-11-01 09:12:22.560000",
+        "refundedAmount": 0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 6024,
+      "invoiceId": null,
+      "archivedField": false,
+      "sqlTotal": 350000.0,
+      "sqlPaid": 100000.0,
+      "sqlRemaining": 250000.0,
+      "response": {
+        "bookingId": 6024,
+        "invoiceId": null,
+        "bookingStatus": "CANCELLED",
+        "totalAmount": 350000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 100000.0,
+        "remainingAmount": 250000.0,
+        "status": "PARTIALLY_PAID",
+        "paymentMethod": "NOT_RECORDED",
+        "canConfirm": false,
+        "isProvisional": true,
+        "paymentStatus": "PARTIALLY_PAID",
+        "field": {
+          "fieldId": 1006,
+          "fieldName": "Sân 1",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1006,
+        "fieldName": "Sân 1",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-11-01",
+        "startTime": "16:00",
+        "endTime": "18:00",
+        "createdDate": null,
+        "refundedAmount": 100000.0
+      },
+      "result": "PASS"
+    },
+    {
+      "bookingId": 7021,
+      "invoiceId": 2002,
+      "archivedField": false,
+      "sqlTotal": 350000.0,
+      "sqlPaid": 350000.0,
+      "sqlRemaining": 0.0,
+      "response": {
+        "bookingId": 7021,
+        "invoiceId": 2002,
+        "bookingStatus": "COMPLETED",
+        "totalAmount": 350000.0,
+        "depositAmount": 100000.0,
+        "paidAmount": 350000.0,
+        "remainingAmount": 0.0,
+        "status": "PAID",
+        "paymentMethod": "CASH",
+        "canConfirm": false,
+        "isProvisional": false,
+        "paymentStatus": "PAID",
+        "field": {
+          "fieldId": 1006,
+          "fieldName": "Sân 1",
+          "fieldType": "7 player",
+          "location": "Hà Nội"
+        },
+        "fieldId": 1006,
+        "fieldName": "Sân 1",
+        "fieldType": "7 player",
+        "location": "Hà Nội",
+        "bookingDate": "2026-11-09",
+        "startTime": "16:00",
+        "endTime": "18:00",
+        "createdDate": "2026-11-05 18:33:25.697000",
+        "refundedAmount": 0
+      },
+      "result": "PASS"
+    }
+  ],
+  "httpChecks": [
+    {
+      "path": "/api/bookings/5010/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5010/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5010/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5010/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5010/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/5011/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5011/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5011/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5011/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5011/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/5012/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5012/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5012/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5012/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5012/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/5013/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5013/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5013/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5013/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5013/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/5016/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5016/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5016/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5016/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5016/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/5017/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5017/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5017/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5017/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5017/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/invoices/3",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/invoices/3",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/invoices/3",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/invoices/3",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/invoices/3",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/5022/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5022/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5022/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/5022/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/5022/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/invoices/2",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/invoices/2",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/invoices/2",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/invoices/2",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/invoices/2",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/6020/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/6020/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/6020/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/6020/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/6020/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/6021/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/6021/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/6021/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/6021/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/6021/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/6023/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/6023/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/6023/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/6023/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/6023/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/invoices/1002",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/invoices/1002",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/invoices/1002",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/invoices/1002",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/invoices/1002",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/6024/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/6024/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/6024/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/6024/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/6024/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/bookings/7021/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/7021/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/7021/invoice",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/bookings/7021/invoice",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/bookings/7021/invoice",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/invoices/2002",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/invoices/2002",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/invoices/2002",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "path": "/api/invoices/2002",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "path": "/api/invoices/2002",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "path": "/api/invoices/2003",
+      "expected": 404,
+      "actual": 404
+    },
+    {
+      "path": "/api/bookings/7022/invoice",
+      "expected": 404,
+      "actual": 404
+    },
+    {
+      "path": "/api/bookings/2/invoice",
+      "expected": 404,
+      "actual": 404
+    }
+  ],
+  "missingIssuedStates": [
+    "PARTIALLY_PAID",
+    "UNPAID"
+  ],
+  "states": {
+    "UNPAID": 0,
+    "PARTIALLY_PAID": 8,
+    "PAID": 4
+  },
+  "conflicts": 0
+}
