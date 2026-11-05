@@ -77,3 +77,17 @@ jobs:
       - name: Stop backend
         if: always()
         run: docker compose down
+
+  deploy-backend:
+    name: CD backend after CI succeeds
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+    needs: [frontend, backend, docker, api-test]
+    uses: ./.github/workflows/deploy-backend.yml
+    secrets: inherit
+
+  sync-frontend:
+    name: CD frontend after CI succeeds
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+    needs: [frontend, backend, docker, api-test]
+    uses: ./.github/workflows/sync-frontend.yml
+    secrets: inherit
