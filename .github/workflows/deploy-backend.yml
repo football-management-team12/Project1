@@ -1,10 +1,7 @@
 name: Deploy Backend
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
-    branches: [develop]
+  workflow_call:
 
 permissions:
   contents: read
@@ -16,23 +13,19 @@ concurrency:
 jobs:
   deploy:
     name: Deploy tested backend revision to VPS
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'develop' &&
-      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Deploy through SSH
         uses: appleboy/ssh-action@v1
         env:
-          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+          DEPLOY_SHA: ${{ github.sha }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
-          envs: DEPLOY_SHA
+          envs: DEPLOY_SHA,DEPLOY_BRANCH
           command_timeout: 15m
           script: |
             set -eu
@@ -57,10 +50,20 @@ jobs:
               previous_image=$(docker inspect --format='{{.Image}}' backend)
             fi
 
-            git fetch origin develop
+            case "$DEPLOY_BRANCH" in
+              develop|main) ;;
+              *) echo "Unexpected deployment branch: $DEPLOY_BRANCH"; exit 1 ;;
+            esac
+
+            git fetch origin "$DEPLOY_BRANCH"
+            latest_sha=$(git rev-parse "origin/$DEPLOY_BRANCH")
+            if [ "$latest_sha" != "$DEPLOY_SHA" ]; then
+              echo "Skipping stale deployment because $DEPLOY_BRANCH has advanced."
+              exit 0
+            fi
             git cat-file -e "$DEPLOY_SHA^{commit}"
             # Forced checkout may remove the previously tracked .env.
-            git checkout -f -B develop "$DEPLOY_SHA"
+            git checkout -f -B "$DEPLOY_BRANCH" "$DEPLOY_SHA"
             install -m 600 /root/project1-config/.env .env
 
             # Fail early if deployment secrets/configuration were not provided.
