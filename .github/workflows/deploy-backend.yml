@@ -1,0 +1,107 @@
+name: Deploy Backend
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-backend-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy tested backend revision to VPS
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      (github.event.workflow_run.head_branch == 'develop' || github.event.workflow_run.head_branch == 'main') &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy through SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+          DEPLOY_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          envs: DEPLOY_SHA,DEPLOY_BRANCH
+          command_timeout: 15m
+          script: |
+            set -eu
+            cd /root/Project1
+
+            # Never let checkout delete the VPS's existing .env.
+            [ -f .env ] || { echo "Missing VPS .env; deployment stopped."; exit 1; }
+            mkdir -p /root/project1-config
+            chmod 700 /root/project1-config
+            install -m 600 .env /root/project1-config/.env
+
+            # Refuse to overwrite unrelated local modifications.
+            git diff --quiet -- . ':(exclude).env' || {
+              echo "Tracked files modified on VPS; deployment stopped."; exit 1;
+            }
+            git diff --cached --quiet -- . ':(exclude).env' || {
+              echo "Staged changes exist on VPS; deployment stopped."; exit 1;
+            }
+
+            previous_image=""
+            if docker inspect backend >/dev/null 2>&1; then
+              previous_image=$(docker inspect --format='{{.Image}}' backend)
+            fi
+
+            case "$DEPLOY_BRANCH" in
+              develop|main) ;;
+              *) echo "Unexpected branch"; exit 1 ;;
+            esac
+            git fetch origin "$DEPLOY_BRANCH"
+            # Prevent delayed CI/CD runs from reverting a newer deployment.
+            latest_sha=$(git rev-parse "origin/$DEPLOY_BRANCH")
+            if [ "$latest_sha" != "$DEPLOY_SHA" ]; then
+              echo "Skipping stale deployment: branch advanced since CI."
+              exit 0
+            fi
+            git cat-file -e "$DEPLOY_SHA^{commit}"
+            # Forced checkout may remove the previously tracked .env.
+            git checkout -f -B "$DEPLOY_BRANCH" "$DEPLOY_SHA"
+            install -m 600 /root/project1-config/.env .env
+
+            # Fail early if deployment secrets/configuration were not provided.
+            docker compose config --quiet
+            docker compose build backend
+
+            rollback() {
+              if [ -n "$previous_image" ]; then
+                echo "Restoring previous backend image..."
+                docker image tag "$previous_image" football-booking-backend:staging
+                docker compose up -d --no-deps --force-recreate backend || true
+              else
+                echo "No previous backend container image available for rollback."
+              fi
+            }
+
+            if ! docker compose up -d --no-deps --force-recreate backend; then
+              rollback
+              exit 1
+            fi
+
+            for i in $(seq 1 18); do
+              if curl --fail --silent --max-time 5 http://127.0.0.1:5000/ready >/dev/null; then
+                echo "Backend deployment and database readiness succeeded."
+                exit 0
+              fi
+              sleep 5
+            done
+
+            echo "Backend readiness failed; rolling back."
+            docker compose logs --tail=50 backend
+            rollback
+            exit 1

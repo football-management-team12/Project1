@@ -1,0 +1,111 @@
+name: Sync Frontend to Vercel Fork
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-frontend-to-vercel
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.head_branch == 'develop' || github.event.workflow_run.head_branch == 'main')
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tested source code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          path: source
+          persist-credentials: false
+
+      - name: Skip outdated CI revisions
+        id: latest
+        shell: bash
+        env:
+          SOURCE_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          git -C source fetch origin "$SOURCE_BRANCH"
+          latest_sha=$(git -C source rev-parse "origin/$SOURCE_BRANCH")
+          if [ "$latest_sha" != "$SOURCE_SHA" ]; then
+            echo "Outdated CI run; skip frontend sync."
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout Vercel fork
+        if: steps.latest.outputs.current == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: Thfnh/Deploy
+          ref: main
+          token: ${{ secrets.FRONTEND_SYNC_TOKEN }}
+          path: fork
+          persist-credentials: true
+
+      - name: Validate frontend directory
+        if: steps.latest.outputs.current == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "source/frontend/package.json" ]; then
+            echo "ERROR: source/frontend/package.json not found."
+            exit 1
+          fi
+
+          if [ ! -d "fork/frontend" ]; then
+            echo "ERROR: fork/frontend does not exist."
+            exit 1
+          fi
+
+      - name: Sync frontend files only
+        if: steps.latest.outputs.current == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rsync -av --delete \
+            --exclude='node_modules/' \
+            --exclude='dist/' \
+            --exclude='build/' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='.vercel/' \
+            source/frontend/ fork/frontend/
+
+      - name: Commit and push if changed
+        if: steps.latest.outputs.current == 'true'
+        working-directory: fork
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A -- frontend
+
+          if git diff --cached --quiet -- frontend; then
+            echo "Frontend is already up to date."
+            exit 0
+          fi
+
+          git commit -m "chore: sync frontend from Project1 ${{ github.event.workflow_run.head_branch }}"
+
+          git push origin HEAD:main
