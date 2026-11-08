@@ -115,9 +115,11 @@ def login():
         is_valid_email = re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", account)
         is_valid_username = re.fullmatch(r"[A-Za-z0-9_]{4,30}", account)
         is_valid_phone = re.fullmatch(r"0\d{9}", account)
-        if not (is_valid_email or is_valid_username or is_valid_phone):
+        if account_field == "email" and not is_valid_email:
+            errors["email"] = ["Email không đúng định dạng, vui lòng nhập lại"]
+        elif not (is_valid_email or is_valid_username or is_valid_phone):
             if "@" in account or "." in account:
-                errors["email"] = ["Email không đúng định dạng"]
+                errors["email"] = ["Email không đúng định dạng, vui lòng nhập lại"]
             else:
                 errors["account"] = ["Tài khoản không đúng định dạng"]
 
@@ -127,7 +129,7 @@ def login():
                 False,
 
             "message":
-                "Vui lòng kiểm tra thông tin đăng nhập",
+                errors.get("email", ["Vui lòng kiểm tra thông tin đăng nhập"])[0],
 
             "errors":
                 errors,

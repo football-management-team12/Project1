@@ -801,7 +801,7 @@ paths:
                     type: object
                     properties:
                       account: { type: array, items: { type: string }, example: ["Vui lòng nhập tên đăng nhập, email hoặc số điện thoại"] }
-                      email: { type: array, items: { type: string }, example: ["Email không đúng định dạng"] }
+                      email: { type: array, items: { type: string }, example: ["Email không đúng định dạng, vui lòng nhập lại"] }
                       password: { type: array, items: { type: string }, example: ["Vui lòng nhập mật khẩu"] }
 
   # ------------------------------------
