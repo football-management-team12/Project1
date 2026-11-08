@@ -134,13 +134,6 @@ button:disabled, [aria-disabled="true"] { cursor: not-allowed; opacity: .55; box
   .admin-container .top-header { margin: -24px -20px 24px; padding: 16px 20px; }
 }
 @media (max-width: 700px) {
-  .navbar { height: auto; padding: 12px 0 0; }
-  .navbar .navbar-container { flex-wrap: wrap; gap: 12px; padding: 0 16px; }
-  .navbar .navbar-menu { display: flex; order: 3; width: 100%; overflow-x: auto; gap: 20px; }
-  .navbar .navbar-link { flex-shrink: 0; padding: 12px 0; }
-  .navbar .navbar-user-area { gap: 4px; }
-  .navbar .navbar-user-name { max-width: 90px; }
-  .navbar .navbar-brand { font-size: 14px; }
   .booking-detail-page .booking-detail-grid { grid-template-columns: 1fr; gap: 16px; }
   .booking-detail-page > .booking-detail-header { flex-wrap: wrap; gap: 16px; }
   .booking-history-card-bottom > div { flex: 1 1 120px; }
