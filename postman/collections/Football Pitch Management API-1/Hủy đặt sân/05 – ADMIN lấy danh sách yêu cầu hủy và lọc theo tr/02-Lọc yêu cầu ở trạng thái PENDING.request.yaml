@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/cancellation-requests?status=PENDING_REVIEW"
+method: GET
+queryParams:
+  status: PENDING_REVIEW
+order: 2000

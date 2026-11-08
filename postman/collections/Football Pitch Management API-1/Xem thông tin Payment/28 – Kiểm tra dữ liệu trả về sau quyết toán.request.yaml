@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/bookings/32/confirm-final-payment"
+method: POST
+body:
+  type: json
+  content: ""
+order: 10000

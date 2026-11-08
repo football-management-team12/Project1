@@ -1,0 +1,4 @@
+$kind: collection
+name: 01 – Customer gửi yêu cầu hủy thành công đối với Booking chưa có giao dịch
+  đặt cọc SUCCESS
+order: 1000

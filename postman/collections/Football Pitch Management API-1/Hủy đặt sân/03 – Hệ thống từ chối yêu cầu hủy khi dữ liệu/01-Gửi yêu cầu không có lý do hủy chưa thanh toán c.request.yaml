@@ -1,0 +1,5 @@
+$kind: http-request
+name: 01-Gửi yêu cầu không có lý do hủy chưa thanh toán cọc
+url: "{{baseUrl}}/api/bookings/26/cancellation-requests"
+method: POST
+order: 1000

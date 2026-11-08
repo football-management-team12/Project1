@@ -1,0 +1,8 @@
+$kind: http-request
+name: 19 – Kiểm tra tính đúng đắn của số tiền còn lại
+url: "{{baseUrl}}/api/admin/bookings/34/confirm-final-payment"
+method: POST
+body:
+  type: json
+  content: '{"amount":99999} '
+order: 16000

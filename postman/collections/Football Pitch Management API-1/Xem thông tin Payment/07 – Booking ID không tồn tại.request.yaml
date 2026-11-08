@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/99999/settlement"
+method: GET
+order: 7000

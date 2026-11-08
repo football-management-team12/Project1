@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/21/cancellation"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "// Kiểm tra Status Code 200 OK\r
+
+      pm.test(\"Status code is 200 OK\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      // Kiểm tra chi tiết yêu cầu hủy trả về đúng lý do\r
+
+      pm.test(\"Verify Cancellation Request details\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    var requestData = Array.isArray(jsonData) ? jsonData[0] : jsonData;\r
+
+      \r
+
+      \    pm.expect(requestData.bookingId.toString()).to.eql(\"701\");\r
+
+      \    pm.expect(requestData.reason).to.eql(\"Tôi muốn thay đổi lịch đặt sân\");\r
+
+      });\r\n"
+    language: text/javascript
+order: 2000
