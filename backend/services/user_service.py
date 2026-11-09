@@ -335,7 +335,7 @@ def update_user_profile(
     ):
 
         raise ProfileError(
-            "Email không đúng định dạng",
+            "Email không đúng định dạng, vui lòng nhập lại",
             400
         )
 

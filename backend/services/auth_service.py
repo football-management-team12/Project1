@@ -58,7 +58,7 @@ def register_customer(full_name, username, email, phone, password):
     if not re.fullmatch(r"[A-Za-z0-9_]{4,30}", username):
         raise AuthenticationError("Tên đăng nhập phải gồm 4-30 ký tự chữ, số hoặc dấu gạch dưới", 400)
     if len(parseaddr(email)[1]) != len(email) or not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
-        raise AuthenticationError("Email không đúng định dạng", 400)
+        raise AuthenticationError("Email không đúng định dạng, vui lòng nhập lại", 400)
     if not re.fullmatch(r"0\d{9}", phone):
         raise AuthenticationError("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0", 400)
     if len(password) < 8 or len(password.encode("utf-8")) > 72:
