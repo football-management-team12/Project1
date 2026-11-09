@@ -1422,7 +1422,11 @@ paths:
         '200':
           description: Tệp biên lai, Content-Disposition attachment, không cache
           content:
-            application/octet-stream:
+            image/png:
+              schema: { type: string, format: binary }
+            image/jpeg:
+              schema: { type: string, format: binary }
+            application/pdf:
               schema: { type: string, format: binary }
         '401': { description: Thiếu hoặc sai JWT }
         '403': { description: Role không được phép hoặc tài khoản inactive }

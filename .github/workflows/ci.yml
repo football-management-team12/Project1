@@ -21,6 +21,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
         working-directory: frontend
+      - name: Verify refund evidence downloads
+        run: node tests/refund_evidence_download_check.mjs
       - run: npm run build
         working-directory: frontend
 

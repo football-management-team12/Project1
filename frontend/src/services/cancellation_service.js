@@ -86,9 +86,12 @@ export const downloadRefundEvidence = async (bookingId) => {
   });
   if (!response.ok) throw new Error("Không tải được biên lai hoàn cọc");
   const blob = await response.blob();
+  const extension = { "image/png": "png", "image/jpeg": "jpg", "application/pdf": "pdf" }[blob.type.split(";")[0].trim().toLowerCase()];
+  if (!blob.size || !extension) {
+    throw new Error("Phản hồi không chứa biên lai PNG, JPEG hoặc PDF hợp lệ. Vui lòng thử lại hoặc liên hệ quản trị viên.");
+  }
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  const extension = { "image/png": "png", "image/jpeg": "jpg", "application/pdf": "pdf" }[blob.type] || "bin";
   link.href = url;
   link.download = `bien-lai-hoan-coc-${bookingId}.${extension}`;
   link.click();
