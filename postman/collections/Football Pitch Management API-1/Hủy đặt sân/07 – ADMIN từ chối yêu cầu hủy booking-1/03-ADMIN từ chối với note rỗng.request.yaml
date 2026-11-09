@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/cancellation-requests/:request_id/decision"
+method: POST
+pathVariables:
+  - key: request_id
+    value: "7"
+    description: ""
+body:
+  type: json
+  content: "{\r
+
+    \    \"decision\":\"APPROVED\",\r
+
+    \    \"note\":\"\"\r
+
+    }"
+order: 2529

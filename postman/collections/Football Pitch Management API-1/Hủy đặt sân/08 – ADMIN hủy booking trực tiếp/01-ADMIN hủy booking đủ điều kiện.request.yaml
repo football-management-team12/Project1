@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/:booking_id/cancel"
+method: POST
+pathVariables:
+  - key: booking_id
+    value: "27"
+    description: ""
+order: 1000

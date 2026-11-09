@@ -1,0 +1,8 @@
+$kind: http-request
+name: 01-Gửi yêu cầu không có lý do hủy với trường hợp đã thanh toan thành công
+url: "{{baseUrl}}/api/bookings/26/cancellation-requests"
+method: POST
+body:
+  type: json
+  content: "{\r\n    \r\n}"
+order: 2000

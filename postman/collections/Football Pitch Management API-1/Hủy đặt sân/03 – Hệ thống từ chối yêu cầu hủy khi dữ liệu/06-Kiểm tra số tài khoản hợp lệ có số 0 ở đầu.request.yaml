@@ -1,0 +1,57 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/26/cancellation-requests"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"reason\": \"Tôi muốn hủy lịch đặt sân.\",\r
+
+    \  \"refundAccount\": {\r
+
+    \    \"bankName\": \"MB Bank\",\r
+
+    \    \"accountNumber\": \"001234567890\",\r
+
+    \    \"accountHolder\": \"NGUYEN VAN A\"\r
+
+    \  }\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "// 1. Kiểm tra API chấp nhận dữ liệu thành công (mã 201 Created hoặc 200 OK)\r
+
+      pm.test(\"Status code is 201 Created for valid account number with leading zero\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r
+
+      });\r
+
+      \r
+
+      // 2. Kiểm tra số tài khoản được lưu giữ chính xác, đảm bảo không bị mất số 0 ở đầu\r
+
+      pm.test(\"Verify account number preserves leading zeros\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    \r
+
+      \    // Trích xuất đúng đường dẫn chứa refundAccount trong response của bạn\r
+
+      \    var accountObj = jsonData.refundAccount ? jsonData.refundAccount : (jsonData.latestRequest ? jsonData.latestRequest.refundAccount : null);\r
+
+      \    \r
+
+      \    pm.expect(accountObj).to.not.be.null;\r
+
+      \    // Kiểm tra kiểu dữ liệu phải là chuỗi (string) để giữ được số 0 ở đầu và khớp giá trị\r
+
+      \    pm.expect(accountObj.accountNumber).to.be.a(\"string\");\r
+
+      \    pm.expect(accountObj.accountNumber).to.eql(\"001234567890\");\r
+
+      });"
+    language: text/javascript
+order: 6750

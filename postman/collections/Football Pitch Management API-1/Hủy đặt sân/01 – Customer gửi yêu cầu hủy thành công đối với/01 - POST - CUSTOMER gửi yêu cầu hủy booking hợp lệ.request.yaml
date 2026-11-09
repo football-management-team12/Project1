@@ -1,0 +1,67 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/21/cancellation-requests"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \  \"reason\": \"Tôi muốn thay đổi lịch đặt sân\",\r
+
+    \  \"refundAccount\": {\r
+
+    \    \"bankName\": \"MB Bank\",\r
+
+    \    \"accountNumber\": \"0329961825\",\r
+
+    \    \"accountHolder\": \"Nguyen Van A\"\r
+
+    \  }\r
+
+    \  \r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "// Kiểm tra Status Code là 201 Created (hoặc 200/202)\r
+
+      pm.test(\"Status code is 201 Created\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([201, 200, 202]);\r
+
+      });\r
+
+      \r
+
+      // Kiểm tra thông tin trong Response Body\r
+
+      pm.test(\"Verify Cancellation Request Response Structure\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(jsonData).to.have.property(\"bookingId\");\r
+
+      \    pm.expect(jsonData.bookingId.toString()).to.eql(\"701\");\r
+
+      \r
+
+      \    pm.expect(jsonData).to.have.property(\"status\");\r
+
+      \    pm.expect(jsonData.status).to.eql(\"PENDING\");\r
+
+      \r
+
+      \    pm.expect(jsonData).to.have.property(\"reason\");\r
+
+      \    pm.expect(jsonData.reason).to.eql(\"Tôi muốn thay đổi lịch đặt sân\");\r
+
+      \r
+
+      \    pm.expect(jsonData).to.have.property(\"createdAt\");\r
+
+      });\r\n"
+    language: text/javascript
+order: 1000

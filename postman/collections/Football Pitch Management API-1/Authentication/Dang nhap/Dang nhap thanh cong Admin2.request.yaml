@@ -5,7 +5,7 @@ body:
   type: json
   content: "{\r
 
-    \  \"account\": \"user1\",\r
+    \  \"account\": \"admin2\",\r
 
     \  \"password\": \"123456\"\r
 
@@ -25,4 +25,4 @@ scripts:
 
       }"
     language: text/javascript
-order: 1000
+order: 1163

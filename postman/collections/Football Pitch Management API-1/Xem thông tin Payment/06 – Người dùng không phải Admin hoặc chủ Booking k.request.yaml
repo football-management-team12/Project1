@@ -1,0 +1,5 @@
+$kind: http-request
+name: 06 – Người dùng không phải Admin hoặc chủ Booking không được xem
+url: "{{baseUrl}}/api/bookings/30/settlement"
+method: GET
+order: 6000

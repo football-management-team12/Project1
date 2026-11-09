@@ -1,0 +1,7 @@
+$kind: http-request
+name: 04-Truy cập API không có token hoặc token sai/hết hạn
+url: "{{baseUrl}}/api/bookings/24/cancellation"
+method: GET
+auth:
+  type: noauth
+order: 6000

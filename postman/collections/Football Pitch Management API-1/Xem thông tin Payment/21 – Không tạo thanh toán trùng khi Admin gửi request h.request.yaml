@@ -1,0 +1,8 @@
+$kind: http-request
+name: 21 – Không tạo thanh toán trùng khi Admin gửi request hai lần
+url: "{{baseUrl}}/api/admin/bookings/31/confirm-final-payment"
+method: POST
+body:
+  type: json
+  content: '{"amount":99999} '
+order: 14601

@@ -1,0 +1,35 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/24/cancellation"
+method: GET
+body:
+  type: json
+  content: ""
+scripts:
+  - type: afterResponse
+    code: "// Kiểm tra Status Code là 200 OK\r
+
+      pm.test(\"Status code is 200 OK\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      // Kiểm tra dữ liệu yêu cầu hủy được lưu trữ chính xác đối với đơn chưa có cọc thành công\r
+
+      pm.test(\"Verify cancellation request details for non-deposited booking\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    var reqData = jsonData.latestRequest ? jsonData.latestRequest : jsonData;\r
+
+      \    \r
+
+      \    pm.expect(reqData).to.have.property(\"reason\");\r
+
+      \    pm.expect(reqData.status).to.eql(\"PENDING_REVIEW\");\r
+
+      });"
+    language: text/javascript
+order: 2000
