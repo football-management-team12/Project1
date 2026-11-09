@@ -1,0 +1,21 @@
+{
+  "verifiedAt": "2026-11-09T18:14:50.147914+00:00",
+  "engine": "SQL Server",
+  "mode": "Session table-variable fixtures only",
+  "applicationTableWrites": 0,
+  "results": [
+    {
+      "scope": "all",
+      "bookingStatesChecked": 12,
+      "paymentStatesChecked": 11,
+      "repeatedExpiry": "idempotent"
+    },
+    {
+      "scope": 1,
+      "bookingStatesChecked": 12,
+      "paymentStatesChecked": 11,
+      "repeatedExpiry": "idempotent"
+    }
+  ],
+  "limitations": "Does not verify real concurrent row locks or inject live database faults."
+}

@@ -1462,7 +1462,7 @@ paths:
       tags: [Payments]
       operationId: getBookingDeposit
       summary: UC06 - Thông tin đặt cọc
-      description: Lấy trạng thái đặt cọc. Nếu quá hạn, booking PENDING và deposit PENDING có thể được chuyển sang CANCELLED/EXPIRED.
+      description: 'CUSTOMER ACTIVE chỉ được xem booking của mình. Trong transaction SERIALIZABLE, đồng bộ DEPOSIT PENDING quá Deadline đã lưu sang EXPIRED và cập nhật UpdatedAt. Booking PENDING hết hạn chuyển CANCELLED nếu không có payment còn hạn, khoản thu SUCCESS hoặc yêu cầu hủy PENDING_REVIEW. Deadline thiếu dùng CreatedAt và DEPOSIT_DEADLINE_MINUTES. Response đọc lại trạng thái DB sau cập nhật; lỗi rollback cả hai bảng. Availability dùng cùng cơ chế expiry; không có scheduler nền. Không sửa tiền hay payment SUCCESS.'
       security:
         - BearerAuth: []
       responses:

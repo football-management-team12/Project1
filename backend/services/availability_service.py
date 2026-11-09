@@ -19,8 +19,12 @@ CANCELLED_STATUSES = {
 }
 
 
-def expire_pending_bookings(cursor):
-    """Release reservations whose deposit window has elapsed."""
+def expire_pending_bookings(cursor, booking_id=None):
+    """Expire overdue pending deposits and release unpaid reservations atomically.
+
+    The caller owns the transaction and commit. A stored payment Deadline takes
+    precedence over the current environment's fallback booking window.
+    """
     try:
         deadline_minutes = int(
             os.getenv("DEPOSIT_DEADLINE_MINUTES", "10")
@@ -29,19 +33,50 @@ def expire_pending_bookings(cursor):
         deadline_minutes = 10
 
     deadline_minutes = max(deadline_minutes, 1)
+    scope = " AND B.BookingID = ?" if booking_id is not None else ""
+    args = [deadline_minutes]
+    if booking_id is not None:
+        args.append(booking_id)
     cursor.execute(
         """
-        UPDATE Bookings
+        UPDATE B
         SET Status = 'CANCELLED'
-        WHERE UPPER(LTRIM(RTRIM(Status))) = 'PENDING'
-          AND CreatedAt IS NOT NULL
-          AND DATEADD(MINUTE, ?, CreatedAt) <= GETDATE()
+        FROM dbo.Bookings B WITH (UPDLOCK, HOLDLOCK)
+        WHERE UPPER(LTRIM(RTRIM(B.Status))) = 'PENDING'
+          AND (
+              EXISTS (SELECT 1 FROM dbo.Payments P WHERE P.BookingID = B.BookingID
+                      AND P.PaymentType = 'DEPOSIT' AND P.Status = 'PENDING'
+                      AND P.Deadline <= GETDATE())
+              OR (B.CreatedAt IS NOT NULL AND DATEADD(MINUTE, ?, B.CreatedAt) <= GETDATE())
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM dbo.Payments P WHERE P.BookingID = B.BookingID
+              AND P.PaymentType = 'DEPOSIT' AND P.Status = 'PENDING'
+              AND P.Deadline > GETDATE()
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM dbo.Payments P WHERE P.BookingID = B.BookingID
+              AND P.Status = 'SUCCESS'
+          )
           AND NOT EXISTS (
               SELECT 1 FROM dbo.BookingCancellationRequests R
-              WHERE R.BookingID = Bookings.BookingID AND R.Status = 'PENDING_REVIEW'
+              WHERE R.BookingID = B.BookingID AND R.Status = 'PENDING_REVIEW'
           )
-        """,
-        deadline_minutes,
+        """ + scope,
+        *args,
+    )
+    cursor.execute(
+        """
+        UPDATE P
+        SET Status = 'EXPIRED', UpdatedAt = GETDATE()
+        FROM dbo.Payments P
+        JOIN dbo.Bookings B ON B.BookingID = P.BookingID
+        WHERE P.PaymentType = 'DEPOSIT' AND P.Status = 'PENDING'
+          AND (P.Deadline <= GETDATE()
+               OR (P.Deadline IS NULL AND B.CreatedAt IS NOT NULL
+                   AND DATEADD(MINUTE, ?, B.CreatedAt) <= GETDATE()))
+        """ + scope,
+        *args,
     )
 
 
