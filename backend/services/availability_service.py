@@ -81,10 +81,46 @@ def expire_pending_bookings(cursor, booking_id=None):
 
 
 # ============================================================
-# FORMAT TIME
-# SQL TIME / datetime.time / string -> HH:MM
+# EXPLICIT DEPOSIT EXPIRY
 # ============================================================
 
+def release_booking_for_expired_deposit(cursor, booking_id, payment_id):
+    """Sync explicit EXPIRED events inside the caller's authorized transaction.
+
+    A demo event may expire a payment before its deadline. Repeated events repair
+    legacy PENDING bookings without changing successful financial records.
+    """
+    cursor.execute(
+        """
+        UPDATE B
+        SET Status = 'CANCELLED'
+        FROM dbo.Bookings B WITH (UPDLOCK, HOLDLOCK)
+        WHERE B.BookingID = ? AND B.Status = 'PENDING'
+          AND EXISTS (
+              SELECT 1 FROM dbo.Payments E
+              WHERE E.PaymentID = ? AND E.BookingID = B.BookingID
+              AND E.PaymentType = 'DEPOSIT' AND E.Status = 'EXPIRED'
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM dbo.Payments P
+              WHERE P.BookingID = B.BookingID AND P.Status = 'SUCCESS'
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM dbo.Payments P
+              WHERE P.BookingID = B.BookingID AND P.PaymentType = 'DEPOSIT'
+              AND P.Status = 'PENDING' AND (P.Deadline IS NULL OR P.Deadline > GETDATE())
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM dbo.BookingCancellationRequests R
+              WHERE R.BookingID = B.BookingID AND R.Status = 'PENDING_REVIEW'
+          )
+        """,
+        booking_id,
+        payment_id,
+    )
+
+
+# SQL TIME / datetime.time / string -> HH:MM
 def format_time(value):
 
     if value is None:

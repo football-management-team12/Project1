@@ -4,7 +4,7 @@ from decimal import Decimal, ROUND_DOWN
 from urllib.parse import quote
 
 from database import get_connection
-from services.availability_service import expire_pending_bookings
+from services.availability_service import expire_pending_bookings, release_booking_for_expired_deposit
 
 
 # ============================================================
@@ -1247,19 +1247,12 @@ def update_deposit_demo_status(
         )
 
 
-        if (
-            current
-            ==
-            new_status
-        ):
-
+        if current == new_status:
+            if new_status == "EXPIRED":
+                release_booking_for_expired_deposit(cursor, row.BookingID, payment_id)
+            result = _payment_dict(row)
             conn.commit()
-
-            return (
-                _payment_dict(
-                    row
-                )
-            )
+            return result
 
 
         if current != "PENDING":
@@ -1355,8 +1348,11 @@ def update_deposit_demo_status(
 
 
         # ====================================================
-        # SUCCESS -> CONFIRMED
+        # Synchronize booking state inside the same payment transaction.
         # ====================================================
+
+        if new_status == "EXPIRED":
+            release_booking_for_expired_deposit(cursor, row.BookingID, payment_id)
 
         if new_status == "SUCCESS":
 
@@ -1404,14 +1400,9 @@ def update_deposit_demo_status(
         )
 
 
+        result = _payment_dict(updated)
         conn.commit()
-
-
-        return (
-            _payment_dict(
-                updated
-            )
-        )
+        return result
 
 
     except Exception:

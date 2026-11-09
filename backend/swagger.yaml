@@ -1501,7 +1501,7 @@ paths:
       tags: [Payments]
       operationId: updateDepositDemoStatus
       summary: UC06 - Mô phỏng trạng thái giao dịch
-      description: Chỉ hoạt động khi PAYMENT_DEMO_MODE=true. SUCCESS xác nhận booking còn PENDING và chưa quá deadline. FAILED/EXPIRED không xác nhận.
+      description: 'Chỉ hoạt động khi PAYMENT_DEMO_MODE=true, CUSTOMER ACTIVE và payment thuộc booking của mình. SUCCESS xác nhận booking còn PENDING và chưa quá deadline. FAILED giữ booking để retry. EXPIRED đồng bộ booking PENDING sang CANCELLED trong cùng transaction nếu không có receipt SUCCESS, lần cọc khác còn hiệu lực hoặc yêu cầu hủy PENDING_REVIEW. Gửi EXPIRED lại sẽ kiểm tra đồng bộ legacy booking; không tạo payment mới hoặc sửa số tiền. Lỗi rollback cả payment và booking.'
       security:
         - BearerAuth: []
       parameters:
