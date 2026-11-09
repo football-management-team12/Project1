@@ -1,0 +1,84 @@
+.uc12-page { max-width: 1400px; margin: 20px auto; color: #17372c; }
+.uc12-page h1 { font-size: clamp(24px, 3vw, 32px); }
+.uc12-page p { line-height: 1.6; }
+.uc12-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 24px 0; }
+.uc12-page label { display: flex; flex-direction: column; gap: 7px; font-weight: 600; }
+.uc12-page input, .uc12-page select, .uc12-page textarea { padding: 10px; border: 1px solid #b8c9c2; border-radius: 8px; font: inherit; min-width: 0; }
+.uc12-page textarea { min-height: 90px; margin-bottom: 14px; resize: vertical; }
+.uc12-table { width: 100%; overflow-x: auto; background: white; border: 1px solid #dbe5df; border-radius: 12px; }
+.uc12-table table { width: 100%; border-collapse: collapse; text-align: left; }
+.uc12-table caption { text-align: left; padding: 14px; font-weight: 700; }
+.uc12-table th, .uc12-table td { padding: 14px; border-bottom: 1px solid #e6ece8; white-space: nowrap; }
+.uc12-table th { background: #edf5f0; }
+.uc12-table small { display: block; margin-top: 5px; color: #53665b; }
+.uc12-page a { color: #006b48; text-decoration: underline; }
+.uc12-pagination { display: flex; align-items: center; gap: 16px; margin: 20px 0; }
+.uc12-page button { cursor: pointer; }
+.uc12-page button:disabled { cursor: default; opacity: .55; }
+.uc12-card { background: white; border: 1px solid #dbe5df; border-radius: 12px; padding: 24px; margin: 24px 0; }
+.uc12-summary { display: grid; grid-template-columns: minmax(130px, 180px) 1fr; gap: 14px; }
+.uc12-summary dt { color: #53665b; }
+.uc12-summary dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .uc12-filters > label { width: 100%; }
+  .uc12-card { padding: 16px; }
+  .uc12-summary { grid-template-columns: 1fr; gap: 8px; }
+  .uc12-summary dd { margin-bottom: 12px; }
+}
+
+/* Invoice workspace */
+.uc12-page { max-width: 1440px; margin: 28px auto 48px; min-width: 0; color: #183b30; }
+.uc12-page > h1 { margin: 14px 0 10px; font-size: clamp(27px, 3vw, 38px); font-weight: 800; letter-spacing: -.045em; }
+.uc12-page > h1::before { content: ""; display: block; width: 36px; height: 4px; margin-bottom: 18px; background: #0b9669; border-radius: 4px; }
+.uc12-page > p { max-width: 780px; color: #71847c; font-size: 14px; line-height: 1.8; }
+.uc12-page h2 { font-size: 20px; letter-spacing: -.025em; }
+.uc12-filters { display: grid; grid-template-columns: minmax(180px, 1.4fr) minmax(160px, 1.1fr) repeat(2, minmax(140px, 1fr)); gap: 18px 14px; padding: 24px; margin: 28px 0 24px; border: 1px solid #e0e9e5; border-radius: 18px; background: #fff; box-shadow: 0 5px 24px #163f2d05; }
+.uc12-page label { gap: 9px; color: #4c6559; font-size: 12px; font-weight: 700; }
+.uc12-page input, .uc12-page select, .uc12-page textarea { width: 100%; min-height: 45px; padding: 11px 13px; border-color: #dce7e1; border-radius: 10px; background: #fafcfb; color: #244735; font-size: 14px; }
+.uc12-page :is(input, select, textarea):focus { outline: none; border-color: #18a374; box-shadow: 0 0 0 3px #13a27113; background: #fff; }
+.uc12-page textarea { min-height: 110px; margin-bottom: 18px; }
+.uc12-filters > button { width: fit-content; min-width: 124px; }
+.uc12-table { border-color: #e0e9e5; border-radius: 18px; box-shadow: 0 5px 24px #163f2d05; }
+.uc12-table table { font-size: 13px; }
+.uc12-table caption { padding: 22px; color: #264e3d; font-size: 15px; }
+.uc12-table th, .uc12-table td { padding: 18px 20px; border-bottom-color: #edf2ef; }
+.uc12-table th { background: #f6f9f7; color: #7a8d82; font-size: 11px; font-weight: 750; letter-spacing: .025em; }
+.uc12-table tbody tr:hover { background: #f5fbf8; }
+.uc12-table tbody tr:last-child td { border-bottom: 0; }
+.uc12-table small { margin-top: 6px; color: #819389; font-size: 11px; }
+.uc12-table td:first-child { color: #07805a; font-weight: 700; }
+.uc12-table td:first-child small { font-weight: 400; }
+.uc12-page a { text-decoration: none; font-weight: 650; }
+.uc12-page a:hover { text-decoration: underline; }
+.uc12-table td:last-child a { display: inline-flex; padding: 8px 12px; background: #edf8f2; border: 1px solid #d9eee2; border-radius: 8px; font-size: 12px; }
+.uc12-pagination { justify-content: flex-end; gap: 14px; margin: 22px 0; color: #6b8075; font-size: 13px; }
+.uc12-pagination button { background: #fff; border: 1px solid #e0e9e5; font-size: 12px; }
+.uc12-card { border-color: #e0e9e5; border-radius: 18px; padding: 28px; margin: 26px 0; box-shadow: 0 5px 24px #163f2d05; }
+.uc12-card > h2 { margin-bottom: 8px; }
+.uc12-card > p { color: #71847c; font-size: 14px; }
+.uc12-status-row { display: flex; gap: 9px; flex-wrap: wrap; margin: 20px 0; }
+.uc12-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border-radius: 7px; background: #edf2ef; color: #64796d; font-size: 11px; font-weight: 700; line-height: 1.4; }
+.uc12-badge::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.uc12-badge-paid, .uc12-badge-active { background: #e7f6ee; color: #078052; }
+.uc12-badge-partially_paid { background: #fff5de; color: #97680d; }
+.uc12-badge-cancelled { background: #fceceb; color: #b44848; }
+.uc12-summary { grid-template-columns: minmax(140px, 190px) 1fr; gap: 0; padding-top: 12px; margin: 22px 0 0; border-top: 1px solid #edf2ef; font-size: 14px; }
+.uc12-summary dt, .uc12-summary dd { padding: 13px 0; border-bottom: 1px solid #f0f4f2; }
+.uc12-summary dt { color: #829087; }
+.uc12-summary dd { color: #234d39; font-weight: 550; }
+.uc12-summary dt:last-of-type, .uc12-summary dd:last-of-type { border-bottom: 0; }
+.uc12-page > [role="alert"] { padding: 18px 22px; border: 1px solid #f1d6d2; border-radius: 14px; background: #fff6f4; color: #a24338; }
+.uc12-page > [role="status"] { padding: 22px; border-radius: 14px; border: 1px solid #e1ebe5; background: #fff; }
+@media (min-width: 1500px) { .uc12-filters { grid-template-columns: minmax(190px, 1.4fr) minmax(180px, 1.2fr) repeat(2, minmax(145px, 1fr)) auto auto; } }
+@media (max-width: 1000px) { .uc12-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .uc12-page { margin-top: 20px; }
+  .uc12-filters { padding: 18px; gap: 16px 10px; border-radius: 14px; }
+  .uc12-filters > label { grid-column: 1 / -1; }
+  .uc12-filters > button { width: 100%; min-width: 0; font-size: 12px; }
+  .uc12-card { padding: 20px; border-radius: 14px; }
+  .uc12-summary { grid-template-columns: minmax(100px, .8fr) 1.3fr; font-size: 12px; }
+  .uc12-summary dt, .uc12-summary dd { padding: 12px 0; margin: 0; }
+  .uc12-pagination { justify-content: center; gap: 9px; }
+  .uc12-pagination button { padding: 10px 12px; }
+}

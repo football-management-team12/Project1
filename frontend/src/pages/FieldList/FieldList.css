@@ -171,3 +171,35 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Field discovery */
+.field-list-heading { margin-bottom: 28px; padding: 30px 32px; border: 1px solid #dcece2; border-radius: 22px; background: radial-gradient(ellipse at top right, #ccebd777, transparent 65%), linear-gradient(120deg, #eef8f1, #f8fcf9); }
+.field-list-heading h1 { color: #153f2c; letter-spacing: -.045em; }
+.field-list-heading p { color: #6d8275; font-size: 14px; }
+.field-list-eyebrow { color: #148153; }
+.field-filter-panel { padding: 24px; margin-bottom: 26px; border-color: #e0eae3; border-radius: 18px; box-shadow: 0 5px 28px #153f2c06; }
+.field-filter-control label { color: #657b6d; font-size: 12px; }
+.field-filter-control input, .field-filter-control select { min-height: 46px; border-color: #dce7df; background: #fafcfb; }
+.field-filter-control input:focus, .field-filter-control select:focus { outline: none; border-color: #199b64; box-shadow: 0 0 0 3px #199b6415; }
+.field-filter-reset { min-height: 46px; background: #eef7f1; color: #187244; border-color: #dce7df; }
+.field-card-grid { gap: 24px; }
+.field-list-page .field-card { display: flex; flex-direction: column; border-color: #e0e9e3; border-radius: 18px; box-shadow: 0 4px 18px #163f2d06; transition: box-shadow .2s, transform .2s; }
+.field-list-page .field-card:hover { box-shadow: 0 14px 34px #163f2d12; transform: translateY(-3px); }
+.field-list-page .field-card-cover { min-height: 128px; background: repeating-linear-gradient(90deg, transparent 0 45px, #ffffff05 45px 90px), linear-gradient(135deg, #164e36, #288f58); border-bottom: 4px solid #d0ebd9; }
+.field-list-page .field-card-body { display: flex; flex-direction: column; flex: 1; padding: 22px; }
+.field-list-page .field-card-title-row h2 { font-size: 20px; color: #1b4530; letter-spacing: -.025em; }
+.field-list-page .field-card-type { display: inline-block; align-self: flex-start; color: #2e7f50; font-size: 12px; font-weight: 650; }
+.field-list-page .field-card-address { font-size: 13px; color: #839084; }
+.field-list-page .field-card-price { padding: 14px 0; margin-top: 10px; border-bottom: 1px solid #edf2ee; color: #137743; }
+.field-list-page .field-card-hint { font-size: 12px; color: #7b8c80; }
+.field-list-page .field-card-availability { flex: 1; margin-bottom: 20px; }
+.field-list-page .field-card-booking-button { border-radius: 10px; min-height: 44px; box-shadow: 0 3px 10px #0b7b4120; }
+@media (max-width: 680px) {
+  .field-list-heading { padding: 24px 20px; border-radius: 16px; }
+  .field-filter-panel { padding: 20px; }
+  .field-list-page .field-card:hover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .field-list-page .field-card { transition: none; }
+  .field-list-page .field-card:hover { transform: none; }
+}

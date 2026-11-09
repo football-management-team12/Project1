@@ -9,6 +9,182 @@ servers:
     description: "Local Server"
 
 paths:
+  /api/admin/invoices:
+    get:
+      tags:
+      - UC12 - Invoice Management
+      summary: ADMIN lists issued invoices without writes
+      security: &id001
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                - page
+                - pageSize
+                - hasNext
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UC12Invoice'
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  hasNext:
+                    type: boolean
+        '400': &id002
+          description: Invalid filters, payload or transition
+        '401': &id003
+          description: Missing, invalid or expired JWT
+        '403': &id004
+          description: Requires ACTIVE ADMIN
+        '404': &id005
+          description: Invoice not found
+        '409': &id006
+          description: Financial mismatch, disallowed or duplicate transition
+        '500': &id007
+          description: Operation failed; transaction rolled back for PATCH
+      parameters:
+      - name: status
+        in: query
+        description: Payment filters exclude cancelled invoices; ACTIVE includes all
+          non-cancelled invoices.
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - CANCELLED
+          - UNPAID
+          - PARTIALLY_PAID
+          - PAID
+      - name: customer
+        in: query
+        description: Literal substring of customer name/email.
+        schema:
+          type: string
+          maxLength: 100
+      - name: from
+        in: query
+        description: Invoice CreatedDate, inclusive start, SQL Server local date.
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        description: Inclusive end date.
+        schema:
+          type: string
+          format: date
+      - name: page
+        in: query
+        description: Page number.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          default: 1
+      - name: pageSize
+        in: query
+        description: Page size.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+  /api/admin/invoices/{invoiceId}:
+    get:
+      tags:
+      - UC12 - Invoice Management
+      summary: ADMIN invoice detail, payment history and separate refund
+      security: *id001
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC12InvoiceDetail'
+        '400': *id002
+        '401': *id003
+        '403': *id004
+        '404': *id005
+        '409': *id006
+        '500': *id007
+      parameters: &id008
+      - name: invoiceId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+  /api/admin/invoices/{invoiceId}/status:
+    patch:
+      tags:
+      - UC12 - Invoice Management
+      summary: Cancel an unpaid invoice only after its booking is CANCELLED
+      security: *id001
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoiceId:
+                    type: integer
+                  invoiceStatus:
+                    type: string
+                    enum:
+                    - CANCELLED
+                  status:
+                    type: string
+                    enum:
+                    - CANCELLED
+                  message:
+                    type: string
+        '400': *id002
+        '401': *id003
+        '403': *id004
+        '404': *id005
+        '409': *id006
+        '500': *id007
+      parameters: *id008
+      description: Only ACTIVE -> CANCELLED with zero SUCCESS DEPOSIT/FINAL_PAYMENT
+        receipts and an already CANCELLED booking. Refunded receipts still block cancellation.
+        Does not alter financial records or UC06/07/08/09. Inserts an immutable cancellation
+        audit in its own table under a booking lock and SERIALIZABLE transaction. PaidAmount
+        and all extra fields are rejected. See docs/UC12-invoice-management.md; migration
+        010 required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - status
+              - reason
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - CANCELLED
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+            example:
+              status: CANCELLED
+              reason: Booking cancelled without any receipts
 
   /api/invoices/{invoiceId}:
     get:
@@ -1604,6 +1780,131 @@ components:
       bearerFormat: JWT
 
   schemas:
+    UC12Invoice:
+      type: object
+      properties:
+        invoiceId:
+          type: integer
+        bookingId:
+          type: integer
+        totalAmount:
+          type: number
+          format: double
+        depositAmount:
+          type: number
+          format: double
+        paidAmount:
+          type: number
+          format: double
+        remainingAmount:
+          type: number
+          format: double
+        bookingStatus:
+          type: string
+        status:
+          type: string
+        paymentMethod:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        invoiceStatus:
+          type: string
+          enum:
+          - ACTIVE
+          - CANCELLED
+        paymentStatus:
+          type: string
+          enum:
+          - UNPAID
+          - PARTIALLY_PAID
+          - PAID
+        createdDate:
+          type: string
+          nullable: true
+        bookingDate:
+          type: string
+          format: date
+        canCancel:
+          type: boolean
+        canConfirm:
+          type: boolean
+          enum:
+          - false
+        allowedTransitions:
+          type: array
+          items:
+            type: string
+            enum:
+            - CANCELLED
+        customer:
+          type: object
+          properties:
+            userId:
+              type: integer
+            name:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+        field:
+          type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+            location:
+              type: string
+              nullable: true
+        cancellation:
+          type: object
+          nullable: true
+          properties:
+            by:
+              type: integer
+            at:
+              type: string
+            reason:
+              type: string
+    UC12InvoiceDetail:
+      allOf:
+      - $ref: '#/components/schemas/UC12Invoice'
+      - type: object
+        properties:
+          payments:
+            type: array
+            items:
+              type: object
+              properties:
+                paymentId:
+                  type: integer
+                type:
+                  type: string
+                  nullable: true
+                amount:
+                  type: number
+                status:
+                  type: string
+                  nullable: true
+                method:
+                  type: string
+                  nullable: true
+                reference:
+                  type: string
+                  nullable: true
+                recordedAt:
+                  type: string
+                  nullable: true
+          refund:
+            type: object
+            nullable: true
+            properties:
+              amount:
+                type: number
+              at:
+                type: string
     UC08Invoice:
       type: object
       required:

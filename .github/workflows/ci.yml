@@ -40,6 +40,10 @@ jobs:
         env:
           DEBUG: "false"
         run: python -m unittest discover -s ../tests -p 'test_staging_health.py'
+      - name: Run isolated API contracts and invoice regressions
+        env:
+          DEBUG: "false"
+        run: python -m unittest discover -s tests/api -p 'test_[a-z]*.py'
 
   docker:
     runs-on: ubuntu-latest

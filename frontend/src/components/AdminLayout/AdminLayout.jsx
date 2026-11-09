@@ -248,20 +248,6 @@ function AdminLayout() {
           </li>
 
 
-          {/* UC03 */}
-
-          <li
-            onClick={
-              () =>
-                navigate(
-                  "/profile"
-                )
-            }
-          >
-            Thông tin cá nhân
-          </li>
-
-
           {
             isAdmin
             &&
@@ -272,11 +258,8 @@ function AdminLayout() {
                   Quản lý khách hàng
                 </li>
 
-                <li>
-                  Quản lý nhân viên
-                </li>
-
-                <li>
+                <li className={isActive("/admin/invoices") || isActive("/admin/invoice-management") ? "active" : ""}
+                  onClick={() => navigate("/admin/invoices")}>
                   Hóa đơn & thanh toán
                 </li>
 
@@ -323,8 +306,9 @@ function AdminLayout() {
             </span>
 
 
-            <div>
-
+            <button type="button" className="admin-profile-button" onClick={() => navigate("/admin/profile")}
+              aria-label="Mở thông tin cá nhân">
+              <div>
               <b>
                 {
                   user?.FullName
@@ -345,8 +329,9 @@ function AdminLayout() {
                 }
 
               </small>
-
+              <small className="admin-profile-link">Thông tin cá nhân ↗</small>
             </div>
+            </button>
 
           </div>
 

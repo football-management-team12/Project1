@@ -80,7 +80,7 @@ const roleLabel = (
 };
 
 
-function Profile() {
+function Profile({ adminView = false }) {
 
   const [
     profile,
@@ -471,9 +471,9 @@ function Profile() {
 
   return (
 
-    <div className="profile-page-shell">
+    <div className={`profile-page-shell${adminView ? " profile-page-shell-admin" : ""}`}>
 
-      <Navbar />
+      {!adminView && <Navbar />}
 
 
       <main className="profile-page">
@@ -941,7 +941,7 @@ function Profile() {
       </main>
 
 
-      <Footer />
+      {!adminView && <Footer />}
 
     </div>
   );

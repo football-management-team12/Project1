@@ -6,6 +6,7 @@ import {
 import Home
   from "../pages/Home/Home";
 import InvoiceDetail from "../pages/InvoiceDetail/InvoiceDetail";
+import InvoiceManagement, { AdminInvoiceDetail } from "../pages/Admin/InvoiceManagement";
 
 import Login
   from "../pages/Login/Login";
@@ -251,6 +252,9 @@ function AppRoutes() {
           }
         />
 
+        <Route path="profile" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Profile adminView /></ProtectedRoute>} />
+        <Route path="invoices" element={<ProtectedRoute allowedRoles={["ADMIN"]}><InvoiceManagement /></ProtectedRoute>} />
+        <Route path="invoice-management/:invoiceId" element={<ProtectedRoute allowedRoles={["ADMIN"]}><AdminInvoiceDetail /></ProtectedRoute>} />
         {["bookings/:bookingId/invoice", "invoices/:invoiceId"].map((path) => (
           <Route key={path} path={path} element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
