@@ -157,7 +157,7 @@ paths:
         '409': *id006
         '500': *id007
       parameters: *id008
-      description: Only ACTIVE -> CANCELLED with zero SUCCESS DEPOSIT/FINAL_PAYMENT
+      description: Only ACTIVE -> CANCELLED with zero SUCCESS DEPOSIT/FINAL_PAYMENT/EXTRA
         receipts and an already CANCELLED booking. Refunded receipts still block cancellation.
         Does not alter financial records or UC06/07/08/09. Inserts an immutable cancellation
         audit in its own table under a booking lock and SERIALIZABLE transaction. PaidAmount
@@ -192,7 +192,7 @@ paths:
       - UC08 - Invoice View
       operationId: getInvoiceById
       summary: View issued invoice by ID
-      description: Requires an existing Invoices row. A booking ID or provisional invoice cannot be looked up as an invoice ID. Missing invoice returns 404. Valid Bearer JWT and an ACTIVE SQL Server account are required. CUSTOMER may view only their own booking; ADMIN may view any booking. Total is Bookings.TotalAmount, never the current field price. Paid amount sums SUCCESS DEPOSIT and FINAL_PAYMENT records; remaining = total - paid. UNPAID means zero paid, PARTIALLY_PAID means a positive balance, PAID means zero remaining. UC07 refunds are reported separately from receipts. Archived fields remain visible. GET performs no writes and never issues an invoice. canConfirm is always false; use UC09 for settlement eligibility and cash confirmation.
+      description: Requires an existing Invoices row. A booking ID or provisional invoice cannot be looked up as an invoice ID. Missing invoice returns 404. Valid Bearer JWT and an ACTIVE SQL Server account are required. CUSTOMER may view only their own booking; ADMIN may view any booking. Total is Bookings.TotalAmount, never the current field price. Paid amount sums SUCCESS DEPOSIT, FINAL_PAYMENT and EXTRA records; remaining = total - paid. UNPAID means zero paid, PARTIALLY_PAID means a positive balance, PAID means zero remaining. UC07 refunds are reported separately from receipts. Archived fields remain visible. GET performs no writes and never issues an invoice. canConfirm is always false; use UC09 for settlement eligibility and cash confirmation.
       security:
       - BearerAuth: []
       parameters:
@@ -348,7 +348,7 @@ paths:
       - UC08 - Invoice View
       operationId: getBookingInvoice
       summary: View booking invoice or provisional invoice
-      description: 'Without an Invoices row, a positive SUCCESS deposit returns a provisional view: invoiceId=null, isProvisional=true, createdDate=null. Without an issued invoice or successful deposit, returns 404. An issued invoice has isProvisional=false. Valid Bearer JWT and an ACTIVE SQL Server account are required. CUSTOMER may view only their own booking; ADMIN may view any booking. Total is Bookings.TotalAmount, never the current field price. Paid amount sums SUCCESS DEPOSIT and FINAL_PAYMENT records; remaining = total - paid. UNPAID means zero paid, PARTIALLY_PAID means a positive balance, PAID means zero remaining. UC07 refunds are reported separately from receipts. Archived fields remain visible. GET performs no writes and never issues an invoice. canConfirm is always false; use UC09 for settlement eligibility and cash confirmation.'
+      description: 'Without an Invoices row, a positive SUCCESS deposit returns a provisional view: invoiceId=null, isProvisional=true, createdDate=null. Without an issued invoice or successful deposit, returns 404. An issued invoice has isProvisional=false. Valid Bearer JWT and an ACTIVE SQL Server account are required. CUSTOMER may view only their own booking; ADMIN may view any booking. Total is Bookings.TotalAmount, never the current field price. Paid amount sums SUCCESS DEPOSIT, FINAL_PAYMENT and EXTRA records; remaining = total - paid. UNPAID means zero paid, PARTIALLY_PAID means a positive balance, PAID means zero remaining. UC07 refunds are reported separately from receipts. Archived fields remain visible. GET performs no writes and never issues an invoice. canConfirm is always false; use UC09 for settlement eligibility and cash confirmation.'
       security:
       - BearerAuth: []
       parameters:
@@ -1793,6 +1793,16 @@ components:
         depositAmount:
           type: number
           format: double
+        extraAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Successful EXTRA credit already received against the booking total in VND.
+        finalPaymentAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Successful FINAL_PAYMENT receipts only; used to prevent duplicate final cash collection.
         paidAmount:
           type: number
           format: double
@@ -1982,11 +1992,21 @@ components:
           format: double
           minimum: 0
           description: Total successful deposits in VND.
+        extraAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Successful EXTRA credit already received against the booking total in VND.
+        finalPaymentAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Successful FINAL_PAYMENT receipts only; used to prevent duplicate final cash collection.
         paidAmount:
           type: number
           format: double
           minimum: 0
-          description: Total successful DEPOSIT and FINAL_PAYMENT receipts in VND.
+          description: Total successful DEPOSIT, FINAL_PAYMENT and EXTRA receipts in VND.
         remainingAmount:
           type: number
           format: double

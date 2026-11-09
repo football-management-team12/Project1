@@ -47,7 +47,7 @@ class AdminInvoiceTests(unittest.TestCase):
                             json=payload if payload is not None else {"status": "CANCELLED", "reason": "Booking đã hủy"})
 
     def seed_cancel(self, **changes):
-        self.cur.fetchone.side_effect = [self.actor, Row(BookingID=10), self.row(**changes), (0, 0), None]
+        self.cur.fetchone.side_effect = [self.actor, Row(BookingID=10), self.row(**changes), (0, 0, 0), None]
 
     def assert_no_legacy_writes(self):
         writes = [c.args[0].strip().upper() for c in self.cur.execute.call_args_list
@@ -96,7 +96,7 @@ class AdminInvoiceTests(unittest.TestCase):
         self.conn.cursor.assert_not_called()
 
     def test_list_derives_balances_and_preserves_archived_field(self):
-        self.cur.fetchone.side_effect = [self.actor, (30000, 0)]
+        self.cur.fetchone.side_effect = [self.actor, (30000, 0, 0)]
         self.cur.fetchall.return_value = [self.row(Status="COMPLETED")]
         response = self.request()
         self.assertEqual(response.status_code, 200)
@@ -107,7 +107,7 @@ class AdminInvoiceTests(unittest.TestCase):
         self.assert_no_legacy_writes()
 
     def test_cancelled_management_state_does_not_change_payment_status(self):
-        self.cur.fetchone.side_effect = [self.actor, (0, 0)]
+        self.cur.fetchone.side_effect = [self.actor, (0, 0, 0)]
         self.cur.fetchall.return_value = [self.row(CancelledBy=2, CancelledAt=datetime(2026, 11, 9), Reason="Closed")]
         response = self.request("/api/admin/invoices?status=CANCELLED")
         item = response.json["items"][0]
@@ -115,7 +115,7 @@ class AdminInvoiceTests(unittest.TestCase):
         self.assertEqual(item["allowedTransitions"], [])
 
     def test_detail_history_includes_unlinked_deposit_and_separate_refund(self):
-        self.cur.fetchone.side_effect = [self.actor, self.row(), (30000, 0), Row(Amount=30000, ConfirmedAt=datetime(2026, 11, 9))]
+        self.cur.fetchone.side_effect = [self.actor, self.row(), (30000, 0, 0), Row(Amount=30000, ConfirmedAt=datetime(2026, 11, 9))]
         self.cur.fetchall.return_value = [Row(PaymentID=5, PaymentType="DEPOSIT", Amount=30000, Status="SUCCESS",
                                              Method="BANK_TRANSFER", Reference="TEST-5", RecordedAt=None)]
         response = self.request("/api/admin/invoices/20")
@@ -153,13 +153,13 @@ class AdminInvoiceTests(unittest.TestCase):
     def test_live_booking_or_successful_receipts_block_cancellation(self):
         for booking_status, deposit, final in (("COMPLETED", 0, 0), ("PENDING", 0, 0), ("CONFIRMED", 0, 0),
                                                ("CANCELLED", 30000, 0), ("CANCELLED", 30000, 70000)):
-            self.cur.fetchone.side_effect = [self.actor, Row(BookingID=10), self.row(Status=booking_status), (deposit, final)]
+            self.cur.fetchone.side_effect = [self.actor, Row(BookingID=10), self.row(Status=booking_status), (deposit, final, 0)]
             self.assertEqual(self.cancel().status_code, 409)
         self.conn.commit.assert_not_called()
         self.assert_no_legacy_writes()
 
     def test_duplicate_cancel_conflicts(self):
-        self.cur.fetchone.side_effect = [self.actor, Row(BookingID=10), self.row(), (0, 0), Row(InvoiceID=20)]
+        self.cur.fetchone.side_effect = [self.actor, Row(BookingID=10), self.row(), (0, 0, 0), Row(InvoiceID=20)]
         self.assertEqual(self.cancel().status_code, 409)
         self.conn.commit.assert_not_called()
         self.conn.rollback.assert_called_once()
@@ -185,6 +185,23 @@ class AdminInvoiceTests(unittest.TestCase):
     def test_legacy_paid_flag_never_allows_cancel_even_if_receipts_are_missing(self):
         self.seed_cancel(InvoicePaymentStatus="PAID")
         self.assertEqual(self.cancel().status_code, 409)
+        self.conn.commit.assert_not_called()
+
+    def test_uc12_list_and_detail_include_successful_extra(self):
+        row = self.row(TotalAmount=900000, InvoiceAmount=900000, Status="COMPLETED")
+        self.cur.fetchone.side_effect = [self.actor, (300000, 0, 100000)]
+        self.cur.fetchall.return_value = [row]
+        response = self.request("/api/admin/invoices?status=PARTIALLY_PAID")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["items"][0]["remainingAmount"], 500000)
+        query = next(c.args[0] for c in self.cur.execute.call_args_list if "OFFSET" in c.args[0])
+        self.assertIn("'EXTRA'", query)
+        self.cur.fetchone.side_effect = [self.actor, row, (300000, 0, 100000), None]
+        self.cur.fetchall.return_value = []
+        response = self.request("/api/admin/invoices/20")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["remainingAmount"], 500000)
+        self.assertFalse(response.json["canCancel"])
         self.conn.commit.assert_not_called()
 
 

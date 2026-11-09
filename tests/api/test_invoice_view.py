@@ -38,9 +38,19 @@ class InvoiceViewTests(unittest.TestCase):
         values.update(changes)
         return SimpleNamespace(**values)
 
-    def seed(self, row, role="CUSTOMER", deposit=0, final=0, refund=None, status="ACTIVE"):
+    def seed(self, row, role="CUSTOMER", deposit=0, final=0, refund=None, status="ACTIVE", extra=0):
         self.cursor.fetchone.side_effect = [SimpleNamespace(Role=role, Status=status), row,
-                                           (Decimal(str(deposit)), Decimal(str(final))), refund]
+                                           (Decimal(str(deposit)), Decimal(str(final)), Decimal(str(extra))), refund]
+
+    def test_extra_receipts_in_both_uc08_lookups_match_settlement(self):
+        for path in ("/api/invoices/20", "/api/bookings/10/invoice"):
+            self.seed(self.row(TotalAmount=900000, InvoiceAmount=900000), deposit=300000, extra=100000)
+            response = self.get(path)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json["paidAmount"], 400000)
+            self.assertEqual(response.json["remainingAmount"], 500000)
+            self.assertEqual(response.json["paymentStatus"], "PARTIALLY_PAID")
+        self.connection.commit.assert_not_called()
 
     def get(self, path="/api/invoices/20", user_id=1, role="CUSTOMER", token=None):
         return self.client.get(path, headers={"Authorization": "Bearer " + (

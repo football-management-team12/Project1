@@ -40,7 +40,7 @@ class CashPaymentRegressionTests(unittest.TestCase):
         return self.client.post("/api/admin/bookings/10/confirm-final-payment", headers=self.headers)
 
     def test_final_cash_still_records_remaining_and_invoice_atomically(self):
-        self.cur.fetchone.side_effect = [self.actor, self.row(), (30000, 0), (51,)]
+        self.cur.fetchone.side_effect = [self.actor, self.row(), (30000, 0, 0), (51,)]
         response = self.confirm()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["amount"], 70000)
@@ -53,8 +53,8 @@ class CashPaymentRegressionTests(unittest.TestCase):
         self.assertFalse(any("InvoiceAdminCancellations" in q for q in writes))
 
     def test_already_paid_and_cancelled_booking_cannot_be_charged(self):
-        for row, receipts in ((self.row(InvoicePaidAmount=100000, InvoicePaymentStatus="PAID"), (30000, 70000)),
-                              (self.row(Status="CANCELLED"), (30000, 0))):
+        for row, receipts in ((self.row(InvoicePaidAmount=100000, InvoicePaymentStatus="PAID"), (30000, 70000, 0)),
+                              (self.row(Status="CANCELLED"), (30000, 0, 0))):
             self.cur.fetchone.side_effect = [self.actor, row, receipts]
             self.assertEqual(self.confirm().status_code, 409)
         self.conn.commit.assert_not_called()
@@ -65,8 +65,36 @@ class CashPaymentRegressionTests(unittest.TestCase):
         self.assertEqual(self.client.post("/api/admin/bookings/10/confirm-final-payment", headers=headers).status_code, 403)
         self.conn.cursor.assert_not_called()
 
+    def test_extra_payment_reduces_final_cash_insert_to_500000(self):
+        self.cur.fetchone.side_effect = [self.actor, self.row(TotalAmount=900000, InvoiceAmount=900000,
+                                                             InvoicePaidAmount=300000), (300000, 0, 100000), (51,)]
+        response = self.confirm()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["amount"], 500000)
+        payment_inserts = [c for c in self.cur.execute.call_args_list if "INSERT INTO Payments" in c.args[0]]
+        self.assertEqual(len(payment_inserts), 1)
+        self.assertEqual(payment_inserts[0].args[3], 500000)
+        self.assertIn("'FINAL_PAYMENT'", payment_inserts[0].args[0])
+        self.assertIn("'CASH'", payment_inserts[0].args[0])
+        self.conn.commit.assert_called_once()
+
+    def test_partial_final_still_blocks_another_cash_payment(self):
+        self.cur.fetchone.side_effect = [self.actor, self.row(), (30000, 10000, 10000)]
+        response = self.confirm()
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json["code"], "FINAL_PAYMENT_EXISTS")
+        self.conn.commit.assert_not_called()
+
+    def test_settlement_can_confirm_with_extra_but_not_existing_final(self):
+        for receipts, allowed in (((30000, 0, 10000), True), ((30000, 10000, 10000), False),
+                                  ((30000, 0, 70000), False)):
+            self.cur.fetchone.side_effect = [self.actor, self.row(), receipts]
+            response = self.client.get("/api/bookings/10/settlement", headers=self.headers)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json["canConfirm"], allowed)
+
     def test_failed_invoice_update_rolls_back_payment(self):
-        self.cur.fetchone.side_effect = [self.actor, self.row(), (30000, 0), (51,)]
+        self.cur.fetchone.side_effect = [self.actor, self.row(), (30000, 0, 0), (51,)]
         def execute(sql, *params):
             if "UPDATE Invoices" in sql:
                 raise RuntimeError("Synthetic failure after payment insert")
