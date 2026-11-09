@@ -3,6 +3,11 @@
   background: #f7faf8;
 }
 
+.profile-page-shell-admin { min-height: 0; background: transparent; }
+.profile-page-shell-admin .profile-page { min-height: 0; padding: 28px 0 48px; }
+.profile-page-shell-admin .profile-container { max-width: 1200px; }
+.profile-page-shell-admin .profile-heading h1 { color: #183b30; }
+
 
 .profile-page {
   min-height: calc(100vh - 64px);
