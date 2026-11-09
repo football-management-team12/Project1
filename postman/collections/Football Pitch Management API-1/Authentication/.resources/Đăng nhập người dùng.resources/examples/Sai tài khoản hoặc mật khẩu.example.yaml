@@ -9,7 +9,7 @@ request:
     content: |-
       {
         "account": "admin",
-        "password": "123456"
+        "password": "123457"
       }
 response:
   statusCode: 401

@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/43/invoice"
+method: GET
+order: 4093

@@ -1,0 +1,12 @@
+$kind: http-request
+name: Cập nhật trạng thái Booking lên COMPLETED
+url: "{{baseUrl}}/api/bookings/32/status"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \    \"Status\": \"COMPLETED\"\r
+
+    }"
+order: 26083

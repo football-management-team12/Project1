@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{baseUrl}}/api/bookings/32/status"
+url: "{{baseUrl}}/api/bookings/37/status"
 method: PATCH
 body:
   type: json
@@ -8,4 +8,4 @@ body:
     \    \"Status\": \"COMPLETED\"\r
 
     }"
-order: 26000
+order: 28000
