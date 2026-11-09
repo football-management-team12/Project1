@@ -94,10 +94,10 @@ def list_invoices(user_id, params):
         elif status:
             where.append("C.InvoiceID IS NULL")
             if status != "ACTIVE":
-                # Exactly the SUCCESS DEPOSIT/FINAL_PAYMENT arithmetic used by UC09.
+                # Same SUCCESS DEPOSIT/FINAL_PAYMENT/EXTRA receipts as UC09.
                 paid = """(SELECT COALESCE(SUM(P.Amount),0) FROM dbo.Payments P
                            WHERE P.BookingID=B.BookingID AND P.Status='SUCCESS'
-                           AND P.PaymentType IN ('DEPOSIT','FINAL_PAYMENT'))"""
+                           AND P.PaymentType IN ('DEPOSIT','FINAL_PAYMENT','EXTRA'))"""
                 where.append({"UNPAID": f"{paid}=0", "PAID": f"{paid}=B.TotalAmount",
                               "PARTIALLY_PAID": f"{paid}>0 AND {paid}<B.TotalAmount"}[status])
         if customer:

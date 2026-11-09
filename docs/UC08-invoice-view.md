@@ -14,7 +14,7 @@ remain as compatibility aliases; the invoice UI uses the canonical properties.
 The existing SQL model uses `Invoices.InvoiceID`, `BookingID`, `Amount`,
 `PaidAmount`, `PaymentStatus`, `CreatedDate`; `Bookings.TotalAmount` stores the
 booked price. UC08 reuses UC09's Decimal arithmetic and consistency checks:
-only successful DEPOSIT and FINAL_PAYMENT records count toward paid amount.
+only successful DEPOSIT, FINAL_PAYMENT and EXTRA records count toward paid amount.
 UNPAID means zero paid; PARTIALLY_PAID means paid below total; PAID means zero
 remaining. Failed/pending payments do not count. Current field prices are never
 used to recalculate historical bookings. No migration is needed or included.

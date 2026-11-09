@@ -4,10 +4,10 @@ SELECT
     COALESCE(SUM(CASE WHEN P.Status = 'SUCCESS' AND P.PaymentType = 'DEPOSIT'
         THEN P.Amount ELSE 0 END), 0) AS DepositAmount,
     COALESCE(SUM(CASE WHEN P.Status = 'SUCCESS'
-        AND P.PaymentType IN ('DEPOSIT', 'FINAL_PAYMENT')
+        AND P.PaymentType IN ('DEPOSIT', 'FINAL_PAYMENT', 'EXTRA')
         THEN P.Amount ELSE 0 END), 0) AS PaidAmount,
     B.TotalAmount - COALESCE(SUM(CASE WHEN P.Status = 'SUCCESS'
-        AND P.PaymentType IN ('DEPOSIT', 'FINAL_PAYMENT')
+        AND P.PaymentType IN ('DEPOSIT', 'FINAL_PAYMENT', 'EXTRA')
         THEN P.Amount ELSE 0 END), 0) AS RemainingAmount,
     F.FieldID, F.IsArchived
 FROM Bookings B

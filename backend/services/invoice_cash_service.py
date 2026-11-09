@@ -105,8 +105,8 @@ def _booking(
 def _successful_payments(
     cursor: Any,
     booking_id: int
-) -> tuple[Decimal, Decimal]:
-    """Cộng tiền cọc và tiền cuối đã SUCCESS."""
+) -> tuple[Decimal, Decimal, Decimal]:
+    """Successful booking receipts: deposit, final cash and previously paid EXTRA."""
 
     cursor.execute(
         """
@@ -131,7 +131,8 @@ def _successful_payments(
                     END
                 ),
                 0
-            )
+            ),
+            COALESCE(SUM(CASE WHEN PaymentType = 'EXTRA' THEN Amount ELSE 0 END), 0)
 
         FROM Payments
 
@@ -139,31 +140,32 @@ def _successful_payments(
           AND Status = 'SUCCESS'
           AND PaymentType IN (
               'DEPOSIT',
-              'FINAL_PAYMENT'
+              'FINAL_PAYMENT', 'EXTRA'
           )
         """,
         booking_id
     )
 
-    deposit, final_payment = cursor.fetchone()
+    deposit, final_payment, extra = cursor.fetchone()
 
-    return _money(deposit), _money(final_payment)
+    return _money(deposit), _money(final_payment), _money(extra)
 
 
 def _summary(cursor: Any, row: Any) -> dict[str, Any]:
     total = _money(row.TotalAmount)
 
-    deposit, final_payment = _successful_payments(
+    deposit, final_payment, extra = _successful_payments(
         cursor,
         row.BookingID
     )
 
-    paid = deposit + final_payment
+    paid = deposit + final_payment + extra
 
     if (
         total <= 0
         or deposit < 0
         or final_payment < 0
+        or extra < 0
         or paid > total
     ):
         raise PaymentError(
@@ -208,6 +210,8 @@ def _summary(cursor: Any, row: Any) -> dict[str, Any]:
         ).upper(),
         "totalAmount": float(total),
         "depositAmount": float(deposit),
+        "extraAmount": float(extra),
+        "finalPaymentAmount": float(final_payment),
         "paidAmount": float(paid),
         "remainingAmount": float(remaining),
         "status": status,
@@ -258,6 +262,7 @@ def get_settlement(
             and info["bookingStatus"] == "COMPLETED"
             and info["depositAmount"] > 0
             and info["remainingAmount"] > 0
+            and info["finalPaymentAmount"] == 0
             and str(
                 row.InvoicePaymentStatus or ""
             ).upper() != "PAID"
@@ -325,7 +330,7 @@ def confirm_final_cash_payment(
                 "ALREADY_PAID"
             )
 
-        if info["paidAmount"] > info["depositAmount"]:
+        if info["finalPaymentAmount"] > 0:
             raise PaymentError(
                 "Đã có thanh toán cuối",
                 409,
@@ -354,7 +359,7 @@ def confirm_final_cash_payment(
                 """,
                 booking_id,
                 total,
-                _money(info["depositAmount"])
+                _money(info["paidAmount"])
             )
 
             invoice_id = int(cursor.fetchone()[0])

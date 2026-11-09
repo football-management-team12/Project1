@@ -43,7 +43,7 @@ Không tìm thấy invoice trả 404; dữ liệu số tiền không nhất quá
 ## Trạng thái và bảo toàn UC trước
 
 `invoiceStatus` là trạng thái quản trị riêng: ACTIVE hoặc CANCELLED.
-`paymentStatus` luôn tính theo SUCCESS DEPOSIT + FINAL_PAYMENT, dùng nguyên `_summary`
+`paymentStatus` luôn tính theo SUCCESS DEPOSIT + FINAL_PAYMENT + EXTRA, dùng nguyên `_summary`
 của UC09. `status` của UC12 là CANCELLED khi đã hủy; nếu chưa hủy thì bằng paymentStatus.
 Tiền hoàn cọc hiển thị riêng, không trừ khỏi lịch sử tiền đã thu.
 
