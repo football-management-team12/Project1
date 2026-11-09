@@ -1,0 +1,5 @@
+$kind: http-request
+name: 08_1 – Customer không được truy cập API quản trị hóa đơn
+url: "{{baseUrl}}/api/admin/invoices/"
+method: GET
+order: 9000

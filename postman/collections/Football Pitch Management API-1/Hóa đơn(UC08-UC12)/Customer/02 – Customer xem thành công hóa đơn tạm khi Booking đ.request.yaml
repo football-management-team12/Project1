@@ -1,0 +1,5 @@
+$kind: http-request
+name: 02 – Customer xem thành công hóa đơn tạm khi Booking đã đặt cọc SUCCESS
+url: "{{baseUrl}}/api/bookings/42/invoice"
+method: GET
+order: 2000

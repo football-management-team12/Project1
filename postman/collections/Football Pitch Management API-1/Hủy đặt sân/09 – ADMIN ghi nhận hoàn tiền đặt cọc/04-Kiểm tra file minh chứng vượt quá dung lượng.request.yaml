@@ -1,0 +1,33 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/27/deposit-refund"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"transactionReference\": \"REFUND-20261027-003\",\r
+
+    \  \"evidenceBase64\": \"{{largeEvidence}}\",\r
+
+    \  \"evidenceMimeType\": \"image/png\",\r
+
+    \  \"evidenceFileName\": \"large-file-proof.png\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: ""
+    language: text/javascript
+  - type: beforeRequest
+    code: "// Tự động tạo một chuỗi có độ dài khoảng 3 triệu ký tự (vượt quá dung
+      lượng 2MB)\r
+
+      var largeString = new Array(3000000).join('A');\r
+
+      \r
+
+      // Lưu vào biến môi trường hoặc biến collection để gọi trong Body\r
+
+      pm.environment.set(\"largeEvidence\", largeString);"
+    language: text/javascript
+order: 1000

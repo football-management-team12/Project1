@@ -1,0 +1,18 @@
+$kind: http-request
+name: 06-API từ chối định dạng không hợp lệ.
+url: "{{baseUrl}}/api/bookings/27/deposit-refund"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"transactionReference\": \"REFUND-20261027-004\",\r
+
+    \  \"evidenceBase64\": \"ABC@@@123\",\r
+
+    \  \"evidenceMimeType\": \"image/png\",\r
+
+    \  \"evidenceFileName\": \"refund-proof.png\"\r
+
+    }"
+order: 2962

@@ -1,0 +1,6 @@
+name: Environment2
+values:
+  - key: baseUrl
+    value: ''
+  - key: accessToken
+    value: ''

@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/cancellation-requests/3/decision"
+method: POST
+order: 2000

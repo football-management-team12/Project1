@@ -1,4 +1,4 @@
 $kind: http-request
-url: ""
-method: GET
+url: "{{baseUrl}}/api/admin/bookings/36/confirm-final-payment"
+method: POST
 order: 1000

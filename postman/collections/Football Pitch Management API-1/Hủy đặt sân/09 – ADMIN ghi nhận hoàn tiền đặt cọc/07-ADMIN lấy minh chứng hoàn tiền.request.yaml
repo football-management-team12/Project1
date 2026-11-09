@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/21/deposit-refund/evidence"
+method: GET
+order: 6000

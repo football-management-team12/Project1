@@ -1,0 +1,5 @@
+$kind: http-request
+name: 01-CUSTOMER gửi liên tiếp yêu cầu hủy cho cùng một booking
+url: "{{baseUrl}}/api/bookings/24/cancellation-requests"
+method: POST
+order: 1000

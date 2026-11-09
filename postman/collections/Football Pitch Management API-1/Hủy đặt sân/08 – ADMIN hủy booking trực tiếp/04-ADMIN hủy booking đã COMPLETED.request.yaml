@@ -3,6 +3,6 @@ url: "{{baseUrl}}/api/bookings/:booking_id/cancel"
 method: POST
 pathVariables:
   - key: booking_id
-    value: "16"
+    value: "37"
     description: ""
 order: 3000

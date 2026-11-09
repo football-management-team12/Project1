@@ -4,4 +4,4 @@ url: "{{baseUrl}}/api/bookings/24/cancellation"
 method: GET
 auth:
   type: noauth
-order: 6000
+order: 7000
