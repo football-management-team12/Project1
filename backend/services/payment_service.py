@@ -4,6 +4,7 @@ from decimal import Decimal, ROUND_DOWN
 from urllib.parse import quote
 
 from database import get_connection
+from services.availability_service import expire_pending_bookings
 
 
 # ============================================================
@@ -730,233 +731,53 @@ def _vietqr(
 # GET /api/bookings/<booking_id>/deposit
 # ============================================================
 
-def get_deposit_info(
-    user_id,
-    booking_id,
-):
-
-    conn = (
-        get_connection()
-    )
-
-
+def get_deposit_info(user_id, booking_id):
+    conn = get_connection()
     if conn is None:
-
-        raise PaymentError(
-            "Không thể kết nối database",
-            500,
-            "DATABASE_UNAVAILABLE",
-        )
-
-
-    cursor = (
-        conn.cursor()
-    )
-
-
+        raise PaymentError("Kh?ng th? k?t n?i database", 500, "DATABASE_UNAVAILABLE")
+    cursor = conn.cursor()
     try:
-
-        _check_customer(
-            cursor,
-            user_id,
-        )
-
-
-        booking = (
-            _get_booking(
-                cursor,
-                booking_id,
-                user_id,
-            )
-        )
-
-
-        deadline = (
-            _deadline(
-                booking
-            )
-        )
-
-
-        payment_row = (
-            _latest_deposit(
-                cursor,
-                booking_id,
-            )
-        )
-
-
-        payment = (
-            _payment_dict(
-                payment_row
-            )
-        )
-
-
-        expired = (
-            _database_now(cursor)
-            >=
-            deadline
-        )
-
-        if expired:
-            cursor.execute(
-                """
-                UPDATE Bookings
-                SET Status = 'CANCELLED'
-                WHERE BookingID = ?
-                  AND UPPER(LTRIM(RTRIM(Status))) = 'PENDING'
-                  AND NOT EXISTS (
-                      SELECT 1 FROM dbo.BookingCancellationRequests R
-                      WHERE R.BookingID = Bookings.BookingID AND R.Status = 'PENDING_REVIEW'
-                  )
-                """,
-                booking_id,
-            )
-            cursor.execute(
-                """
-                UPDATE Payments
-                SET Status = 'EXPIRED', UpdatedAt = GETDATE()
-                WHERE BookingID = ?
-                  AND PaymentType = 'DEPOSIT'
-                  AND UPPER(LTRIM(RTRIM(Status))) = 'PENDING'
-                """,
-                booking_id,
-            )
-            conn.commit()
-            booking = _get_booking(cursor, booking_id, user_id)
-            payment_row = _latest_deposit(cursor, booking_id)
-            payment = _payment_dict(payment_row)
-
-
-        if payment:
-
-            status = (
-                payment[
-                    "status"
-                ]
-            )
-
-        elif expired:
-
-            status = (
-                "EXPIRED"
-            )
-
-        else:
-
-            status = (
-                "NOT_CREATED"
-            )
-
-
-        if (
-            payment
-            and
-            status == "PENDING"
-            and
-            expired
-        ):
-
-            status = (
-                "EXPIRED"
-            )
-
-
-        amount = (
-            _deposit_amount(
-                booking.TotalAmount
-            )
-        )
-
-
-        reference = (
-
-            payment[
-                "reference"
-            ]
-
-            if payment
-
-            else
-
-            (
-                f"BOOKING-"
-                f"{booking_id}"
-                f"-DEPOSIT"
-            )
-        )
-
-
-        return {
-
-            "booking":
-                _booking_dict(
-                    booking
-                ),
-
-            "depositAmount":
-                float(
-                    amount
-                ),
-
-            "depositRate":
-                float(
-                    Decimal("1")
-                    /
-                    DEPOSIT_DIVISOR
-                ),
-
-            "depositRatio":
-                "1/3",
-
-            "depositRoundStep":
-                int(
-                    DEPOSIT_ROUND_STEP
-                ),
-
-            "depositMinAmount":
-                int(
-                    DEPOSIT_MIN_AMOUNT
-                ),
-
-            "deadline":
-                _iso(
-                    deadline
-                ),
-
-            "isExpired":
-                expired,
-
-            "currentPaymentStatus":
-                status,
-
-            "payment":
-                payment,
-
-            "vietQr":
-                _vietqr(
-                    amount,
-                    reference,
-                ),
-
-            "demoMode":
-                payment_demo_mode(),
-
+        cursor.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+        _check_customer(cursor, user_id)
+        # Verify ownership before expiry, then serialize against successful payment.
+        _get_booking(cursor, booking_id, user_id, lock=True)
+        expire_pending_bookings(cursor, booking_id=booking_id)
+        booking = _get_booking(cursor, booking_id, user_id)
+        payment_row = _latest_deposit(cursor, booking_id)
+        payment = _payment_dict(payment_row)
+        deadline = (payment_row.Deadline if payment_row is not None
+                    and isinstance(payment_row.Deadline, datetime) else _deadline(booking))
+        expired = _database_now(cursor) >= deadline
+        status = payment["status"] if payment else ("EXPIRED" if expired else "NOT_CREATED")
+        amount = _deposit_amount(booking.TotalAmount)
+        reference = payment["reference"] if payment else f"BOOKING-{booking_id}-DEPOSIT"
+        result = {
+            "booking": _booking_dict(booking),
+            "depositAmount": float(amount),
+            "depositRate": float(Decimal("1") / DEPOSIT_DIVISOR),
+            "depositRatio": "1/3",
+            "depositRoundStep": int(DEPOSIT_ROUND_STEP),
+            "depositMinAmount": int(DEPOSIT_MIN_AMOUNT),
+            "deadline": _iso(deadline),
+            "isExpired": expired,
+            "currentPaymentStatus": status,
+            "payment": payment,
+            "vietQr": _vietqr(amount, reference),
+            "demoMode": payment_demo_mode(),
         }
-
-
+        # Both status updates commit together; any SQL/serialization error rolls back.
+        conn.commit()
+        return result
+    except Exception:
+        conn.rollback()
+        raise
     finally:
-
         cursor.close()
-
         conn.close()
 
 
 # ============================================================
 # CREATE DEPOSIT
-#
-# POST /api/bookings/<booking_id>/deposit
 # ============================================================
 
 def create_deposit(
