@@ -1390,10 +1390,14 @@ paths:
               required: [decision]
               properties:
                 decision: { type: string, enum: [APPROVED, REJECTED] }
-                note: { type: string, maxLength: 500 }
+                note:
+                  type: string
+                  maxLength: 500
+                  description: "Bắt buộc khi decision=REJECTED; không được rỗng/chỉ có khoảng trắng sau khi trim. Tùy chọn khi APPROVED."
       responses:
         '200': { description: "APPROVED -> CANCELLED + audit + release slot; REJECTED -> giữ booking" }
-        '400': { description: "Thiếu note khi từ chối hoặc input sai" }
+        '400':
+          description: "REVIEW_NOTE_REQUIRED khi từ chối thiếu note/null/rỗng/chỉ khoảng trắng; INVALID_TEXT khi note sai kiểu hoặc quá dài. Không cập nhật trạng thái."
         '401': { description: "Thiếu/sai JWT" }
         '403': { description: "Không phải ADMIN" }
         '404': { description: "Không có request" }
