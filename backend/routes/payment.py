@@ -172,6 +172,7 @@ def create_booking_deposit(
 @payment_bp.route(
     "/payments/<int:payment_id>/demo-status",
     methods=["PATCH"],
+    strict_slashes=False,
 )
 @jwt_required
 @role_required(
