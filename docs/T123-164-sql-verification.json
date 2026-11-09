@@ -1,0 +1,23 @@
+{
+  "verifiedAt": "2026-11-09T18:49:42.431241+00:00",
+  "engine": "SQL Server",
+  "mode": "Session table-variable fixtures only",
+  "applicationTableWrites": 0,
+  "bookingStatesChecked": 12,
+  "repeatEvent": "idempotent",
+  "states": {
+    "1": "CANCELLED",
+    "2": "PENDING",
+    "3": "CONFIRMED",
+    "4": "COMPLETED",
+    "5": "CANCELLED",
+    "6": "PENDING",
+    "7": "PENDING",
+    "8": "PENDING",
+    "9": "PENDING",
+    "10": "CANCELLED",
+    "11": "PENDING",
+    "12": "PENDING"
+  },
+  "limitations": "Does not verify physical row locks or live concurrent financial writes."
+}
