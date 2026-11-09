@@ -348,7 +348,7 @@ paths:
       - UC08 - Invoice View
       operationId: getBookingInvoice
       summary: View booking invoice or provisional invoice
-      description: 'Without an Invoices row, a positive SUCCESS deposit returns a provisional view: invoiceId=null, isProvisional=true, createdDate=null. Without an issued invoice or successful deposit, returns 404. An issued invoice has isProvisional=false. Valid Bearer JWT and an ACTIVE SQL Server account are required. CUSTOMER may view only their own booking; ADMIN may view any booking. Total is Bookings.TotalAmount, never the current field price. Paid amount sums SUCCESS DEPOSIT, FINAL_PAYMENT and EXTRA records; remaining = total - paid. UNPAID means zero paid, PARTIALLY_PAID means a positive balance, PAID means zero remaining. UC07 refunds are reported separately from receipts. Archived fields remain visible. GET performs no writes and never issues an invoice. canConfirm is always false; use UC09 for settlement eligibility and cash confirmation.'
+      description: 'Without an Invoices row, a positive SUCCESS deposit returns a provisional view: invoiceId=null, isProvisional=true, createdDate=null. A confirmed/completed/cancelled zero-total booking may also return a complimentary provisional view without payment. Otherwise, without an issued invoice or successful deposit, returns 404. An issued invoice has isProvisional=false. Valid Bearer JWT and an ACTIVE SQL Server account are required. CUSTOMER may view only their own booking; ADMIN may view any booking. Total is Bookings.TotalAmount, never the current field price. Paid amount sums SUCCESS DEPOSIT, FINAL_PAYMENT and EXTRA records; remaining = total - paid. UNPAID means zero paid, PARTIALLY_PAID means a positive balance, PAID means zero remaining. UC07 refunds are reported separately from receipts. Archived fields remain visible. GET performs no writes and never issues an invoice. canConfirm is always false; use UC09 for settlement eligibility and cash confirmation.'
       security:
       - BearerAuth: []
       parameters:
@@ -1480,10 +1480,15 @@ paths:
       tags: [Payments]
       operationId: createBookingDeposit
       summary: UC06 - Tạo đặt cọc VietQR demo
-      description: Không cần request body. Backend tự tính tiền cọc; không dùng amount/paymentMethod do client truyền.
+      description: 'Không cần request body. Backend dùng TotalAmount đã lưu, không nhận amount/TotalAmount/paymentMethod từ client. TotalAmount=0 trả 200, xác nhận booking và hết hạn cọc PENDING cũ, không tạo Payment/Invoice/QR. TotalAmount dương giữ luồng cọc hiện có và HTTP 201.'
       security:
         - BearerAuth: []
       responses:
+        '200':
+          description: Stored total is zero; booking confirmed without creating a payment, invoice or QR. Existing successful receipts or mismatched invoice return 409.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ComplimentaryBookingResponse' }
         '201':
           description: Tạo DEPOSIT / VIETQR / PENDING
           content:
@@ -1945,9 +1950,12 @@ components:
           type: integer
           nullable: true
           description: Issued invoice ID; null for a provisional invoice.
+        isComplimentary:
+          type: boolean
+          description: Zero-total booking; no deposit or cash collection required.
         isProvisional:
           type: boolean
-          description: True when there is no Invoices row but a positive successful deposit exists. GET never inserts a row.
+          description: True when no issued invoice exists and either a successful deposit exists or a confirmed/completed/cancelled booking has a zero total. GET never inserts an invoice or payment.
         bookingId:
           type: integer
         bookingStatus:
@@ -2324,6 +2332,7 @@ components:
         updatedAt: { type: string, format: date-time, nullable: true }
     DepositVietQr:
       type: object
+      nullable: true
       properties:
         bankId: { type: string, nullable: true, example: MB }
         accountNo: { type: string, nullable: true, example: '0000000000' }
@@ -2334,6 +2343,8 @@ components:
     DepositInfoResponse:
       type: object
       properties:
+        requiresDeposit: { type: boolean, description: False only for a stored zero-total booking; absent or true for ordinary deposits. }
+        isComplimentary: { type: boolean }
         booking: { $ref: '#/components/schemas/DepositBooking' }
         depositAmount: { type: number, example: 200000 }
         depositRate: { type: number, example: 0.3333333333333333 }
@@ -2356,6 +2367,15 @@ components:
             depositRatio: { type: string, example: '1/3' }
             vietQr: { $ref: '#/components/schemas/DepositVietQr' }
             demoMode: { type: boolean, example: true }
+    ComplimentaryBookingResponse:
+      allOf:
+        - { $ref: '#/components/schemas/DepositInfoResponse' }
+        - type: object
+          properties:
+            status: { type: string, enum: [NOT_REQUIRED] }
+            bookingStatus: { type: string, enum: [CONFIRMED] }
+            paymentId: { type: integer, nullable: true }
+            message: { type: string }
     DemoStatusResponse:
       type: object
       properties:

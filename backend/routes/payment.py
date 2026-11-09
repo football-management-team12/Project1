@@ -131,7 +131,7 @@ def create_booking_deposit(
 
         return jsonify(
             result
-        ), 201
+        ), (200 if result.get("requiresDeposit") is False else 201)
 
 
     except PaymentError as error:

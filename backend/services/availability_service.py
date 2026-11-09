@@ -43,6 +43,7 @@ def expire_pending_bookings(cursor, booking_id=None):
         SET Status = 'CANCELLED'
         FROM dbo.Bookings B WITH (UPDLOCK, HOLDLOCK)
         WHERE UPPER(LTRIM(RTRIM(B.Status))) = 'PENDING'
+          AND B.TotalAmount > 0
           AND (
               EXISTS (SELECT 1 FROM dbo.Payments P WHERE P.BookingID = B.BookingID
                       AND P.PaymentType = 'DEPOSIT' AND P.Status = 'PENDING'
@@ -95,7 +96,7 @@ def release_booking_for_expired_deposit(cursor, booking_id, payment_id):
         UPDATE B
         SET Status = 'CANCELLED'
         FROM dbo.Bookings B WITH (UPDLOCK, HOLDLOCK)
-        WHERE B.BookingID = ? AND B.Status = 'PENDING'
+        WHERE B.BookingID = ? AND B.Status = 'PENDING' AND B.TotalAmount > 0
           AND EXISTS (
               SELECT 1 FROM dbo.Payments E
               WHERE E.PaymentID = ? AND E.BookingID = B.BookingID

@@ -57,7 +57,7 @@ function InvoiceView({ invoiceId, bookingId, onRefresh, adminView }) {
         <h2>{invoice.isProvisional ? "Hóa đơn tạm thời" : `Hóa đơn #${invoice.invoiceId}`} · Booking #{invoice.bookingId}</h2>
         <p className={`invoice-status invoice-status-${invoice.paymentStatus?.toLowerCase()}`}>{statuses[invoice.paymentStatus] || invoice.paymentStatus}</p>
         {invoice.isProvisional && <p>
-          Đã ghi nhận đặt cọc thành công.
+          {invoice.isComplimentary ? "Booking miễn phí, không yêu cầu thanh toán." : "Đã ghi nhận đặt cọc thành công."}
           {" "}Hóa đơn tạm thời chưa có mã hóa đơn chính thức.
         </p>}
         {invoice.remainingAmount > 0 && invoice.bookingStatus !== "CANCELLED" && <p className="invoice-balance-notice" role="status">

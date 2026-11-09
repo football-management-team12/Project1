@@ -731,16 +731,68 @@ def _vietqr(
 # GET /api/bookings/<booking_id>/deposit
 # ============================================================
 
+def _validate_zero_total(cursor, booking_id):
+    """Never hide a successful receipt or rewrite an inconsistent issued invoice."""
+    cursor.execute("""SELECT TOP 1 PaymentID FROM Payments WITH (UPDLOCK, HOLDLOCK)
+                      WHERE BookingID = ? AND Status = 'SUCCESS'""", booking_id)
+    if cursor.fetchone() is not None:
+        raise PaymentError("Booking 0 đồng đã có khoản thu; cần đối soát trước", 409, "PAYMENT_MISMATCH")
+    cursor.execute("SELECT Amount, PaidAmount FROM Invoices WHERE BookingID = ?", booking_id)
+    invoice = cursor.fetchone()
+    if invoice is not None and (invoice.Amount is None or invoice.PaidAmount is None
+                                or _money(invoice.Amount) != 0 or _money(invoice.PaidAmount) != 0):
+        raise PaymentError("Hóa đơn không khớp booking 0 đồng", 409, "INVOICE_MISMATCH")
+
+
+def _zero_total_response(booking):
+    return {
+        "booking": _booking_dict(booking), "bookingId": booking.BookingID,
+        "bookingStatus": str(booking.Status or "").strip().upper(),
+        "requiresDeposit": False, "isComplimentary": True,
+        "depositAmount": 0, "amount": 0, "depositRate": 0, "depositRatio": "NOT_REQUIRED",
+        "depositRoundStep": int(DEPOSIT_ROUND_STEP), "depositMinAmount": 0,
+        "deadline": None, "isExpired": False, "currentPaymentStatus": "NOT_REQUIRED",
+        "status": "NOT_REQUIRED", "payment": None, "paymentId": None, "vietQr": None,
+        "demoMode": False, "message": "Booking miễn phí, không cần đặt cọc",
+    }
+
+
+def _confirm_zero_total(cursor, user_id, booking):
+    if str(booking.Status or "").strip().upper() not in {"PENDING", "CONFIRMED"}:
+        raise PaymentError("Booking hiện không thể xác nhận", 409, "BOOKING_NOT_PAYABLE")
+    _validate_zero_total(cursor, booking.BookingID)
+    cursor.execute("""SELECT TOP 1 RequestID FROM dbo.BookingCancellationRequests
+                      WHERE BookingID = ? AND Status = 'PENDING_REVIEW'""", booking.BookingID)
+    if cursor.fetchone() is not None:
+        raise PaymentError("Booking đang chờ duyệt hủy", 409, "REQUEST_PENDING")
+    # Invalidate old unpaid attempts without inventing a zero-value SUCCESS payment.
+    cursor.execute("""UPDATE Payments SET Status='EXPIRED', UpdatedAt=GETDATE()
+                      WHERE BookingID=? AND PaymentType='DEPOSIT' AND Status='PENDING'""", booking.BookingID)
+    cursor.execute("""UPDATE Bookings SET Status='CONFIRMED'
+                      WHERE BookingID=? AND Status='PENDING'""", booking.BookingID)
+    return _zero_total_response(_get_booking(cursor, booking.BookingID, user_id))
+
+
 def get_deposit_info(user_id, booking_id):
     conn = get_connection()
     if conn is None:
-        raise PaymentError("Kh?ng th? k?t n?i database", 500, "DATABASE_UNAVAILABLE")
+        raise PaymentError("Không thể kết nối database", 500, "DATABASE_UNAVAILABLE")
     cursor = conn.cursor()
     try:
         cursor.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
         _check_customer(cursor, user_id)
         # Verify ownership before expiry, then serialize against successful payment.
-        _get_booking(cursor, booking_id, user_id, lock=True)
+        booking = _get_booking(cursor, booking_id, user_id, lock=True)
+        if booking.TotalAmount is None:
+            raise PaymentError("Tổng tiền booking không hợp lệ", 409, "INVALID_BOOKING_AMOUNT")
+        total = _money(booking.TotalAmount)
+        if total == 0:
+            _validate_zero_total(cursor, booking_id)
+            result = _zero_total_response(booking)
+            conn.commit()
+            return result
+        if total < 0:
+            raise PaymentError("Tổng tiền booking không hợp lệ", 409, "INVALID_BOOKING_AMOUNT")
         expire_pending_bookings(cursor, booking_id=booking_id)
         booking = _get_booking(cursor, booking_id, user_id)
         payment_row = _latest_deposit(cursor, booking_id)
@@ -830,6 +882,13 @@ def create_deposit(
             )
         )
 
+
+        if booking.TotalAmount is None or _money(booking.TotalAmount) < 0:
+            raise PaymentError("Tổng tiền booking không hợp lệ", 409, "INVALID_BOOKING_AMOUNT")
+        if _money(booking.TotalAmount) == 0:
+            result = _confirm_zero_total(cursor, user_id, booking)
+            conn.commit()
+            return result
 
         booking_status = (
             str(
@@ -1173,7 +1232,8 @@ def update_deposit_demo_status(
                 P.UpdatedAt,
 
                 B.Status
-                    AS BookingStatus
+                    AS BookingStatus,
+                B.TotalAmount AS BookingTotalAmount
 
             FROM Payments P
 
@@ -1295,6 +1355,9 @@ def update_deposit_demo_status(
 
 
         if new_status == "SUCCESS":
+
+            if _money(row.BookingTotalAmount) <= 0:
+                raise PaymentError("Booking không yêu cầu thu tiền cọc", 409, "BOOKING_NOT_PAYABLE")
 
             if (
                 booking_status

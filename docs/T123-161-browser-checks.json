@@ -1,0 +1,9 @@
+{
+  "passed": 3,
+  "scenarios": [
+    "Free booking: no QR/countdown, one confirmation and refresh",
+    "Cancelled free booking: no confirmation action",
+    "Positive booking: existing 200000 VND QR flow retained"
+  ],
+  "note": "Intercepted API fixtures; no SQL writes."
+}
