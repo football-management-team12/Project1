@@ -98,7 +98,7 @@ def list_invoices(user_id, params):
                 paid = """(SELECT COALESCE(SUM(P.Amount),0) FROM dbo.Payments P
                            WHERE P.BookingID=B.BookingID AND P.Status='SUCCESS'
                            AND P.PaymentType IN ('DEPOSIT','FINAL_PAYMENT','EXTRA'))"""
-                where.append({"UNPAID": f"{paid}=0", "PAID": f"{paid}=B.TotalAmount",
+                where.append({"UNPAID": f"{paid}=0 AND B.TotalAmount>0", "PAID": f"{paid}=B.TotalAmount",
                               "PARTIALLY_PAID": f"{paid}>0 AND {paid}<B.TotalAmount"}[status])
         if customer:
             escaped = customer.replace("~", "~~").replace("%", "~%").replace("_", "~_").replace("[", "~[")

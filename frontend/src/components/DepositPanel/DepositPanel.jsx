@@ -152,9 +152,10 @@ function DepositPanel({
     ""
   );
 
-  const [remainingSeconds, setRemainingSeconds] = useState(null);
+  const [remainingSecondsValue, setRemainingSeconds] = useState(null);
+  const remainingSeconds = deposit?.deadline && !deposit?.isExpired ? remainingSecondsValue : null;
   const onPaymentChangedRef = useRef(onPaymentChanged);
-  onPaymentChangedRef.current = onPaymentChanged;
+  useEffect(() => { onPaymentChangedRef.current = onPaymentChanged; }, [onPaymentChanged]);
 
 
   // =========================================================
@@ -308,7 +309,6 @@ function DepositPanel({
   useEffect(() => {
     const deadline = deposit?.deadline;
     if (!deadline || deposit?.isExpired) {
-      setRemainingSeconds(null);
       return undefined;
     }
 
@@ -327,9 +327,9 @@ function DepositPanel({
       }
     };
 
-    updateCountdown();
+    const firstTick = window.setTimeout(updateCountdown, 0);
     const intervalId = window.setInterval(updateCountdown, 1000);
-    return () => window.clearInterval(intervalId);
+    return () => { window.clearTimeout(firstTick); window.clearInterval(intervalId); };
   }, [deposit?.deadline, deposit?.isExpired, loadDeposit]);
 
 
@@ -357,17 +357,23 @@ function DepositPanel({
         );
 
 
-        await createDeposit(
+        const result = await createDeposit(
           bookingId
         );
 
 
         setMessage(
-          "Đã tạo mã QR đặt cọc. Quét QR để chuyển khoản đúng số tiền hiển thị."
+          result.requiresDeposit === false
+            ? "Đã xác nhận booking miễn phí, không cần thanh toán."
+            : "Đã tạo mã QR đặt cọc. Quét QR để chuyển khoản đúng số tiền hiển thị."
         );
 
 
         await loadDeposit();
+
+        if (result.requiresDeposit === false && onPaymentChangedRef.current) {
+          await onPaymentChangedRef.current();
+        }
 
 
       } catch (
@@ -519,6 +525,23 @@ function DepositPanel({
 
   }
 
+
+  if (deposit?.requiresDeposit === false) {
+    const status = String(deposit.booking?.status || bookingStatus || "").toUpperCase();
+    return <section className="deposit-panel" aria-label="Booking miễn phí">
+      <div className="deposit-panel-head"><h3>Booking miễn phí</h3><strong className="deposit-status deposit-status-success">Không cần đặt cọc</strong></div>
+      <p>Tổng tiền: <strong>0đ</strong>. Booking này không yêu cầu chuyển khoản hoặc tạo mã QR.</p>
+      <p>{status === "PENDING" ? "Xác nhận đặt sân để hoàn tất booking miễn phí."
+        : status === "CANCELLED" ? "Booking đã hủy."
+        : status === "COMPLETED" ? "Booking đã hoàn thành."
+        : "Booking đã được xác nhận."}</p>
+      {error && <p role="alert" className="deposit-error">{error}</p>}
+      {message && <p role="status">{message}</p>}
+      {status === "PENDING" && <button type="button" className="deposit-primary" onClick={handleCreate} disabled={actionLoading}>
+        <CheckCircle2 size={18} />{actionLoading ? "Đang xác nhận..." : "Xác nhận booking miễn phí"}
+      </button>}
+    </section>;
+  }
 
   const paymentStatus =
     String(

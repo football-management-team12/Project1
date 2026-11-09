@@ -52,6 +52,22 @@ class InvoiceViewTests(unittest.TestCase):
             self.assertEqual(response.json["paymentStatus"], "PARTIALLY_PAID")
         self.connection.commit.assert_not_called()
 
+    def test_confirmed_free_booking_has_read_only_provisional_view_without_fake_payment(self):
+        self.seed(self.row(TotalAmount=0, InvoiceID=None, Status="CONFIRMED"))
+        response = self.get("/api/bookings/10/invoice")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["paymentStatus"], "PAID")
+        self.assertEqual(response.json["remainingAmount"], 0)
+        self.assertEqual(response.json["paidAmount"], 0)
+        self.assertTrue(response.json["isComplimentary"])
+        self.assertTrue(response.json["isProvisional"])
+        self.assertIsNone(response.json["invoiceId"])
+        self.assert_read_only()
+
+    def test_free_booking_with_successful_money_is_a_mismatch(self):
+        self.seed(self.row(TotalAmount=0, InvoiceID=None, Status="CONFIRMED"), deposit=100000)
+        self.assertEqual(self.get("/api/bookings/10/invoice").status_code, 409)
+
     def get(self, path="/api/invoices/20", user_id=1, role="CUSTOMER", token=None):
         return self.client.get(path, headers={"Authorization": "Bearer " + (
             token if token is not None else create_access_token(user_id, role))})

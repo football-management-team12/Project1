@@ -31,9 +31,11 @@ def get_invoice(user_id, *, invoice_id=None, booking_id=None):
             raise PaymentError("Bạn không có quyền xem hóa đơn này", 403, "FORBIDDEN")
         info = _summary(cursor, row)
         provisional = row.InvoiceID is None
-        if provisional and (invoice_id is not None or info["depositAmount"] <= 0):
+        complimentary = info["totalAmount"] == 0 and info["bookingStatus"] in {"CONFIRMED", "COMPLETED", "CANCELLED"}
+        if provisional and (invoice_id is not None or (info["depositAmount"] <= 0 and not complimentary)):
             raise PaymentError("Booking chưa có hóa đơn; cần đặt cọc thành công", 404, "INVOICE_NOT_FOUND")
         info["isProvisional"] = provisional
+        info["isComplimentary"] = complimentary
         # Jira UC08 contract. Preserve UC09-compatible aliases for existing clients.
         info["paymentStatus"] = info["status"]
         info["field"] = {

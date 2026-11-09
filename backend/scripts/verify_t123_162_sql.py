@@ -18,11 +18,11 @@ from services.availability_service import expire_pending_bookings
 
 FIXTURES = """
 SET NOCOUNT ON;
-DECLARE @Bookings TABLE (BookingID INT PRIMARY KEY, Status VARCHAR(30), CreatedAt DATETIME);
+DECLARE @Bookings TABLE (BookingID INT PRIMARY KEY, Status VARCHAR(30), CreatedAt DATETIME, TotalAmount DECIMAL(18,2) DEFAULT 600000);
 DECLARE @Payments TABLE (PaymentID INT PRIMARY KEY, BookingID INT, PaymentType VARCHAR(30),
                         Status VARCHAR(30), Deadline DATETIME, UpdatedAt DATETIME);
 DECLARE @Requests TABLE (BookingID INT, Status VARCHAR(30));
-INSERT @Bookings VALUES
+INSERT @Bookings (BookingID,Status,CreatedAt) VALUES
  (1,'PENDING',GETDATE()), (2,'PENDING',DATEADD(HOUR,-1,GETDATE())),
  (3,'PENDING',DATEADD(HOUR,-1,GETDATE())), (4,'PENDING',DATEADD(HOUR,-1,GETDATE())),
  (5,'COMPLETED',DATEADD(HOUR,-1,GETDATE())), (6,'CANCELLED',DATEADD(HOUR,-1,GETDATE())),

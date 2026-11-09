@@ -204,6 +204,18 @@ class AdminInvoiceTests(unittest.TestCase):
         self.assertFalse(response.json["canCancel"])
         self.conn.commit.assert_not_called()
 
+    def test_zero_value_issued_invoice_is_paid_not_unpaid(self):
+        self.cur.fetchone.side_effect = [self.actor, (0, 0, 0)]
+        self.cur.fetchall.return_value = [self.row(TotalAmount=0, InvoiceAmount=0, Status="CONFIRMED")]
+        response = self.request("/api/admin/invoices?status=PAID")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["items"][0]["paymentStatus"], "PAID")
+        self.cur.fetchone.side_effect = [self.actor]
+        self.cur.fetchall.return_value = []
+        self.assertEqual(self.request("/api/admin/invoices?status=UNPAID").status_code, 200)
+        query = next(c.args[0] for c in reversed(self.cur.execute.call_args_list) if "OFFSET" in c.args[0])
+        self.assertIn("B.TotalAmount>0", query)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -33,7 +33,7 @@ class DemoExpiredBookingTests(unittest.TestCase):
         fields = dict(PaymentID=7, BookingID=10, PaymentType="DEPOSIT", PaymentMethod="VIETQR",
                       Amount=200000, Status=status, Reference="BOOKING-10-DEPOSIT",
                       Deadline=self.now + timedelta(minutes=5), CreatedAt=self.now,
-                      UpdatedAt=self.now, BookingStatus="PENDING")
+                      UpdatedAt=self.now, BookingStatus="PENDING", BookingTotalAmount=600000)
         fields.update(changes)
         return Row(**fields)
 

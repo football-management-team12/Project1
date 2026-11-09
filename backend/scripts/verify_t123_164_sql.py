@@ -13,11 +13,11 @@ from services.availability_service import release_booking_for_expired_deposit
 
 FIXTURES = """
 SET NOCOUNT ON;
-DECLARE @Bookings TABLE (BookingID INT PRIMARY KEY, Status VARCHAR(30));
+DECLARE @Bookings TABLE (BookingID INT PRIMARY KEY, Status VARCHAR(30), TotalAmount DECIMAL(18,2) DEFAULT 600000);
 DECLARE @Payments TABLE (PaymentID INT PRIMARY KEY, BookingID INT, PaymentType VARCHAR(30),
                         Status VARCHAR(30), Deadline DATETIME);
 DECLARE @Requests TABLE (BookingID INT, Status VARCHAR(30));
-INSERT @Bookings VALUES
+INSERT @Bookings (BookingID,Status) VALUES
  (1,'PENDING'),(2,'PENDING'),(3,'CONFIRMED'),(4,'COMPLETED'),(5,'CANCELLED'),(6,'PENDING'),
  (7,'PENDING'),(8,'PENDING'),(9,'PENDING'),(10,'PENDING'),(11,'PENDING'),(12,'PENDING');
 INSERT @Payments VALUES

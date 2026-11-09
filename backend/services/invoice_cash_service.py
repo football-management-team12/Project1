@@ -162,7 +162,8 @@ def _summary(cursor: Any, row: Any) -> dict[str, Any]:
     paid = deposit + final_payment + extra
 
     if (
-        total <= 0
+        row.TotalAmount is None
+        or total < 0
         or deposit < 0
         or final_payment < 0
         or extra < 0
