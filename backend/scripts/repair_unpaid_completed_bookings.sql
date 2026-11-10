@@ -3,7 +3,7 @@
 -- No schema changes. Never changes successful receipts or paid/refunded records.
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
-DECLARE @BookingID INT = 8021; -- One booking only; change explicitly for another.
+DECLARE @BookingID INT = NULL; -- REQUIRED: enter one booking ID after checking the affected database.
 DECLARE @Apply BIT = 0;
 DECLARE @DepositDeadlineMinutes INT = 10; -- Match backend DEPOSIT_DEADLINE_MINUTES.
 IF @BookingID IS NULL OR @DepositDeadlineMinutes < 1

@@ -105,7 +105,7 @@ def main():
             assert call("get", "/api/bookings/14/settlement", 200)["canConfirm"] is False
             # The repair file is executed only after replacing ALL application tables with fixtures.
             sql = (ROOT / "backend/scripts/repair_unpaid_completed_bookings.sql").read_text(encoding="utf-8")
-            sql = fixture_sql(sql).replace("DECLARE @BookingID INT = 8021;", "DECLARE @BookingID INT = 15;")
+            sql = fixture_sql(sql).replace("DECLARE @BookingID INT = NULL;", "DECLARE @BookingID INT = 15;")
             assert "dbo." not in sql
             for apply in (False, True):
                 cur.execute(sql.replace("DECLARE @Apply BIT = 0;", "DECLARE @Apply BIT = 1;" if apply else "DECLARE @Apply BIT = 0;"))

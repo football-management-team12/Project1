@@ -33,16 +33,16 @@ có khoản cuối/Invoice PAID thì ADMIN thấy nút “Xác nhận đã thu �
 danh sách/detail cũng phản ánh khoản cuối và số dư 0. Booking chưa cọc không được
 hợp thức hóa bằng cách ghi khoản cuối; UI giải thích cần hủy/đối soát đơn lỗi.
 
-## Dữ liệu cũ #8021
+## Đối soát dữ liệu cũ
 
-Đọc dữ liệu trong DB local cấu hình ngày 10/11/2026 xác nhận #8021 đang COMPLETED,
-TotalAmount=350000, tổng Payment SUCCESS=0. Chưa cập nhật bản ghi thật này.
+Đơn cũ có phí, không có khoản thu nhưng đã bị chuyển COMPLETED cần được đối soát
+riêng. Không cập nhật bản ghi thật trong quá trình kiểm tra bản sửa này.
 
 `backend/scripts/repair_unpaid_completed_bookings.sql` dành cho SSMS, không phải
 migration schema và không tự chạy khi deploy:
 
 1. Kết nối đúng database backend đang dùng, local hoặc môi trường deploy.
-2. Giữ `@BookingID=8021`, `@Apply=0`; chỉnh deadline cho khớp cấu hình. Chạy để xem
+2. Nhập `@BookingID` cần đối soát, giữ `@Apply=0`; chỉnh deadline cho khớp cấu hình. Chạy để xem
    database và bản ghi đủ điều kiện. Bản xem trước rollback, không sửa dữ liệu.
 3. Chỉ khi bản ghi đúng và đủ điều kiện, đổi `@Apply=1`, chạy lại để chuyển
    CONFIRMED/COMPLETED chưa thu tiền sang CANCELLED và cọc PENDING sang EXPIRED.
@@ -68,4 +68,4 @@ vào database thật trong quá trình phát triển bản sửa này.
 - Frontend production build đạt. ESLint hai file React còn 3 lỗi set-state-in-effect
   và 1 cảnh báo dependency đã có trên HEAD trước thay đổi; không báo là lint đã đạt.
 
-Chưa deploy và chưa sửa dữ liệu #8021 trên database thật.
+Chưa deploy và chưa sửa dữ liệu booking trên database thật.
