@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import "./FieldCard.css";
 
@@ -408,6 +408,8 @@ const FieldCard = ({
                 ? "Đặt sân"
                 : "Không có khung giờ trống"}
         </button>
+
+        <Link className="field-card-review-link" to={`/fields/${id}/reviews`}>Xem đánh giá của sân</Link>
 
       </div>
 

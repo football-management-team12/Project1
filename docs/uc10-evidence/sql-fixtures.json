@@ -1,0 +1,113 @@
+{
+  "fixture_only": true,
+  "live_table_writes": 0,
+  "checks": [
+    {
+      "case": "migration_on_tempdb_fixtures_twice",
+      "passed": true,
+      "foreign_keys_on_temp_tables": "not enforced by SQL Server"
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/201/reviews",
+      "status": 201
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/201/reviews",
+      "status": 409
+    },
+    {
+      "method": "get",
+      "path": "/api/bookings/201/reviews",
+      "status": 200
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/202/reviews",
+      "status": 409
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/204/reviews",
+      "status": 409
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/205/reviews",
+      "status": 409
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/203/reviews",
+      "status": 403
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/999/reviews",
+      "status": 404
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/206/reviews",
+      "status": 403
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/206/reviews",
+      "status": 400
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/206/reviews",
+      "status": 400
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/206/reviews",
+      "status": 400
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/206/reviews",
+      "status": 201
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/209/reviews",
+      "status": 201
+    },
+    {
+      "case": "concurrent_same_booking",
+      "statuses": [
+        201,
+        409
+      ]
+    },
+    {
+      "method": "get",
+      "path": "/api/fields/5/reviews?page=1&pageSize=10",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/fields/5/reviews?page=2&pageSize=10",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/fields/7/reviews",
+      "status": 404
+    },
+    {
+      "method": "get",
+      "path": "/api/fields/999/reviews",
+      "status": 404
+    },
+    {
+      "method": "get",
+      "path": "/api/fields/5/reviews?page=0",
+      "status": 400
+    }
+  ]
+}

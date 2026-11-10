@@ -16,6 +16,7 @@ import Register
 
 import FieldList
   from "../pages/FieldList/FieldList";
+import FieldReviews from "../pages/FieldReviews/FieldReviews";
 
 import Admin
   from "../pages/Admin/Admin";
@@ -100,6 +101,7 @@ function AppRoutes() {
           <FieldList />
         }
       />
+      <Route path="/fields/:fieldId/reviews" element={<FieldReviews />} />
 
 
       <Route

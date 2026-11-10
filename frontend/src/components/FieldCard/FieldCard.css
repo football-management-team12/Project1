@@ -195,3 +195,4 @@
 
   cursor: not-allowed;
 }
+.field-card-review-link { display:block; text-align:center; padding:12px; color:#087b55; font-weight:700; border:1px solid #dce9e3; border-radius:10px; margin-top:10px; text-decoration:none; }
