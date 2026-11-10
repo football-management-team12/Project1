@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 
 import "../../pages/Admin/Admin.css";
+import useReviewInbox from "../../hooks/useReviewInbox";
 
 
 const MANAGER_ROLES = [
@@ -72,6 +73,8 @@ function AdminLayout() {
     )
       .trim()
       .toUpperCase();
+
+  const { data: reviewInbox } = useReviewInbox({ enabled: role === "ADMIN", pageSize: 1, status: "unanswered" });
 
 
   if (!user) {
@@ -265,6 +268,12 @@ function AdminLayout() {
 
                 <li>
                   Thống kê & báo cáo
+                </li>
+
+                <li className={isActive("/admin/reviews") ? "active" : ""} onClick={() => navigate("/admin/reviews")}
+                  role="link" tabIndex={0} onKeyDown={event => { if (event.key === "Enter") navigate("/admin/reviews"); }}>
+                  Đánh giá & phản hồi {reviewInbox?.unansweredCount > 0 && <span aria-label={`${reviewInbox.unansweredCount} đánh giá chưa phản hồi`}
+                    style={{marginLeft:8,background:"#fce9af",color:"#765000",borderRadius:12,padding:"2px 7px",fontSize:12}}>{reviewInbox.unansweredCount}</span>}
                 </li>
 
                 <li>

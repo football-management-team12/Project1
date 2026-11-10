@@ -1,0 +1,504 @@
+{
+  "info": {
+    "name": "UC10 - T123-66 Reviews",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Apply 011 first; Admin replies additionally require 012. Use dedicated test bookings. Customer POST creates one review and stores reviewId for reply tests. Provide CUSTOMER and ADMIN tokens. Do not use production customer data."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5001"
+    },
+    {
+      "key": "customerToken",
+      "value": ""
+    },
+    {
+      "key": "bookingId",
+      "value": "1001"
+    },
+    {
+      "key": "ineligibleBookingId",
+      "value": "1002"
+    },
+    {
+      "key": "otherBookingId",
+      "value": "1003"
+    },
+    {
+      "key": "fieldId",
+      "value": "5"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "reviewId",
+      "value": "30"
+    }
+  ],
+  "item": [
+    {
+      "name": "Booking eligibility",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}/reviews"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "pm.test(\"JSON response\", () => pm.response.json());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit valid review - fresh booking required",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}/reviews",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"rating\": 5, \"comment\": \"Sân tốt, đúng giờ\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(201));",
+              "pm.test(\"JSON response\", () => pm.response.json());",
+              "if (pm.response.code === 201) pm.collectionVariables.set(\"reviewId\", pm.response.json().reviewId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject duplicate",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}/reviews",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"rating\": 5, \"comment\": \"Duplicate test\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(409));",
+              "pm.test(\"JSON response\", () => pm.response.json());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject rating 0",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}/reviews",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"rating\": 0, \"comment\": \"Boundary\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(400));",
+              "pm.test(\"JSON response\", () => pm.response.json());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject rating 6",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}/reviews",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"rating\": 6, \"comment\": \"Boundary\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(400));",
+              "pm.test(\"JSON response\", () => pm.response.json());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject blank comment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}/reviews",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"rating\": 5, \"comment\": \" \"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(400));",
+              "pm.test(\"JSON response\", () => pm.response.json());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject ineligible booking",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/{{ineligibleBookingId}}/reviews",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"rating\": 5, \"comment\": \"Ineligible\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(409));",
+              "pm.test(\"JSON response\", () => pm.response.json());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject other owner",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/{{otherBookingId}}/reviews",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"rating\": 5, \"comment\": \"Not mine\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(403));",
+              "pm.test(\"JSON response\", () => pm.response.json());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public field reviews",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/fields/{{fieldId}}/reviews?page=1&pageSize=10"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "pm.test(\"JSON response\", () => pm.response.json());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public pagination page 2",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/fields/{{fieldId}}/reviews?page=2&pageSize=10"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "pm.test(\"JSON response\", () => pm.response.json());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject invalid pagination",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/fields/{{fieldId}}/reviews?page=0"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(400));",
+              "pm.test(\"JSON response\", () => pm.response.json());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "[Admin] Inbox all",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/reviews?page=1&pageSize=10",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "[Admin] Unanswered",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/reviews?status=unanswered",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "[Admin] Save reply",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/reviews/{{reviewId}}/reply",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"comment\": \"Cảm ơn bạn, chủ sân đã ghi nhận góp ý.\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "[Admin] Update reply",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/reviews/{{reviewId}}/reply",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"comment\": \"Chủ sân đã cập nhật phản hồi.\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "[Admin] Customer cannot reply",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/reviews/{{reviewId}}/reply",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"comment\": \"Not ADMIN\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\", () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

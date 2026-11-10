@@ -893,6 +893,8 @@ function BookingHistory() {
                           <button type="button" className="ui-button" onClick={() => navigate(`/bookings/${booking.BookingID}/invoice`)}>
                             Xem hóa đơn
                           </button>
+                          {booking.Status === "COMPLETED" && <button type="button" className="ui-button"
+                            onClick={() => navigate(`/bookings/${booking.BookingID}#booking-review-panel`)}>Đánh giá sân</button>}
 
 
                           <button

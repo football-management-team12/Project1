@@ -22,6 +22,7 @@ import DepositPanel from "../../components/DepositPanel/DepositPanel";
 import SettlementPanel from "../../components/SettlementPanel/SettlementPanel";
 
 import CancellationPanel from "../../components/CancellationPanel/CancellationPanel";
+import ReviewPanel from "../../components/ReviewPanel/ReviewPanel";
 
 import {
   getCustomerBookingDetail,
@@ -227,6 +228,12 @@ export default function BookingDetail() {
   // ROLE GUARD
   // ======================================================
 
+  useEffect(() => {
+    if (location.hash !== "#booking-review-panel" || loading || status !== "COMPLETED") return undefined;
+    const frame = window.requestAnimationFrame(() => document.getElementById("booking-review-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.hash, loading, status]);
+
   if (role === "ADMIN" || role === "STAFF") {
     return (
       <Navigate
@@ -390,6 +397,8 @@ export default function BookingDetail() {
               />
             </div>
 
+
+            {status === "COMPLETED" && <ReviewPanel key={booking.BookingID} bookingId={booking.BookingID} />}
 
             {/* CUSTOMER INFORMATION */}
 
