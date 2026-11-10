@@ -9,6 +9,102 @@ servers:
     description: "Local Server"
 
 paths:
+  /api/admin/customers:
+    get:
+      tags: [UC13 - Customers]
+      summary: ADMIN ACTIVE tìm và phân trang tài khoản CUSTOMER
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: keyword, in: query, schema: { type: string, maxLength: 100 }, description: 'Tìm tên, username, email hoặc phone. Trim; ký tự %, _ và [ được tìm như chữ thường, không phải wildcard.' }
+        - { name: status, in: query, schema: { type: string, enum: ['', ACTIVE, INACTIVE] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, maximum: 1000000, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 } }
+      responses:
+        '200':
+          description: 'items chỉ CUSTOMER, có bookingCount; tổng, phân trang và totalPages. UserID giảm dần. Không có kết quả trả items=[] và total=0.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/UC13Customer' } }
+                  total: { type: integer }
+                  page: { type: integer }
+                  pageSize: { type: integer }
+                  totalPages: { type: integer }
+        '400': { description: INVALID_KEYWORD / INVALID_STATUS / INVALID_PAGINATION }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '503': { description: DB_UNAVAILABLE }
+  /api/admin/customers/{customerId}:
+    parameters:
+      - { name: customerId, in: path, required: true, schema: { type: integer, minimum: 1, maximum: 2147483647 } }
+    get:
+      tags: [UC13 - Customers]
+      summary: ADMIN xem hồ sơ khách hàng
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200':
+          description: Chỉ trường hồ sơ công khai cho quản trị, không trả PasswordHash
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UC13Customer' }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '404': { description: CUSTOMER_NOT_FOUND, bao gồm ID của ADMIN/STAFF }
+    put:
+      tags: [UC13 - Customers]
+      summary: ADMIN sửa riêng họ tên, email hoặc điện thoại của CUSTOMER
+      description: 'Chấp nhận 1..3 trường; trường không gửi được giữ nguyên. Không sửa Role/Status/Username/Password hay dữ liệu giao dịch. Kiểm tra trùng liên hệ trên tất cả tài khoản; SERIALIZABLE và rollback khi lỗi. Không thay đổi trả 200, updatedFields rỗng.'
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                fullName: { type: string, minLength: 1, maxLength: 100, description: 'Sau trim, tối đa 100 đơn vị UTF-16; không chứa ký tự điều khiển' }
+                email: { type: string, format: email, maxLength: 100, description: 'ASCII, trim và lowercase' }
+                phone: { type: string, pattern: '^0[0-9]{9}$' }
+            example: { phone: '0912345678' }
+      responses:
+        '200':
+          description: Kết quả cập nhật
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  customer: { $ref: '#/components/schemas/UC13Customer' }
+                  updatedFields: { type: array, items: { type: string, enum: [fullName, email, phone] } }
+        '400': { description: INVALID_BODY / INVALID_FIELDS / INVALID_CUSTOMER_DATA / INVALID_FULL_NAME / INVALID_EMAIL / INVALID_PHONE }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '404': { description: CUSTOMER_NOT_FOUND }
+        '409': { description: CONTACT_ALREADY_USED / CUSTOMER_CHANGED }
+        '413': { description: BODY_TOO_LARGE, giới hạn 16 KB }
+        '500': { description: Lỗi cập nhật hoặc commit, rollback }
+        '503': { description: DB_UNAVAILABLE }
+  /api/admin/customers/{customerId}/bookings:
+    get:
+      tags: [UC13 - Customers]
+      summary: ADMIN đọc lịch sử Booking của một CUSTOMER, không cập nhật trạng thái
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: customerId, in: path, required: true, schema: { type: integer, minimum: 1, maximum: 2147483647 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, maximum: 1000000, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 } }
+      responses:
+        '200':
+          description: 'customerId, items, total, page, pageSize, totalPages. Mỗi item: bookingId, fieldId, fieldName, fieldType, bookingDate, startTime, endTime, totalAmount, status. Giữ lịch sử sân Archive. Sắp ngày/giờ/BookingID giảm dần. Không có Booking trả items=[].'
+        '400': { description: ID hoặc phân trang không hợp lệ }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '404': { description: CUSTOMER_NOT_FOUND }
   /api/admin/reviews:
     get:
       tags: [UC10 - Reviews]
@@ -2625,6 +2721,18 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/UC06Error' }
           example: { message: 'Booking đã quá thời hạn đặt cọc', code: DEPOSIT_DEADLINE_EXPIRED }
+    UC13Customer:
+      type: object
+      required: [customerId, username, fullName, email, phone, role, status]
+      properties:
+        customerId: { type: integer }
+        username: { type: string, nullable: true }
+        fullName: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        role: { type: string, enum: [CUSTOMER] }
+        status: { type: string }
+        bookingCount: { type: integer, description: Chỉ trả trong danh sách khách hàng }
     UC10Review:
       type: object
       required: [reviewId, bookingId, fieldId, rating, comment, createdAt]

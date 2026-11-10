@@ -257,7 +257,8 @@ function AdminLayout() {
             (
               <>
 
-                <li>
+                <li className={isActive("/admin/customers") ? "active" : ""} onClick={() => navigate("/admin/customers")}
+                  role="link" tabIndex={0} onKeyDown={event => { if (event.key === "Enter") navigate("/admin/customers"); }}>
                   Quản lý khách hàng
                 </li>
 
