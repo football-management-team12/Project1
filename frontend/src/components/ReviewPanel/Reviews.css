@@ -28,6 +28,8 @@
 .uc10-comment { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.65; }
 .uc10-link { display:inline-block; color:#087b55; font-weight:700; text-decoration:none; margin-top:18px; }
 .uc10-link:hover { text-decoration:underline; }
+.uc10-owner-reply { background:#edf6f0; border-left:3px solid #15805b; border-radius:0 12px 12px 0; padding:16px 20px; margin:18px 0; }
+.uc10-owner-reply small { color:#71877c; }
 .uc10-page { min-height:100vh; background:#f4f8f5; }
 .uc10-page-main { max-width:960px; margin:auto; padding:40px 24px 70px; }
 .uc10-page-main h1 { font-size:36px; margin:12px 0; line-height:1.25; }

@@ -5,6 +5,7 @@ import pyodbc
 
 from database import get_connection
 from services.payment_service import PaymentError
+from services.review_reply_service import replies_for
 
 
 MAX_COMMENT_LENGTH = 1000
@@ -117,10 +118,13 @@ def get_booking_review(user_id, booking_id):
         booking = _booking(cursor, user_id, booking_id)
         row = _existing(cursor, booking_id)
         completed = str(booking.Status).strip().upper() == "COMPLETED"
+        review = _serialize(row) if row is not None else None
+        if review is not None:
+            review["reply"] = replies_for(cursor,[review["reviewId"]]).get(review["reviewId"])
         return {"bookingId": int(booking.BookingID), "fieldId": int(booking.FieldID),
                 "canReview": completed and row is None,
                 "reason": "REVIEW_ALREADY_EXISTS" if row is not None else None if completed else "BOOKING_NOT_COMPLETED",
-                "review": _serialize(row) if row is not None else None}
+                "review": review}
     finally:
         if cursor is not None:
             cursor.close()
@@ -149,6 +153,9 @@ def list_field_reviews(field_id, page, page_size):
             created = row.CreatedAt.replace(tzinfo=timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
             items.append({"reviewId":int(row.ReviewID), "fieldId":field_id, "rating":int(row.Rating),
                           "comment":row.Comment, "createdAt":created, "reviewerName":"Khách đã đặt sân"})
+        replies = replies_for(cursor,[item["reviewId"] for item in items])
+        for item in items:
+            item["reply"] = replies.get(item["reviewId"])
         return {"fieldId":field_id, "fieldName":field.FieldName, "page":page, "pageSize":page_size,
                 "total":int(count), "totalPages":(int(count)+page_size-1)//page_size,
                 "averageRating":round(float(average),2) if average is not None else None, "items":items}

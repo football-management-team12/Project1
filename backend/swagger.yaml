@@ -9,6 +9,58 @@ servers:
     description: "Local Server"
 
 paths:
+  /api/admin/reviews:
+    get:
+      tags: [UC10 - Reviews]
+      summary: ADMIN ACTIVE xem inbox đánh giá và tổng số chờ phản hồi
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1, minimum: 1, maximum: 1000000 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 10, minimum: 1, maximum: 50 } }
+        - { name: status, in: query, schema: { type: string, enum: [all, answered, unanswered], default: all } }
+        - { name: rating, in: query, schema: { type: integer, minimum: 1, maximum: 5 } }
+      responses:
+        '200':
+          description: 'items gồm reviewId, bookingId, fieldId, fieldName, customerName, rating, comment, createdAt, reply. Metadata: total, page, pageSize, totalPages, totalReviews, unansweredCount. Hai tổng cuối theo toàn bộ inbox, không theo bộ lọc.'
+        '400': { description: INVALID_FILTER }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '503': { description: DB không sẵn sàng hoặc chưa áp dụng migration 012 }
+  /api/admin/reviews/{reviewId}/reply:
+    put:
+      tags: [UC10 - Reviews]
+      summary: ADMIN ACTIVE tạo hoặc cập nhật phản hồi duy nhất của đánh giá
+      description: 'Khóa review trong transaction SERIALIZABLE. Một phản hồi mỗi review; cập nhật giữ CreatedAt, đổi UpdatedAt. AdminUserID lấy từ JWT và kiểm tra role thực trong DB. Không đổi nội dung review của khách.'
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: reviewId, in: path, required: true, schema: { type: integer, minimum: 1, maximum: 2147483647 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [comment]
+              properties:
+                comment: { type: string, minLength: 1, maxLength: 1000 }
+            example: { comment: 'Cảm ơn bạn, chủ sân đã ghi nhận góp ý.' }
+      responses:
+        '200':
+          description: Phản hồi được lưu, bao gồm tạo mới và cập nhật
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviewId: { type: integer }
+                  reply: { $ref: '#/components/schemas/UC10Reply' }
+        '400': { description: INVALID_BODY / INVALID_COMMENT / INVALID_REVIEW_ID }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '404': { description: REVIEW_NOT_FOUND }
+        '413': { description: Body vượt 16 KB }
+        '500': { description: Lỗi ghi hoặc commit; rollback }
+        '503': { description: DB không sẵn sàng hoặc chưa áp dụng migration 012 }
   /api/bookings/{bookingId}/reviews:
     parameters:
       - { name: bookingId, in: path, required: true, schema: { type: integer, minimum: 1 } }
@@ -103,6 +155,9 @@ paths:
                         comment: { type: string }
                         createdAt: { type: string, format: date-time }
                         reviewerName: { type: string, example: 'Khách đã đặt sân' }
+                        reply:
+                          allOf: [{ $ref: '#/components/schemas/UC10Reply' }]
+                          nullable: true
         '400': { description: INVALID_PAGINATION / INVALID_FIELD_ID }
         '404': { description: Sân không tồn tại hoặc đã Archive }
         '503': { description: DB không sẵn sàng hoặc chưa áp dụng migration 011 }
@@ -2576,6 +2631,16 @@ components:
         rating: { type: integer, minimum: 1, maximum: 5 }
         comment: { type: string, minLength: 1, maxLength: 1000 }
         createdAt: { type: string, format: date-time }
+        reply:
+          allOf: [{ $ref: '#/components/schemas/UC10Reply' }]
+          nullable: true
+    UC10Reply:
+      type: object
+      required: [comment, createdAt, updatedAt]
+      properties:
+        comment: { type: string, maxLength: 1000 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     UC06ServerError:
       description: Lỗi DB hoặc lỗi server (500)
       content:

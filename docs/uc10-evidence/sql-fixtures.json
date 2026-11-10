@@ -108,6 +108,41 @@
       "method": "get",
       "path": "/api/fields/5/reviews?page=0",
       "status": 400
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/reviews?status=unanswered",
+      "status": 200
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/reviews/1/reply",
+      "status": 403
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/reviews/1/reply",
+      "status": 200
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/reviews/1/reply",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/bookings/201/reviews",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/fields/5/reviews?pageSize=50",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/reviews?status=answered",
+      "status": 200
     }
   ]
 }

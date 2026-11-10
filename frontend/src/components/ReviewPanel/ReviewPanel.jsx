@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 import { getBookingReview, submitBookingReview } from "../../services/review_service";
 import "./Reviews.css";
+import ReviewReply from "./ReviewReply";
 
 export default function ReviewPanel({ bookingId }) {
   const group = useId();
@@ -16,11 +17,17 @@ export default function ReviewPanel({ bookingId }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    getBookingReview(bookingId, { signal: controller.signal })
-      .then(setInfo)
+    const load = () => getBookingReview(bookingId, { signal: controller.signal })
+      .then(data => { if (!controller.signal.aborted) {
+        setInfo(previous => previous?.review && !data.review ? previous : data); setError("");
+      } })
       .catch(err => { if (!controller.signal.aborted) setError(err.message); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
+    load();
+    const visibleLoad = () => { if (document.visibilityState !== "hidden") load(); };
+    const timer = window.setInterval(visibleLoad, 30000);
+    window.addEventListener("focus", visibleLoad);
+    return () => { controller.abort(); window.clearInterval(timer); window.removeEventListener("focus", visibleLoad); };
   }, [bookingId, revision]);
 
   const submit = async event => {
@@ -56,6 +63,7 @@ export default function ReviewPanel({ bookingId }) {
       <span className="uc10-eyebrow">ĐÁNH GIÁ CỦA BẠN</span>
       <p className="uc10-stars-display" aria-label={`${info.review.rating} trên 5 sao`}>{"★".repeat(info.review.rating)}<span>{"☆".repeat(5 - info.review.rating)}</span></p>
       <p className="uc10-comment">{info.review.comment}</p>
+      <ReviewReply reply={info.review.reply} />
       <p className="uc10-muted">Đánh giá đã được lưu. Bạn không thể gửi thêm cho đơn này.</p>
     </div>}
     {!loading && info?.canReview && <form className="uc10-form" onSubmit={submit}>

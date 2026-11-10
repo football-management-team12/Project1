@@ -4,7 +4,8 @@
 
 - Chỉ CUSTOMER ACTIVE, JWT hợp lệ, sở hữu booking COMPLETED được gửi.
 - Không thêm điều kiện Invoice PAID hoặc yêu cầu cọc/thanh toán nữa.
-- Một review mỗi booking; không có sửa/xóa/ADMIN trả lời trong phạm vi task.
+- Một review mỗi booking; không sửa/xóa nội dung review của khách. ADMIN trả lời
+  được bổ sung theo yêu cầu ngày 11/11/2026 (xem phần cuối tài liệu).
 - Rating: JSON integer 1..5; bool, float và string đều không hợp lệ.
 - Comment: bắt buộc string, trim trước lưu, không rỗng, tối đa 1.000 đơn vị UTF-16
   (đúng giới hạn textarea và NVARCHAR; emoji có thể chiếm 2 đơn vị); không chứa
@@ -71,7 +72,7 @@ Chi tiết schema: `backend/swagger.yaml`. Postman: `postman/UC10.postman_collec
   điểm trung bình, phân trang, trạng thái rỗng/lỗi và retry, responsive.
 - Comment được render bằng React text, không dùng dangerouslySetInnerHTML.
 
-## Kiểm tra và bằng chứng
+## Kiểm tra và bằng chứng bản đầu
 
 - Kết quả local: 119 API tests (21 test UC10 mới), 2 health tests và 11 browser
   scenarios đạt; frontend production build đạt. ESLint component/service UC10,
@@ -105,3 +106,37 @@ nạp các file mới. Không tự dừng một tiến trình Python chưa xác 
 6. GET theo sân, page/pageSize: đúng sân, không lặp giữa trang, không lộ dữ liệu tài khoản.
 7. UI form thành công/lỗi/trùng, public list, mobile và nội dung giống HTML phải chỉ hiển thị chữ.
 8. Regression UC05/06/07/08/09/12/15; review không ghi Payment/Invoice/Booking.
+
+## Bổ sung ADMIN xem và phản hồi (11/11/2026)
+
+Chạy **012_uc10_review_replies.sql** sau 011 trên đúng database. File chỉ thêm
+`dbo.BookingReviewReplies` (ReviewID PK/FK, AdminUserID FK, Comment tối đa 1000,
+CreatedAt/UpdatedAt UTC). Không sửa các bảng cũ. Nếu chưa có 012, API khách vẫn
+xem/gửi review được, reply trả null; API inbox/reply Admin báo chưa sẵn sàng.
+
+- Admin → **Đánh giá & phản hồi** (`/admin/reviews`): danh sách mới nhất, khách,
+  sân, booking, điểm, nội dung và câu trả lời; lọc đã/chưa phản hồi và số sao.
+- Badge menu là tổng số **chưa phản hồi**, không phải tổng số chưa đọc.
+- Tự cập nhật mỗi 30 giây khi tab hiện; tải lại khi focus/visibility và sau khi lưu
+  phản hồi. Có nút Làm mới. Poll giữ nội dung bản nháp đang soạn; không phải WebSocket.
+- Mỗi review có một câu trả lời công khai, ADMIN có thể cập nhật. Giữ CreatedAt,
+  đổi UpdatedAt và người cập nhật; không lưu chuỗi lịch sử sửa. Khi hai ADMIN sửa
+  cùng phản hồi, lần lưu sau là nội dung hiện hành.
+- Khách xem câu trả lời tại đánh giá theo sân và đánh giá của mình trong đơn;
+  hai nơi tự tải lại mỗi 30 giây/khi focus, không lộ AdminUserID ra public.
+- GET `/api/admin/reviews?page=1&pageSize=10&status=all&rating=5`: ADMIN ACTIVE;
+  trả items/total/totalPages và totalReviews/unansweredCount toàn inbox.
+- PUT `/api/admin/reviews/{reviewId}/reply`, body `{comment}`: ADMIN ACTIVE;
+  tạo/cập nhật trả 200; dùng chung validation nhận xét, khóa review và transaction;
+  sai quyền 403, missing review 404, body sai 400, lỗi ghi rollback.
+- Middleware JWT lẫn vai trò/trạng thái trong DB đều được kiểm tra lại.
+
+Evidence thêm: `admin-browser-checks.json`, ảnh `admin-replies-desktop.png`;
+SQL fixture chạy migration 012 hai lần, tạo/sửa một reply, CUSTOMER bị chặn,
+lọc Admin, đếm chờ phản hồi và khách/public nhận câu trả lời.
+
+Kết quả bản mở rộng: 132 API tests, 2 health tests, 11 browser scenarios khách
+và 7 browser scenarios Admin đạt. Build và ESLint các module mới/được mở rộng
+cho inbox, sidebar, phản hồi đạt; lỗi lint cũ ở BookingDetail/BookingHistory
+vẫn như phần ghi chú bản đầu. Postman có 16 request; các request Admin cần
+`adminToken` và `reviewId` fixture (POST review thành công lưu reviewId tự động).

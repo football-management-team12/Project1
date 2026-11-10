@@ -1,0 +1,13 @@
+{
+  "passed": 7,
+  "scenarios": [
+    "Admin menu/inbox, pending count and review form",
+    "Polling: new review and sidebar count arrive without reload; draft preserved",
+    "Reply save: public reply shown, pending badge decreases",
+    "Edit reply: one reply updated instead of adding duplicates",
+    "Unanswered filter hides answered review",
+    "Public customer field list includes saved owner reply",
+    "Booking owner sees admin reply alongside their existing review"
+  ],
+  "note": "Intercepted APIs, polling accelerated from 30s to 500ms in browser test only. No SQL writes."
+}

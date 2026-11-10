@@ -24,7 +24,7 @@ from services.jwt_service import create_access_token
 
 def main(output=None):
     prefix = "##UC10_" + uuid4().hex[:12] + "_"
-    tables = ("BookingReviews","Bookings","FootballFields","Users")
+    tables = ("BookingReviewReplies","BookingReviews","Bookings","FootballFields","Users")
     def rewrite(sql):
         for name in tables:
             sql = re.sub(r"(?<![\w#])(?:dbo\.)?" + name + r"\b", prefix+name,sql)
@@ -53,10 +53,10 @@ def main(output=None):
     try:
         cursor.execute(rewrite("""
             SET NOCOUNT ON;
-            CREATE TABLE dbo.Users (UserID INT PRIMARY KEY,Role VARCHAR(20),Status VARCHAR(20));
+            CREATE TABLE dbo.Users (UserID INT PRIMARY KEY,Role VARCHAR(20),Status VARCHAR(20),FullName NVARCHAR(80) NULL);
             CREATE TABLE dbo.FootballFields (FieldID INT PRIMARY KEY,FieldName NVARCHAR(100),IsArchived BIT);
             CREATE TABLE dbo.Bookings (BookingID INT PRIMARY KEY,UserID INT,FieldID INT,Status VARCHAR(20));
-            INSERT dbo.Users VALUES (1,'CUSTOMER','ACTIVE'),(2,'CUSTOMER','ACTIVE'),(3,'ADMIN','ACTIVE'),(4,'CUSTOMER','INACTIVE');
+            INSERT dbo.Users (UserID,Role,Status) VALUES (1,'CUSTOMER','ACTIVE'),(2,'CUSTOMER','ACTIVE'),(3,'ADMIN','ACTIVE'),(4,'CUSTOMER','INACTIVE');
             INSERT dbo.FootballFields VALUES (5,'QA Field A',0),(6,'QA Field B',0),(7,'QA Archived',1);
             INSERT dbo.Bookings VALUES (201,1,5,'COMPLETED'),(202,1,5,'PENDING'),(203,2,5,'COMPLETED'),
                 (204,1,5,'CONFIRMED'),(205,1,5,'CANCELLED'),(206,1,5,'COMPLETED'),(207,1,7,'COMPLETED'),
@@ -68,7 +68,8 @@ def main(output=None):
         for _ in range(2): cursor.execute(migration);drain()
         owner.commit()
         checks.append({"case":"migration_on_tempdb_fixtures_twice","passed":True,"foreign_keys_on_temp_tables":"not enforced by SQL Server"})
-        with patch.dict(os.environ,{"JWT_SECRET":"uc10-sql-fixture-only"}),patch('services.review_service.get_connection',side_effect=connection):
+        with patch.dict(os.environ,{"JWT_SECRET":"uc10-sql-fixture-only"}),patch('services.review_service.get_connection',side_effect=connection), \
+                patch('services.review_reply_service.get_connection',side_effect=connection):
             client=app.test_client()
             def call(method,path,status,payload=None,user=1,role='CUSTOMER'):
                 headers={"Authorization":"Bearer "+create_access_token(user,role)} if user else {}
@@ -121,6 +122,27 @@ def main(output=None):
             call('get','/api/fields/7/reviews',404,user=None)
             call('get','/api/fields/999/reviews',404,user=None)
             call('get','/api/fields/5/reviews?page=0',400,user=None)
+            # Apply optional reply migration to temp tables only; old UC10 worked without it above.
+            reply_migration=rewrite((ROOT/'backend/migrations/012_uc10_review_replies.sql').read_text(encoding='utf-8'))
+            reply_migration=re.sub(r'\b(PK|FK|CK|DF)_BookingReviewReplies_?\w*',lambda m:m.group()+"_"+prefix[7:19],reply_migration)
+            for _ in range(2):cursor.execute(reply_migration);drain()
+            owner.commit()
+            inbox=call('get','/api/admin/reviews?status=unanswered',200,user=3,role='ADMIN')
+            assert inbox['unansweredCount']==15
+            review_id=review['reviewId']
+            call('put',f'/api/admin/reviews/{review_id}/reply',403,{"comment":"Not admin"})
+            answer=call('put',f'/api/admin/reviews/{review_id}/reply',200,{"comment":"Cảm ơn bạn"},user=3,role='ADMIN')
+            assert answer['reply']['comment']=="Cảm ơn bạn"
+            answer=call('put',f'/api/admin/reviews/{review_id}/reply',200,{"comment":"Phản hồi cập nhật"},user=3,role='ADMIN')
+            assert answer['reply']['comment']=="Phản hồi cập nhật"
+            cursor.execute(rewrite("SELECT COUNT(*) FROM dbo.BookingReviewReplies WHERE ReviewID=?"),review_id)
+            assert cursor.fetchone()[0]==1;owner.commit()
+            own=call('get','/api/bookings/201/reviews',200)
+            assert own['review']['reply']['comment']=="Phản hồi cập nhật"
+            public=call('get','/api/fields/5/reviews?pageSize=50',200,user=None)
+            assert next(r for r in public['items'] if r['reviewId']==review_id)['reply']['comment']=="Phản hồi cập nhật"
+            answered=call('get','/api/admin/reviews?status=answered',200,user=3,role='ADMIN')
+            assert answered['total']==1 and answered['unansweredCount']==14
             # Actual SQL unique/check constraints independently reject invalid writes.
             for sql in ("INSERT dbo.BookingReviews (BookingID,UserID,FieldID,Rating,Comment) VALUES (201,1,5,5,N'Duplicate')",
                         "INSERT dbo.BookingReviews (BookingID,UserID,FieldID,Rating,Comment) VALUES (207,1,7,6,N'Invalid rating')"):
