@@ -1,0 +1,447 @@
+{
+  "info": {
+    "name": "UC13 - T123-64 Customer Management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "No migration required. Use dedicated QA customers: valid PUT updates contact data. Set a duplicateEmail belonging to another account. Do not use production customer records."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5001"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "customerToken",
+      "value": ""
+    },
+    {
+      "key": "customerId",
+      "value": "1001"
+    },
+    {
+      "key": "keyword",
+      "value": "QA"
+    },
+    {
+      "key": "duplicateEmail",
+      "value": "existing-qa@example.invalid"
+    }
+  ],
+  "item": [
+    {
+      "name": "List customers",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/customers?page=1&pageSize=10",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search customers",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/customers?keyword={{keyword}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Filter inactive",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/customers?status=INACTIVE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer detail",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/customers/{{customerId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Booking history",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/customers/{{customerId}}/bookings",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Partial name update - dedicated fixture only",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/customers/{{customerId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"fullName\": \"QA Customer Updated\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject duplicate email",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/customers/{{customerId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"{{duplicateEmail}}\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(409));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject invalid phone",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/customers/{{customerId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"phone\": \"bad\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(400));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject role update",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/customers/{{customerId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"role\": \"ADMIN\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(400));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject status update",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/customers/{{customerId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"status\": \"INACTIVE\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(400));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer cannot list",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/customers",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(403));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer cannot view detail",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/customers/{{customerId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(403));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer cannot update",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/admin/customers/{{customerId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"fullName\": \"Unauthorized\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(403));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer cannot view history",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/customers/{{customerId}}/bookings",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{customerToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(403));",
+              "pm.test(\"JSON body\", () => pm.response.json());",
+              "pm.test(\"No password hash in response\", () => pm.expect(pm.response.text().toLowerCase()).not.to.include(\"passwordhash\"));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

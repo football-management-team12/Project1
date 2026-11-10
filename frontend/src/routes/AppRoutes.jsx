@@ -18,6 +18,7 @@ import FieldList
   from "../pages/FieldList/FieldList";
 import FieldReviews from "../pages/FieldReviews/FieldReviews";
 import ReviewManagement from "../pages/Admin/ReviewManagement";
+import CustomerManagement, { AdminCustomerDetail } from "../pages/Admin/CustomerManagement";
 
 import Admin
   from "../pages/Admin/Admin";
@@ -257,6 +258,8 @@ function AppRoutes() {
 
         <Route path="profile" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Profile adminView /></ProtectedRoute>} />
         <Route path="reviews" element={<ProtectedRoute allowedRoles={["ADMIN"]}><ReviewManagement /></ProtectedRoute>} />
+        <Route path="customers" element={<ProtectedRoute allowedRoles={["ADMIN"]}><CustomerManagement /></ProtectedRoute>} />
+        <Route path="customers/:customerId" element={<ProtectedRoute allowedRoles={["ADMIN"]}><AdminCustomerDetail /></ProtectedRoute>} />
         <Route path="invoices" element={<ProtectedRoute allowedRoles={["ADMIN"]}><InvoiceManagement /></ProtectedRoute>} />
         <Route path="invoice-management/:invoiceId" element={<ProtectedRoute allowedRoles={["ADMIN"]}><AdminInvoiceDetail /></ProtectedRoute>} />
         {["bookings/:bookingId/invoice", "invoices/:invoiceId"].map((path) => (
