@@ -7,6 +7,7 @@ from database import get_connection
 from services.availability_service import (
     booking_is_cancelled,
     expire_pending_bookings,
+    cancel_overdue_unpaid_bookings,
     is_time_overlap,
 )
 from services.jwt_service import (
@@ -136,6 +137,12 @@ def row_to_booking(row):
         "PaidAmount": float(
             getattr(row, "PaidAmount", 0) or 0
         ),
+        "DepositAmount": float(getattr(row, "DepositAmount", 0) or 0),
+        "CanConfirmBooking": str(row.Status).upper() == "PENDING"
+            and (row.TotalAmount == 0 or (getattr(row, "DepositAmount", 0) or 0) > 0),
+        "CanCompleteBooking": str(row.Status).upper() == "CONFIRMED"
+            and (row.TotalAmount == 0 or (getattr(row, "DepositAmount", 0) or 0) > 0)
+            and bool(getattr(row, "HasEnded", False)),
         "RemainingAmount": max(
             float(row.TotalAmount or 0)
             - float(getattr(row, "PaidAmount", 0) or 0),
@@ -233,6 +240,11 @@ def get_booking_row(
             U.FullName,
             U.Phone,
             U.Email,
+            (SELECT COALESCE(SUM(P.Amount),0) FROM Payments P WHERE P.BookingID=B.BookingID
+             AND P.PaymentType='DEPOSIT' AND P.Status='SUCCESS') AS DepositAmount,
+            CASE WHEN B.BookingDate < CONVERT(date,GETDATE())
+                  OR (B.BookingDate=CONVERT(date,GETDATE()) AND B.EndTime<=CONVERT(time,GETDATE()))
+                 THEN 1 ELSE 0 END AS HasEnded,
             PaymentTotals.PaidAmount,
             (SELECT R.Amount FROM dbo.BookingDepositRefunds R WHERE R.BookingID = B.BookingID) AS RefundedAmount
 
@@ -256,7 +268,7 @@ def get_booking_row(
                 ) AS PaidAmount
             FROM Payments P
             WHERE P.BookingID = B.BookingID
-              AND P.PaymentType = 'DEPOSIT'
+              AND P.PaymentType IN ('DEPOSIT','FINAL_PAYMENT','EXTRA')
         ) PaymentTotals
 
         WHERE B.BookingID = ?
@@ -818,6 +830,10 @@ def get_booking_detail(
 
         cursor = conn.cursor()
 
+        if get_booking_manager(cursor, current_user_id()) is None:
+            return jsonify({"message": "Bạn không có quyền xem booking"}), 403
+        cancel_overdue_unpaid_bookings(cursor, booking_id)
+        conn.commit()
         booking = get_booking_row(
             cursor,
             booking_id,
@@ -843,6 +859,9 @@ def get_booking_detail(
         )
 
         print(error)
+
+        if conn is not None:
+            conn.rollback()
 
         return jsonify({
             "message":
@@ -974,6 +993,9 @@ def get_all_bookings():
         # BUILD QUERY
         # ====================================================
 
+        cancel_overdue_unpaid_bookings(cursor)
+        conn.commit()
+
         query = """
             SELECT
                 B.BookingID,
@@ -993,8 +1015,13 @@ def get_all_bookings():
                 U.FullName,
                 U.Phone,
                 U.Email,
+                (SELECT COALESCE(SUM(P.Amount),0) FROM Payments P WHERE P.BookingID=B.BookingID
+                 AND P.PaymentType='DEPOSIT' AND P.Status='SUCCESS') AS DepositAmount,
+                CASE WHEN B.BookingDate < CONVERT(date,GETDATE())
+                      OR (B.BookingDate=CONVERT(date,GETDATE()) AND B.EndTime<=CONVERT(time,GETDATE()))
+                     THEN 1 ELSE 0 END AS HasEnded,
                 (SELECT COALESCE(SUM(P.Amount), 0) FROM Payments P
-                 WHERE P.BookingID = B.BookingID AND P.PaymentType = 'DEPOSIT'
+                 WHERE P.BookingID = B.BookingID AND P.PaymentType IN ('DEPOSIT','FINAL_PAYMENT','EXTRA')
                  AND UPPER(LTRIM(RTRIM(P.Status))) = 'SUCCESS') AS PaidAmount,
                 (SELECT R.Amount FROM dbo.BookingDepositRefunds R WHERE R.BookingID = B.BookingID) AS RefundedAmount
 
@@ -1127,6 +1154,9 @@ def get_all_bookings():
         )
 
         print(error)
+
+        if conn is not None:
+            conn.rollback()
 
         return jsonify({
             "message":
@@ -1282,7 +1312,11 @@ def update_booking_status(
             """
             SELECT
                 BookingID,
-                Status
+                Status,
+                TotalAmount,
+                CASE WHEN BookingDate < CONVERT(date,GETDATE())
+                      OR (BookingDate = CONVERT(date,GETDATE()) AND EndTime <= CONVERT(time,GETDATE()))
+                     THEN 1 ELSE 0 END AS HasEnded
 
             FROM Bookings WITH (
                 UPDLOCK,
@@ -1325,6 +1359,24 @@ def update_booking_status(
         # ====================================================
         # STATUS ALREADY SAME
         # ====================================================
+
+        if new_status in {"CONFIRMED", "COMPLETED"}:
+            if booking.TotalAmount is None or booking.TotalAmount < 0:
+                conn.rollback()
+                return jsonify({"message": "Tổng tiền booking không hợp lệ", "code": "INVALID_TOTAL"}), 409
+            if booking.TotalAmount > 0:
+                cursor.execute("""SELECT COALESCE(SUM(Amount),0) FROM Payments
+                    WHERE BookingID=? AND PaymentType='DEPOSIT' AND Status='SUCCESS'""", booking_id)
+                if cursor.fetchone()[0] <= 0:
+                    cancel_overdue_unpaid_bookings(cursor, booking_id)
+                    conn.commit()
+                    return jsonify({
+                        "message": "Đơn chưa đặt cọc thành công nên không thể xác nhận hoặc hoàn thành. Đơn quá hạn chưa thanh toán sẽ được hủy.",
+                        "code": "DEPOSIT_REQUIRED",
+                    }), 409
+            if new_status == "COMPLETED" and not booking.HasEnded:
+                conn.rollback()
+                return jsonify({"message": "Chưa kết thúc giờ thuê, không thể hoàn thành booking", "code": "BOOKING_NOT_ENDED"}), 409
 
         if new_status == current_status:
 
@@ -1398,8 +1450,6 @@ def update_booking_status(
             booking_id,
         )
 
-        conn.commit()
-
         # ====================================================
         # GET UPDATED BOOKING
         # ====================================================
@@ -1410,6 +1460,8 @@ def update_booking_status(
                 booking_id,
             )
         )
+
+        conn.commit()
 
         return jsonify({
 
