@@ -148,14 +148,14 @@ def update_my_profile():
 
 
     allowed_fields = {
-        "fullname",
+        "fullName",
         "email",
         "phone",
     }
 
 
     unknown_fields = (
-        normalized_keys
+        set(data)
         -
         allowed_fields
     )
@@ -172,24 +172,14 @@ def update_my_profile():
         }), 400
 
 
-    required_fields = (
-        "fullName",
-        "email",
-        "phone",
-    )
-
-
-    if any(
-        field not in data
-        for field in required_fields
-    ):
+    if not data:
 
         return jsonify({
             "success":
                 False,
 
             "message":
-                "Vui lòng nhập đầy đủ họ tên, email và số điện thoại"
+                "Vui lòng gửi ít nhất một trường họ tên, email hoặc số điện thoại"
         }), 400
 
 
@@ -197,9 +187,9 @@ def update_my_profile():
 
         profile = update_user_profile(
             current_user_id(),
-            data.get("fullName"),
-            data.get("email"),
-            data.get("phone"),
+            **{target: data[source] for source, target in (
+                ("fullName", "full_name"), ("email", "email"), ("phone", "phone")
+            ) if source in data},
         )
 
 
