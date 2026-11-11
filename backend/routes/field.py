@@ -7,6 +7,9 @@ from flask import (
 )
 
 from database import get_connection
+from services.field_filter_service import (
+    parse_field_type, field_type_clause, parse_available_only,
+)
 
 from services.availability_service import (
     build_availability_slots,
@@ -36,6 +39,11 @@ field_bp = Blueprint(
 
 @field_bp.route("/")
 def get_fields():
+
+    try:
+        field_type = parse_field_type(request.args)
+    except ValueError as error:
+        return jsonify({"message": str(error)}), 400
 
     conn = None
     cursor = None
@@ -79,9 +87,9 @@ def get_fields():
                 P.StartTime
         """
 
-        cursor.execute(
-            sql
-        )
+        clause, params = field_type_clause(field_type, "F.FieldType")
+        sql = sql.replace("WHERE F.IsArchived = 0", "WHERE F.IsArchived = 0" + clause)
+        cursor.execute(sql, *params)
 
         rows = cursor.fetchall()
 
@@ -736,6 +744,12 @@ def get_field_availability(
 )
 def get_all_fields_availability():
 
+    try:
+        field_type = parse_field_type(request.args)
+        available_only = parse_available_only(request.args)
+    except ValueError as error:
+        return jsonify({"message": str(error)}), 400
+
     conn = None
     cursor = None
 
@@ -806,6 +820,7 @@ def get_all_fields_availability():
         # GET ALL FIELDS
         # ====================================================
 
+        clause, params = field_type_clause(field_type)
         cursor.execute(
             """
             SELECT
@@ -818,9 +833,10 @@ def get_all_fields_availability():
             FROM FootballFields
 
             WHERE IsArchived = 0
+            """ + clause + """
 
             ORDER BY FieldID
-            """
+            """, *params
         )
 
         field_rows = (
@@ -1105,6 +1121,9 @@ def get_all_fields_availability():
                 and
                 available_count > 0
             )
+
+            if available_only and not has_available_slot:
+                continue
 
             # =================================================
             # COUNT AVAILABLE FIELDS
