@@ -1936,10 +1936,9 @@ paths:
 
               type: object
 
-              required:
-                - fullName
-                - email
-                - phone
+              minProperties: 1
+              additionalProperties: false
+              description: "Cho phép gửi 1..3 trường; trường không gửi giữ nguyên. null/rỗng bị từ chối."
 
               properties:
 

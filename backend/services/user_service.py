@@ -242,11 +242,14 @@ def get_user_profile(user_id):
 # - PasswordHash
 # ============================================================
 
+_MISSING = object()
+
+
 def update_user_profile(
     user_id,
-    full_name,
-    email,
-    phone
+    full_name=_MISSING,
+    email=_MISSING,
+    phone=_MISSING
 ):
 
     user_id = _parse_user_id(
@@ -254,105 +257,24 @@ def update_user_profile(
     )
 
 
-    # ========================================================
-    # TYPE CHECK
-    # ========================================================
-
-    if not all(
-        isinstance(
-            value,
-            str
-        )
-        for value in (
-            full_name,
-            email,
-            phone
-        )
-    ):
-
-        raise ProfileError(
-            "Vui lòng nhập đầy đủ thông tin hợp lệ",
-            400
-        )
-
-
-    # ========================================================
-    # NORMALIZE INPUT
-    # ========================================================
-
-    full_name = _normalize(
-        full_name
-    )
-
-    email = (
-        _normalize(
-            email
-        )
-        .lower()
-    )
-
-    phone = _normalize(
-        phone
-    )
-
-
-    # ========================================================
-    # REQUIRED
-    # ========================================================
-
-    if not all(
-        (
-            full_name,
-            email,
-            phone
-        )
-    ):
-
-        raise ProfileError(
-            "Vui lòng nhập đầy đủ họ tên, email và số điện thoại",
-            400
-        )
-
-
-    # ========================================================
-    # FULL NAME
-    # ========================================================
-
-    if len(full_name) > 100:
-
-        raise ProfileError(
-            "Họ và tên không được vượt quá 100 ký tự",
-            400
-        )
-
-
-    # ========================================================
-    # EMAIL
-    # ========================================================
-
-    if not _is_valid_email(
-        email
-    ):
-
-        raise ProfileError(
-            "Email không đúng định dạng, vui lòng nhập lại",
-            400
-        )
-
-
-    # ========================================================
-    # PHONE
-    # ========================================================
-
-    if not _is_valid_phone(
-        phone
-    ):
-
-        raise ProfileError(
-            "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0",
-            400
-        )
-
+    # Validate only supplied fields. Missing is distinct from explicit null/empty.
+    supplied = {key: value for key, value in (
+        ("fullName", full_name), ("email", email), ("phone", phone)
+    ) if value is not _MISSING}
+    if not supplied:
+        raise ProfileError("Vui lòng gửi ít nhất một trường thông tin", 400)
+    for key, value in supplied.items():
+        if not isinstance(value, str) or not value.strip():
+            raise ProfileError("Thông tin cập nhật không được rỗng và phải là chuỗi", 400)
+        supplied[key] = value.strip()
+    if "fullName" in supplied and len(supplied["fullName"]) > 100:
+        raise ProfileError("Họ và tên không được vượt quá 100 ký tự", 400)
+    if "email" in supplied:
+        supplied["email"] = supplied["email"].lower()
+        if not _is_valid_email(supplied["email"]):
+            raise ProfileError("Email không đúng định dạng, vui lòng nhập lại", 400)
+    if "phone" in supplied and not _is_valid_phone(supplied["phone"]):
+        raise ProfileError("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0", 400)
 
     # ========================================================
     # DATABASE
@@ -393,6 +315,9 @@ def update_user_profile(
             """
             SELECT
                 UserID,
+                FullName,
+                Email,
+                Phone,
                 Status
 
             FROM Users
@@ -430,6 +355,11 @@ def update_user_profile(
                 403
             )
 
+
+        # Merge under the existing UPDLOCK/HOLDLOCK, avoiding lost concurrent edits.
+        full_name = supplied.get("fullName", current_user.FullName)
+        email = supplied.get("email", current_user.Email)
+        phone = supplied.get("phone", current_user.Phone)
 
         # ----------------------------------------------------
         # CHECK DUPLICATE EMAIL / PHONE
