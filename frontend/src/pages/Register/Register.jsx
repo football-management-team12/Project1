@@ -76,20 +76,20 @@ function Register() {
               <label htmlFor={name}>{label}</label>
               <div className={`register-input-wrapper ${errors[name] ? "input-error" : ""}`}>
                 <Icon size={20} />
-                <input id={name} name={name} type={type} placeholder={placeholder} value={formData[name]} onChange={handleChange} autoComplete={name === "fullName" ? "name" : name === "username" ? "username" : name} />
+                <input id={name} name={name} type={type} placeholder={placeholder} value={formData[name]} onChange={handleChange} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} autoComplete={name === "fullName" ? "name" : name === "username" ? "username" : name} />
               </div>
-              {errors[name] && <p className="form-error">{errors[name]}</p>}
+              {errors[name] && <p id={`${name}-error`} className="form-error" role="alert">{errors[name]}</p>}
             </div>
           ))}
           <div className="register-form-group">
             <label htmlFor="register-password">Mật khẩu</label>
             <div className={`register-input-wrapper ${errors.password ? "input-error" : ""}`}>
               <LockKeyhole size={21} />
-              <input id="register-password" name="password" type={showPassword ? "text" : "password"} placeholder="Tối thiểu 8 ký tự" value={formData.password} onChange={handleChange} autoComplete="new-password" />
-              <button type="button" className="register-password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>{showPassword ? <Eye size={19} /> : <EyeOff size={19} />}</button>
+              <input id="register-password" name="password" type={showPassword ? "text" : "password"} placeholder="8+ ký tự, hoa, thường, số/ký hiệu" title="Ít nhất 8 ký tự, có chữ hoa, chữ thường và số hoặc ký tự đặc biệt; tối đa 72 byte UTF-8." aria-invalid={Boolean(errors.password)} aria-describedby={`register-password-hint${errors.password ? " register-password-error" : ""}`} value={formData.password} onChange={handleChange} autoComplete="new-password" />
+              <button type="button" className="register-password-toggle" onClick={() => setShowPassword((value) => !value)} aria-pressed={showPassword} aria-controls="register-password" aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>{showPassword ? <Eye size={19} /> : <EyeOff size={19} />}</button>
             </div>
-            <p>Ít nhất 8 ký tự, có chữ hoa, chữ thường và số hoặc ký tự đặc biệt.</p>
-            {errors.password && <p className="form-error">{errors.password}</p>}
+            <p id="register-password-hint" className="register-password-hint">Ít nhất 8 ký tự, có chữ hoa, chữ thường và số hoặc ký tự đặc biệt; tối đa 72 byte UTF-8.</p>
+            {errors.password && <p id="register-password-error" className="form-error" role="alert">{errors.password}</p>}
           </div>
           {serverMessage && <p className="server-message" role="alert">{serverMessage}</p>}
           <button type="submit" className="register-submit-button" disabled={loading}>{loading ? "Đang đăng ký…" : "Đăng ký tài khoản"}</button>
