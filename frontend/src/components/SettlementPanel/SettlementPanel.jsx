@@ -225,8 +225,9 @@ export default function SettlementPanel({
             !info.canConfirm &&
             info.status !== "PAID" && (
               <p className="settlement-help">
-                Chỉ Admin được xác nhận booking
-                COMPLETED đã cọc thành công.
+                {Number(info.totalAmount) > 0 && Number(info.depositAmount) <= 0
+                  ? "Đơn chưa cọc thành công nên không được thu khoản cuối. Đơn quá hạn chưa thanh toán phải được hủy; dữ liệu cũ sai trạng thái cần quản trị viên đối soát."
+                  : "Chỉ Admin được xác nhận đã thu đủ sau khi kết thúc lịch thuê. Trạng thái kết thúc lịch không có nghĩa là đã thanh toán đủ."}
               </p>
             )}
         </>

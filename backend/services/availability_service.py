@@ -121,6 +121,43 @@ def release_booking_for_expired_deposit(cursor, booking_id, payment_id):
     )
 
 
+def cancel_overdue_unpaid_bookings(cursor, booking_id=None):
+    """Release legacy unpaid confirmations, never rewrite completed history.
+
+    Caller authenticates the actor and owns transaction/commit. Positive-price
+    bookings have a deposit obligation; free bookings are explicitly exempt.
+    Protect any successful receipt, paid invoice, refund or pending review.
+    """
+    try:
+        minutes = max(int(os.getenv("DEPOSIT_DEADLINE_MINUTES", "10")), 1)
+    except (TypeError, ValueError):
+        minutes = 10
+    scope = " AND B.BookingID = ?" if booking_id is not None else ""
+    args = [minutes] + ([booking_id] if booking_id is not None else [])
+    cursor.execute("""
+        UPDATE B SET Status='CANCELLED'
+        FROM dbo.Bookings B WITH (UPDLOCK, HOLDLOCK)
+        WHERE B.Status IN ('PENDING','CONFIRMED') AND B.TotalAmount > 0
+          AND (EXISTS (SELECT 1 FROM dbo.Payments P WHERE P.BookingID=B.BookingID
+                       AND P.PaymentType='DEPOSIT' AND P.Status='PENDING' AND P.Deadline<=GETDATE())
+               OR DATEADD(MINUTE, ?, B.CreatedAt)<=GETDATE())
+          AND NOT EXISTS (SELECT 1 FROM dbo.Payments P WHERE P.BookingID=B.BookingID
+                          AND P.PaymentType='DEPOSIT' AND P.Status='PENDING' AND P.Deadline>GETDATE())
+          AND NOT EXISTS (SELECT 1 FROM dbo.Payments P WHERE P.BookingID=B.BookingID AND P.Status='SUCCESS')
+          AND NOT EXISTS (SELECT 1 FROM dbo.Invoices I WHERE I.BookingID=B.BookingID
+                          AND (I.PaidAmount>0 OR I.PaymentStatus='PAID'))
+          AND NOT EXISTS (SELECT 1 FROM dbo.BookingDepositRefunds R WHERE R.BookingID=B.BookingID)
+          AND NOT EXISTS (SELECT 1 FROM dbo.BookingCancellationRequests R
+                          WHERE R.BookingID=B.BookingID AND R.Status='PENDING_REVIEW')
+    """ + scope, *args)
+    cursor.execute("""
+        UPDATE P SET Status='EXPIRED', UpdatedAt=GETDATE()
+        FROM dbo.Payments P JOIN dbo.Bookings B ON B.BookingID=P.BookingID
+        WHERE B.Status='CANCELLED' AND B.TotalAmount>0
+          AND P.PaymentType='DEPOSIT' AND P.Status='PENDING'
+    """ + scope, *([booking_id] if booking_id is not None else []))
+
+
 # SQL TIME / datetime.time / string -> HH:MM
 def format_time(value):
 

@@ -27,7 +27,7 @@ const LABELS = {
   ],
 
   COMPLETED: [
-    "Hoàn thành",
+    "Đã kết thúc lịch",
     "booking-status-completed"
   ],
 
@@ -406,7 +406,8 @@ export default function BookingManagement() {
             <button
               type="button"
               className="booking-action-btn booking-action-confirm"
-              disabled={busy}
+              disabled={busy || !booking.CanConfirmBooking}
+              title={!booking.CanConfirmBooking ? "Cần đặt cọc thành công; đơn quá hạn chưa thanh toán sẽ bị hủy" : "Xác nhận booking"}
               onClick={() =>
                 changeStatus(booking, "CONFIRMED")
               }
@@ -433,12 +434,13 @@ export default function BookingManagement() {
             <button
               type="button"
               className="booking-action-btn booking-action-complete"
-              disabled={busy}
+              disabled={busy || !booking.CanCompleteBooking}
+              title={!booking.CanCompleteBooking ? "Chỉ kết thúc lịch khi đã cọc (hoặc miễn phí) và đã hết giờ thuê" : "Kết thúc lịch thuê"}
               onClick={() =>
                 changeStatus(booking, "COMPLETED")
               }
             >
-              Hoàn thành
+              Kết thúc lịch
             </button>
 
             <button
@@ -668,7 +670,7 @@ export default function BookingManagement() {
               <th>Ngày</th>
               <th>Khung giờ</th>
               <th>Tổng tiền</th>
-              <th>Đã cọc</th>
+              <th>Đã thu</th>
               <th>Trạng thái</th>
               <th>Thao tác</th>
             </tr>
