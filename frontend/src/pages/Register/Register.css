@@ -101,6 +101,7 @@
 }
 
 .register-input-wrapper input {
+  min-width: 0;
   flex: 1;
 
   width: 100%;
@@ -120,6 +121,7 @@
 }
 
 .register-password-toggle {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
 
@@ -256,4 +258,34 @@
 
 .register-login-link a:hover {
   text-decoration: underline;
+}
+
+/* Edge supplies a native password-reveal control; keep only the app toggle. */
+.register-card input[name="password"]::-ms-reveal,
+.register-card input[name="password"]::-ms-clear {
+  display: none;
+}
+
+.register-card .form-error,
+.register-card .server-message {
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.register-card .register-input-wrapper > svg {
+  flex-shrink: 0;
+}
+
+/* Full policy stays available to screen readers and via the input title. */
+.register-password-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
