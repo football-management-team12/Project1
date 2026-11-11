@@ -1237,15 +1237,21 @@ paths:
         - Fields
       summary: "Lấy danh sách tất cả các sân bóng (BE-03)"
       operationId: getFields
+      parameters:
+        - name: FieldType
+          in: query
+          description: "Lọc loại sân; nhận 5, 7, 11 hoặc dạng 5 player. Alias fieldType. Chỉ một giá trị; bỏ qua tham số để lấy mọi loại sân chưa Archive."
+          schema: { type: string, example: "5 player" }
       responses:
         '200':
-          description: "Lấy danh sách sân bóng thành công."
+          description: "Danh sách theo FieldType; không có kết quả trả []. API này không tính lịch trống theo ngày."
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/FieldWithPrice'
+        '400': { description: "FieldType không hợp lệ hoặc truyền nhiều giá trị." }
         '500':
           description: "Lỗi máy chủ nội bộ."
           content:
@@ -1366,6 +1372,14 @@ paths:
       summary: "Kiểm tra lịch trống của toàn bộ sân bóng theo ngày (BE-05.1)"
       operationId: getAllFieldsAvailability
       parameters:
+        - name: FieldType
+          in: query
+          description: "Lọc loại sân, nhận 5/7/11 hoặc dạng 5 player; alias fieldType."
+          schema: { type: string, example: "5 player" }
+        - name: availableOnly
+          in: query
+          description: "true chỉ trả sân AVAILABLE có ít nhất một slot trống trong ngày; các bộ đếm tính trên danh sách sau lọc."
+          schema: { type: boolean, default: false }
         - name: date
           in: query
           required: true
