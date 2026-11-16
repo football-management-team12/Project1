@@ -1,4 +1,5 @@
 import { vietnamDate } from "../../utils/bookingTime";
+import useBookingClock from "../../hooks/useBookingClock";
 import {
   useEffect,
   useMemo,
@@ -158,9 +159,9 @@ const groupFieldRows = (payload) => {
 };
 
 
-const localDateString = vietnamDate;
-
 const FieldList = () => {
+  const now = useBookingClock();
+  const today = vietnamDate(now);
 
   // =========================================================
   // FIELD LIST
@@ -211,9 +212,11 @@ const FieldList = () => {
   // =========================================================
 
   const [
-    selectedDate,
-    setSelectedDate,
-  ] = useState(localDateString);
+    selectedDateOverride,
+    setSelectedDateOverride,
+  ] = useState(null);
+  // Follow the business clock until a customer explicitly chooses another date.
+  const selectedDate = selectedDateOverride ?? today;
 
 
   const [
@@ -539,7 +542,7 @@ const FieldList = () => {
 
   const changeDate = (value) => {
     if (value === selectedDate) return;
-    setSelectedDate(value);
+    setSelectedDateOverride(value === today ? null : value);
     setAvailability(null);
     setAvailabilityError("");
     setAvailabilityLoading(Boolean(value));
@@ -553,7 +556,7 @@ const FieldList = () => {
 
     setTypeFilter("");
 
-    changeDate(localDateString());
+    changeDate(today);
   };
 
 
@@ -746,7 +749,7 @@ const FieldList = () => {
               type="date"
 
               min={
-                localDateString()
+                today
               }
 
               value={

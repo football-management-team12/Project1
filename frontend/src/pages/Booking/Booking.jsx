@@ -56,10 +56,9 @@ const formatPrice = (value) => {
 };
 
 
-const getLocalDateString = vietnamDate;
-
 function Booking() {
   const now = useBookingClock();
+  const today = vietnamDate(now);
   const navigate = useNavigate();
 
   const location = useLocation();
@@ -72,13 +71,8 @@ function Booking() {
   const fieldId =
     searchParams.get("fieldId") || "";
 
-  const dateFromUrl =
-    searchParams.get("date") || "";
-
-  const [
-    selectedDate,
-    setSelectedDate,
-  ] = useState(dateFromUrl);
+  // Direct links without a date use today; explicit links retain their date.
+  const selectedDate = searchParams.get("date") || today;
 
   const [
     availability,
@@ -99,22 +93,6 @@ function Booking() {
     error,
     setError,
   ] = useState("");
-
-
-  // =========================================================
-  // SYNC DATE FROM URL
-  // =========================================================
-
-  useEffect(() => {
-    setSelectedDate(
-      dateFromUrl
-    );
-
-    setSelectedSlot(null);
-  }, [
-    dateFromUrl,
-    fieldId,
-  ]);
 
 
   // =========================================================
@@ -243,10 +221,6 @@ function Booking() {
   ) => {
     const nextDate =
       event.target.value;
-
-    setSelectedDate(
-      nextDate
-    );
 
     setSelectedSlot(null);
 
@@ -490,7 +464,7 @@ function Booking() {
                 type="date"
 
                 min={
-                  getLocalDateString()
+                  today
                 }
 
                 value={
