@@ -1,0 +1,9 @@
+$kind: http-request
+name: 18 – Không tạo đặt cọc cho Booking đã hủy
+url: "{{baseUrl}}/api/bookings/11/deposit"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 20000

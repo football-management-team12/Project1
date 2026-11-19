@@ -1,0 +1,13 @@
+{
+  "passed": 7,
+  "checks": [
+    "ADMIN: four real-data KPIs in one desktop row, raw booking status, pending tasks, signed revenue and 24-hour denominator",
+    "Schedule deep link opens the correct booking detail",
+    "Review deep link reaches unanswered filter and selected review",
+    "Mobile has no page-level horizontal overflow",
+    "Partial report failure preserves schedule; refresh recovers chart",
+    "Empty data shows real zero KPIs, empty schedule/tasks/utilization and zero chart",
+    "STAFF sees schedule only and makes no ADMIN-only API requests"
+  ],
+  "note": "Intercepted fixture APIs, no live booking/payment changes."
+}

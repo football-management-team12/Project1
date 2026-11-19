@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/21/cancellation"
+method: GET
+order: 4000

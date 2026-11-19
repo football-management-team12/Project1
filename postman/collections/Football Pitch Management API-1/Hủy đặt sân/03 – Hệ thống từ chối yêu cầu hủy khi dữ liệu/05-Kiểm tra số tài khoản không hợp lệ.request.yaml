@@ -1,0 +1,45 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/26/cancellation-requests"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"reason\": \"Tôi muốn hủy lịch đặt sân.\",\r
+
+    \  \"refundAccount\": {\r
+
+    \    \"bankName\": \"MB Bank\",\r
+
+    \    \"accountNumber\": \"0123@567\",\r
+
+    \    \"accountHolder\": \"NGUYEN VAN A\"\r
+
+    \  }\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "// 1. Kiểm tra API phải từ chối yêu cầu chứa ký tự đặc biệt không hợp lệ (trả về mã lỗi 400 Bad Request hoặc 422)\r
+
+      pm.test(\"Status code is 400 Bad Request for invalid accountNumber\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([400, 422]);\r
+
+      });\r
+
+      \r
+
+      // 2. Kiểm tra response trả về thông báo lỗi hoặc từ chối ghi nhận yêu cầu hủy\r
+
+      pm.test(\"Verify response rejects invalid account number\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    var hasError = jsonData.message || jsonData.error || jsonData.errors;\r
+
+      \    pm.expect(hasError).to.be.true;\r
+
+      });"
+    language: text/javascript
+order: 5000

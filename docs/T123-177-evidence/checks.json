@@ -1,0 +1,18 @@
+{
+  "passed": 12,
+  "checks": [
+    "Default Vietnam day, BookingDate not CreatedAt, eight lifecycle KPIs agree with daily rows",
+    "Search/status AND date filter only table; KPIs depend on date alone",
+    "Inclusive range covers both boundaries and cancellation inbox stays independent",
+    "Manual refresh and repeated 10-second polling preserve selected range",
+    "Reversed/missing range shows friendly error, preserves valid scope and sends no invalid query",
+    "Empty future day returns eight zero KPIs and explicit empty state without all-history fallback",
+    "Delayed old response cannot overwrite newer day during polling",
+    "Polling errors use inline message without repeated alerts; retry retains date",
+    "Responsive date controls fit mobile viewport",
+    "Detail and cash collection refresh the current selected range without resetting dates",
+    "Reload at 00:30 Vietnam defaults to current Vietnam date although UTC is previous day",
+    "STAFF can filter dates and KPIs without ADMIN-only API requests"
+  ],
+  "note": "Intercepted fixture APIs; no production data changes."
+}

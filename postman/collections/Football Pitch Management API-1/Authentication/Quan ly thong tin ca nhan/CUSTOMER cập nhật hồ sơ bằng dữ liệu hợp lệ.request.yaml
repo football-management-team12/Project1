@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/api/users/me"
+method: GET
+body:
+  type: json
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 5000

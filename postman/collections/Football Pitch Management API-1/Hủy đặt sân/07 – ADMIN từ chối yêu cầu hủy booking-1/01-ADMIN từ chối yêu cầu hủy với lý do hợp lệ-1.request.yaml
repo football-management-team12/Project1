@@ -1,0 +1,16 @@
+$kind: http-request
+name: 01-ADMIN từ chối yêu cầu hủy với lý do hợp lệ
+url: "{{baseUrl}}/api/admin/cancellation-requests/:request_id/decision"
+method: POST
+pathVariables:
+  request_id: "1"
+body:
+  type: json
+  content: "{\r
+
+    \    \"decision\":\"APPROVED\",\r
+
+    \    \"note\":\"Đồng ý yêu cầu hủy booking\"\r
+
+    }"
+order: 1000

@@ -1,0 +1,20 @@
+$kind: http-request
+name: Tự động trim khoảng trắng ở đầu/cuối Email và Username
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"fullName\": \"Nguyen Van Test\",\r
+
+    \  \"username\": \"  test_user_06  \",\r
+
+    \  \"email\": \"  test06@example.com  \",\r
+
+    \  \"phone\": \"0912345680\",\r
+
+    \  \"password\": \"Test@123456\"\r
+
+    }"
+order: 9000

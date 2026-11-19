@@ -1,0 +1,5 @@
+$kind: http-request
+name: 07 – Hệ thống tính chính xác Total, PaidAmount và Remaining từ Payment hợp lệ
+url: "{{baseUrl}}/api/admin/invoices/"
+method: GET
+order: 9639

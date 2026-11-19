@@ -1,0 +1,46 @@
+$kind: http-example
+name: Hủy đặt sân thành công.
+request:
+  url: "{{baseUrl}}/api/bookings/:booking_id/cancel"
+  method: PUT
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: booking_id
+      value: "50"
+      disabled: false
+      description: ID lượt đặt sân cần hủy
+  body:
+    type: json
+    content: |-
+      {
+        "reason": "Bận đột xuất không đá được"
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": "Booking cancelled successfully"
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Booking cancelled successfully"
+          }
+        }
+      }
+order: 1000

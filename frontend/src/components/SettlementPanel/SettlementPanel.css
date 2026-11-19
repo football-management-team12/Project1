@@ -1,0 +1,104 @@
+.settlement-panel {
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid #dbe3e8;
+  border-radius: 14px;
+  background: white;
+  color: #0f172a;
+}
+
+.settlement-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settlement-head h3 {
+  margin: 0 0 12px;
+  font-size: 19px;
+}
+
+.settlement-status {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.settlement-status.is-paid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.settlement-numbers {
+  display: grid;
+  gap: 6px;
+}
+
+.settlement-numbers p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.settlement-numbers span {
+  color: #475569;
+}
+
+.settlement-numbers strong {
+  white-space: nowrap;
+}
+
+.settlement-remaining strong {
+  font-size: 21px;
+  color: #0b9b4b;
+}
+
+.settlement-help {
+  margin: 12px 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.settlement-error {
+  padding: 8px;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.settlement-confirm,
+.settlement-refresh {
+  display: inline-block;
+  margin: 10px 10px 0 0;
+  padding: 10px 13px;
+  border: 0;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settlement-confirm {
+  background: #0b9b4b;
+  color: white;
+}
+
+.settlement-refresh {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.settlement-confirm:disabled,
+.settlement-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

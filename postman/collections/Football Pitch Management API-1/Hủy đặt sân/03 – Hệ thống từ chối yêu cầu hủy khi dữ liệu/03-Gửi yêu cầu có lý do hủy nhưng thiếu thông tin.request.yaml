@@ -1,0 +1,12 @@
+$kind: http-request
+name: 03-Gửi yêu cầu có lý do hủy nhưng thiếu thông tin đơn hàng
+url: "{{baseUrl}}/api/bookings/26/cancellation-requests"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"reason\": \"Tôi muốn hủy lịch đặt sân.\"\r
+
+    }"
+order: 4000

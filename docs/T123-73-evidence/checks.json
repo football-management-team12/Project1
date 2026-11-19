@@ -1,0 +1,10 @@
+{
+  "passed": 5,
+  "checks": [
+    "Today selected and availability loaded on entry",
+    "No overlapping slow refresh requests",
+    "Date switch disables stale booking",
+    "Late old-date response ignored",
+    "Reset restores today and loads availability"
+  ]
+}

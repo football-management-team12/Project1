@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/fields/1031/prices/60"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \r
+
+    \    \"EndTime\": \"10:00\",\r
+
+    \    \"Price\": 220000.0,\r
+
+    \    \r
+
+    \    \"StartTime\": \"08:00\"\r
+
+    \                    \r
+
+    }"
+order: 14000

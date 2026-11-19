@@ -1,0 +1,12 @@
+$kind: http-request
+name: 21 – Cập nhật Payment sang FAILED
+url: "{{baseUrl}}/api/payments/18/demo-status"
+method: PATCH
+body:
+  type: json
+  content: "{\r\n  \"status\": \"SUCCESS\"\r\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 23000

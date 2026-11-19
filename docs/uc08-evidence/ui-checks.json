@@ -1,0 +1,82 @@
+{
+  "transport": "Intercepted GET responses; no mutations",
+  "cases": [
+    {
+      "name": "customer-provisional",
+      "source": "SQL response replay",
+      "result": "PASS",
+      "url": "/bookings/5010/invoice",
+      "overflow": false
+    },
+    {
+      "name": "customer-paid",
+      "source": "SQL response replay",
+      "result": "PASS",
+      "url": "/bookings/5017/invoice",
+      "overflow": false
+    },
+    {
+      "name": "customer-unpaid",
+      "source": "Synthetic fixture; no issued UNPAID invoice in SQL",
+      "result": "PASS",
+      "url": "/bookings/5017/invoice",
+      "overflow": false
+    },
+    {
+      "name": "admin-provisional",
+      "source": "SQL response replay",
+      "result": "PASS",
+      "url": "/admin/bookings/5010/invoice",
+      "overflow": false
+    },
+    {
+      "name": "admin-mobile",
+      "source": "SQL response replay",
+      "result": "PASS",
+      "url": "/admin/bookings/5010/invoice",
+      "overflow": false
+    },
+    {
+      "name": "customer-mobile",
+      "source": "SQL response replay",
+      "result": "PASS",
+      "url": "/bookings/5010/invoice",
+      "overflow": false
+    },
+    {
+      "name": "customer-not-found",
+      "source": "Synthetic 404",
+      "result": "PASS",
+      "url": "/bookings/5010/invoice",
+      "overflow": false
+    },
+    {
+      "name": "customer-legacy-paid",
+      "source": "Legacy API response without field/paymentStatus",
+      "result": "PASS",
+      "url": "/bookings/5017/invoice",
+      "overflow": false
+    },
+    {
+      "name": "customer-legacy-provisional",
+      "source": "Legacy API response without field/paymentStatus",
+      "result": "PASS",
+      "url": "/bookings/5010/invoice",
+      "overflow": false
+    },
+    {
+      "name": "admin-legacy-paid",
+      "source": "Legacy API response without field/paymentStatus",
+      "result": "PASS",
+      "url": "/admin/bookings/5017/invoice",
+      "overflow": false
+    },
+    {
+      "name": "customer-missing-field",
+      "source": "Synthetic response with unavailable field metadata",
+      "result": "PASS",
+      "url": "/bookings/5017/invoice",
+      "overflow": false
+    }
+  ]
+}

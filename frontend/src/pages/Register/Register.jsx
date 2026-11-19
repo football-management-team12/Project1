@@ -1,336 +1,103 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-
-import {
-  UserRound,
-  Mail,
-  Phone,
-  LockKeyhole,
-  Eye,
-  EyeOff,
-  ArrowLeft,
-} from "lucide-react";
-
+import { Link, useNavigate } from "react-router-dom";
+import { UserRound, Mail, Phone, LockKeyhole, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import AuthLayout from "../../components/AuthLayout/AuthLayout";
 import registerField from "../../assets/images/football-field.jpg";
-
+import { registerUser } from "../../services/auth_service";
+import { setOtpFlow } from "../../services/otp_context";
 import "./Register.css";
 
 function Register() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    phone: "",
-    password: "",
-    agreeTerms: true,
-  });
-
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({ fullName: "", username: "", email: "", phone: "", password: "" });
   const [errors, setErrors] = useState({});
-
   const [serverMessage, setServerMessage] = useState("");
 
-  const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-
-    setErrors((prev) => ({
-      ...prev,
-      [name]: "",
-    }));
-
+  const handleChange = ({ target: { name, value } }) => {
+    setFormData((current) => ({ ...current, [name]: value }));
+    setErrors((current) => ({ ...current, [name]: "" }));
     setServerMessage("");
   };
 
   const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.username.trim()) {
-      newErrors.username = "Vui lòng nhập tên tài khoản.";
-    } else if (formData.username.trim().length < 4) {
-      newErrors.username = "Tên tài khoản phải có ít nhất 4 ký tự.";
+    const next = {};
+    if (!formData.fullName.trim()) next.fullName = "Vui lòng nhập họ và tên.";
+    else if (formData.fullName.trim().length > 100) next.fullName = "Họ và tên không được vượt quá 100 ký tự.";
+    if (!/^[A-Za-z0-9_]{4,30}$/.test(formData.username.trim())) next.username = "Tên đăng nhập phải gồm 4-30 ký tự chữ, số hoặc dấu gạch dưới.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) next.email = "Email không đúng định dạng.";
+    if (!/^0\d{9}$/.test(formData.phone.trim())) next.phone = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.";
+    if ([...formData.password].length < 8 || new TextEncoder().encode(formData.password).length > 72) {
+      next.password = "Mật khẩu phải có ít nhất 8 ký tự và không vượt quá 72 byte UTF-8.";
+    } else if (!/[A-Z]/.test(formData.password) || !/[a-z]/.test(formData.password) || !/[0-9]|[^\p{L}\p{N}_\s]/u.test(formData.password)) {
+      next.password = "Mật khẩu phải có chữ hoa, chữ thường và số hoặc ký tự đặc biệt.";
     }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Vui lòng nhập email.";
-    } else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-    ) {
-      newErrors.email = "Email không đúng định dạng.";
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Vui lòng nhập số điện thoại.";
-    } else if (!/^0\d{9}$/.test(formData.phone)) {
-      newErrors.phone =
-        "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Vui lòng nhập mật khẩu.";
-    } else if (formData.password.length < 6) {
-      newErrors.password =
-        "Mật khẩu phải có ít nhất 6 ký tự.";
-    }
-
-    if (!formData.agreeTerms) {
-      newErrors.agreeTerms =
-        "Bạn cần đồng ý với Điều khoản dịch vụ.";
-    }
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
+    setErrors(next);
+    return Object.keys(next).length === 0;
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+    if (loading) return;
     setServerMessage("");
-
-    const isValid = validateForm();
-
-    if (!isValid) {
-      return;
-    }
-
+    if (!validateForm()) return;
+    setLoading(true);
     try {
-      console.log("Register data:", formData);
-
-      /*
-        Sau này khi Backend hoàn thành:
-
-        const response = await authService.register({
-          username: formData.username,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-        });
-
-        console.log(response);
-      */
-
-      setServerMessage(
-        "Dữ liệu hợp lệ. Sẵn sàng gửi tới Backend."
-      );
+      const result = await registerUser({
+        fullName: formData.fullName.trim(),
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        password: formData.password,
+      });
+      setOtpFlow({ ...result, purpose: "register", sentAt: Date.now() });
+      navigate("/register/verify-otp");
     } catch (error) {
-      setServerMessage(
-        error.message || "Đăng ký thất bại."
-      );
+      setServerMessage(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const fields = [
+    { name: "fullName", label: "Họ và tên", icon: UserRound, type: "text", placeholder: "Nguyễn Văn A" },
+    { name: "username", label: "Tên đăng nhập", icon: UserRound, type: "text", placeholder: "nguyenvana" },
+    { name: "email", label: "Email", icon: Mail, type: "email", placeholder: "example@gmail.com" },
+    { name: "phone", label: "Số điện thoại", icon: Phone, type: "tel", placeholder: "0901234567" },
+  ];
+
   return (
-    <AuthLayout
-      image={registerField}
-      description="Trở thành thành viên để được tích điểm đổi quà ra sân, tìm đồng đội ghép đội nhanh chóng và tận hưởng mọi đặc quyền dành riêng cho thành viên Sân Bóng."
-    >
+    <AuthLayout image={registerField} description="Trở thành thành viên để tận hưởng mọi đặc quyền dành riêng cho thành viên Sân Bóng.">
       <div className="register-card">
-        <div className="register-icon">
-          <UserRound size={36} />
-        </div>
-
+        <div className="register-icon"><UserRound size={36} /></div>
         <h2>Đăng ký</h2>
-
-        <p className="register-subtitle">
-          Đăng ký ngay tài khoản Sân Bóng mới
-        </p>
-
-        <form
-          onSubmit={handleSubmit}
-          noValidate
-        >
-          <div className="register-form-group">
-            <label htmlFor="username">
-              Tài khoản
-            </label>
-
-            <div
-              className={`register-input-wrapper ${
-                errors.username ? "input-error" : ""
-              }`}
-            >
-              <UserRound size={23} />
-
-              <input
-                id="username"
-                name="username"
-                type="text"
-                placeholder="Tên đăng nhập của bạn"
-                value={formData.username}
-                onChange={handleChange}
-              />
+        <form onSubmit={handleSubmit} noValidate>
+          {fields.map(({ name, label, icon: Icon, type, placeholder }) => (
+            <div className="register-form-group" key={name}>
+              <label htmlFor={name}>{label}</label>
+              <div className={`register-input-wrapper ${errors[name] ? "input-error" : ""}`}>
+                <Icon size={20} />
+                <input id={name} name={name} type={type} placeholder={placeholder} value={formData[name]} onChange={handleChange} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} autoComplete={name === "fullName" ? "name" : name === "username" ? "username" : name} />
+              </div>
+              {errors[name] && <p id={`${name}-error`} className="form-error" role="alert">{errors[name]}</p>}
             </div>
-
-            {errors.username && (
-              <p className="form-error">
-                {errors.username}
-              </p>
-            )}
-          </div>
-
+          ))}
           <div className="register-form-group">
-            <label htmlFor="email">
-              Email
-            </label>
-
-            <div
-              className={`register-input-wrapper ${
-                errors.email ? "input-error" : ""
-              }`}
-            >
-              <Mail size={20} />
-
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="example@gmail.com"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-
-            {errors.email && (
-              <p className="form-error">
-                {errors.email}
-              </p>
-            )}
-          </div>
-
-          <div className="register-form-group">
-            <label htmlFor="phone">
-              Số điện thoại
-            </label>
-
-            <div
-              className={`register-input-wrapper ${
-                errors.phone ? "input-error" : ""
-              }`}
-            >
-              <Phone size={20} />
-
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="Nhập số điện thoại"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-            </div>
-
-            {errors.phone && (
-              <p className="form-error">
-                {errors.phone}
-              </p>
-            )}
-          </div>
-
-          <div className="register-form-group">
-            <label htmlFor="register-password">
-              Mật khẩu
-            </label>
-
-            <div
-              className={`register-input-wrapper ${
-                errors.password ? "input-error" : ""
-              }`}
-            >
+            <label htmlFor="register-password">Mật khẩu</label>
+            <div className={`register-input-wrapper ${errors.password ? "input-error" : ""}`}>
               <LockKeyhole size={21} />
-
-              <input
-                id="register-password"
-                name="password"
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-              />
-
-              <button
-                type="button"
-                className="register-password-toggle"
-                onClick={() =>
-                  setShowPassword(!showPassword)
-                }
-                aria-label={
-                  showPassword
-                    ? "Ẩn mật khẩu"
-                    : "Hiện mật khẩu"
-                }
-              >
-                {showPassword ? (
-                  <EyeOff size={19} />
-                ) : (
-                  <Eye size={19} />
-                )}
-              </button>
+              <input id="register-password" name="password" type={showPassword ? "text" : "password"} placeholder="8+ ký tự, hoa, thường, số/ký hiệu" title="Ít nhất 8 ký tự, có chữ hoa, chữ thường và số hoặc ký tự đặc biệt; tối đa 72 byte UTF-8." aria-invalid={Boolean(errors.password)} aria-describedby={`register-password-hint${errors.password ? " register-password-error" : ""}`} value={formData.password} onChange={handleChange} autoComplete="new-password" />
+              <button type="button" className="register-password-toggle" onClick={() => setShowPassword((value) => !value)} aria-pressed={showPassword} aria-controls="register-password" aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>{showPassword ? <Eye size={19} /> : <EyeOff size={19} />}</button>
             </div>
-
-            {errors.password && (
-              <p className="form-error">
-                {errors.password}
-              </p>
-            )}
+            <p id="register-password-hint" className="register-password-hint">Ít nhất 8 ký tự, có chữ hoa, chữ thường và số hoặc ký tự đặc biệt; tối đa 72 byte UTF-8.</p>
+            {errors.password && <p id="register-password-error" className="form-error" role="alert">{errors.password}</p>}
           </div>
-
-          <label className="register-terms">
-            <input
-              type="checkbox"
-              name="agreeTerms"
-              checked={formData.agreeTerms}
-              onChange={handleChange}
-            />
-
-            <span>
-              Tôi đồng ý với Điều khoản dịch vụ
-            </span>
-          </label>
-
-          {errors.agreeTerms && (
-            <p className="form-error terms-error">
-              {errors.agreeTerms}
-            </p>
-          )}
-
-          {serverMessage && (
-            <p className="server-message">
-              {serverMessage}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            className="register-submit-button"
-          >
-            Đăng ký tài khoản
-          </button>
+          {serverMessage && <p className="server-message" role="alert">{serverMessage}</p>}
+          <button type="submit" className="register-submit-button" disabled={loading}>{loading ? "Đang đăng ký…" : "Đăng ký tài khoản"}</button>
         </form>
-
-        <p className="register-login-link">
-          Đã có tài khoản?{" "}
-          <Link to="/login">
-            Đăng nhập ngay
-          </Link>
-        </p>
-
-        <Link
-          to="/"
-          className="register-back-home"
-        >
-          <ArrowLeft size={18} />
-          Về trang chủ
-        </Link>
+        <p className="register-login-link">Đã có tài khoản? <Link to="/login">Đăng nhập ngay</Link></p>
+        <Link to="/" className="register-back-home"><ArrowLeft size={18} /> Về trang chủ</Link>
       </div>
     </AuthLayout>
   );

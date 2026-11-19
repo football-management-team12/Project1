@@ -1,0 +1,89 @@
+$kind: http-example
+name: Chi tiết đơn đặt sân.
+request:
+  url: "{{baseUrl}}/api/bookings/:booking_id"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: booking_id
+      value: "50"
+      disabled: false
+      description: ID của lượt đặt sân
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "BookingID": 50,
+        "UserID": 1,
+        "FieldID": 1,
+        "FieldName": "Sân 7 A1",
+        "BookingDate": "2026-10-05",
+        "StartTime": "06:00:00",
+        "EndTime": "07:30:00",
+        "Price": 300000,
+        "Status": "CONFIRMED",
+        "CreatedAt": "2026-10-01T08:30:00Z"
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "BookingID": {
+            "type": "integer",
+            "example": 50
+          },
+          "UserID": {
+            "type": "integer",
+            "example": 1
+          },
+          "FieldID": {
+            "type": "integer",
+            "example": 1
+          },
+          "FieldName": {
+            "type": "string",
+            "example": "Sân 7 A1"
+          },
+          "BookingDate": {
+            "type": "string",
+            "example": "2026-10-05",
+            "format": "date"
+          },
+          "StartTime": {
+            "type": "string",
+            "example": "06:00:00"
+          },
+          "EndTime": {
+            "type": "string",
+            "example": "07:30:00"
+          },
+          "Price": {
+            "type": "number",
+            "example": 300000,
+            "format": "float"
+          },
+          "Status": {
+            "type": "string",
+            "example": "CONFIRMED"
+          },
+          "CreatedAt": {
+            "type": "string",
+            "example": "2026-10-01T08:30:00Z",
+            "format": "date-time"
+          }
+        }
+      }
+order: 1000

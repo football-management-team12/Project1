@@ -1,0 +1,58 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/fields/1031/prices"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"StartTime\": {{StartTime}},\r
+
+    \    \"EndTime\": {{EndTime}},\r
+
+    \    \"Price\": {{Price}}\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "var caseName = pm.iterationData.get(\"case_name\") || \"Test case\";\r
+
+      var reqBodyStr = pm.variables.get(\"reqBody\");\r
+
+      var resBody = pm.response.text();\r
+
+      \r
+
+      pm.test(\"[TC: \" + caseName + \"] | Input: \" + reqBodyStr + \" ==>
+      Status 400\", function () {\r
+
+      \    pm.response.to.have.status(400);\r
+
+      });"
+    language: text/javascript
+  - type: beforeRequest
+    code: "var st = pm.iterationData.get(\"StartTime\");\r
+
+      var et = pm.iterationData.get(\"EndTime\");\r
+
+      var pr = pm.iterationData.get(\"Price\");\r
+
+      \r
+
+      // Đảm bảo dữ liệu nhận diện đúng kiểu (số, null, chuỗi) trước khi đưa vào
+      body\r
+
+      var bodyObj = {\r
+
+      \    \"StartTime\": st !== undefined ? st : null,\r
+
+      \    \"EndTime\": et !== undefined ? et : null,\r
+
+      \    \"Price\": pr !== undefined ? pr : null\r
+
+      };\r
+
+      \r
+
+      pm.collectionVariables.set(\"reqBodyJson\", JSON.stringify(bodyObj));"
+    language: text/javascript
+order: 16000

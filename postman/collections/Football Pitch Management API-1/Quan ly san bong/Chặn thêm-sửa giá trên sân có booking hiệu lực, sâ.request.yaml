@@ -1,0 +1,16 @@
+$kind: http-request
+name: Chặn thêm/sửa giá trên sân có booking hiệu lực, sân Archive & API legacy
+url: "{{baseUrl}}/api/fields/price/1006"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"StartTime\": \"16:00\",\r
+
+    \  \"EndTime\": \"18:00\",\r
+
+    \  \"Price\": 200000\r
+
+    }"
+order: 19000

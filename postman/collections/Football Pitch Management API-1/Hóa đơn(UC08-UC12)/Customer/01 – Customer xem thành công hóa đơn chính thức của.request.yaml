@@ -1,0 +1,6 @@
+$kind: http-request
+name: 01 – Customer xem thành công hóa đơn chính thức của Booking thuộc tài
+  khoản mình
+url: "{{baseUrl}}/api/invoices/1"
+method: GET
+order: 1000

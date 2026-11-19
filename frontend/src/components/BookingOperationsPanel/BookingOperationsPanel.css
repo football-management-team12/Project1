@@ -1,0 +1,10 @@
+.booking-operations-panel { margin: 22px 0; padding: 20px; border: 1px solid #d8e5de; border-radius: 12px; background: #f8faf9; }
+.booking-operations-panel h3 { margin: 0 0 12px; }
+.booking-operations-panel label { display: grid; gap: 8px; font-weight: 600; }
+.booking-operations-panel textarea { width: 100%; box-sizing: border-box; min-height: 72px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font: inherit; resize: vertical; }
+.booking-operation-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.booking-operation-actions button { border: 1px solid #bed7cc; border-radius: 8px; padding: 10px 14px; background: #fff; color: #065f46; font-weight: 600; cursor: pointer; }
+.booking-operation-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.booking-operation-error { color: #b91c1c; }
+.booking-operation-history article { border-top: 1px solid #dce5df; padding: 10px 0; }
+.booking-operation-history p { margin: 5px 0; font-size: 13px; }

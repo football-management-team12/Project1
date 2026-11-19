@@ -1,0 +1,50 @@
+$kind: http-request
+name: Kiểm tra lịch trống của một sân bóng theo ngày (BE-05 / T123-59)
+description: ""
+url: "{{baseUrl}}/api/fields/:field_id/availability?date=2026-09-26"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: date
+    value: 2026-09-26
+    disabled: false
+    description: Ngày cần kiểm tra (YYYY-MM-DD)
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-09-26"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+pathVariables:
+  - key: field_id
+    value: "1"
+    disabled: false
+    description: ID của sân bóng
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: text
+  content: ""
+settings: {}
+examples: ./.resources/Kiểm tra lịch trống của một sân bóng theo ngày (BE-.resources/examples
+order: 1000

@@ -1,35 +1,287 @@
-import { Routes, Route } from "react-router-dom";
+import {
+  Routes,
+  Route,
+} from "react-router-dom";
 
-import Home from "../pages/Home/Home";
-import Login from "../pages/Login/Login";
-import Register from "../pages/Register/Register";
-import FieldList from "../pages/FieldList/FieldList";
-import Admin from "../pages/Admin/Admin";
-import About from "../pages/About/About";
-import Booking from "../pages/Booking/Booking";
-import Pricing from "../pages/Pricing/Pricing";
+import Home
+  from "../pages/Home/Home";
+import InvoiceDetail from "../pages/InvoiceDetail/InvoiceDetail";
+import InvoiceManagement, { AdminInvoiceDetail } from "../pages/Admin/InvoiceManagement";
+
+import Login
+  from "../pages/Login/Login";
+
+import Register
+  from "../pages/Register/Register";
+import AuthOtp from "../pages/AuthOtp/AuthOtp";
+
+import FieldList
+  from "../pages/FieldList/FieldList";
+import FieldReviews from "../pages/FieldReviews/FieldReviews";
+import ReviewManagement from "../pages/Admin/ReviewManagement";
+import CustomerManagement, { AdminCustomerDetail } from "../pages/Admin/CustomerManagement";
+import ReportManagement from "../pages/Admin/ReportManagement";
+
+import Admin
+  from "../pages/Admin/Admin";
+
+import FieldManagement
+  from "../pages/Admin/FieldManagement";
+
+import BookingManagement
+  from "../pages/Admin/BookingManagement";
+
+import AdminLayout
+  from "../components/AdminLayout/AdminLayout";
+
+import About
+  from "../pages/About/About";
+
+import Booking
+  from "../pages/Booking/Booking";
+
+import BookingConfirm
+  from "../pages/BookingConfirm/BookingConfirm";
+
+import BookingHistory
+  from "../pages/BookingHistory/BookingHistory";
+
+import BookingDetail
+  from "../pages/BookingDetail/BookingDetail";
+
+import Pricing
+  from "../pages/Pricing/Pricing";
+
+import Profile
+  from "../pages/Profile/Profile";
+
+import ProtectedRoute
+  from "../components/ProtectedRoute/ProtectedRoute";
 
 
 function AppRoutes() {
+
   return (
+
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/register/verify-otp" element={<AuthOtp key="register-otp" mode="verify" />} />
+      <Route path="/forgot-password" element={<AuthOtp key="forgot" mode="forgot" />} />
+      <Route path="/forgot-password/verify-otp" element={<AuthOtp key="forgot-otp" mode="verify" />} />
+      <Route path="/reset-password" element={<AuthOtp key="reset" mode="reset" />} />
+      {["/invoices/:invoiceId", "/bookings/:bookingId/invoice"].map((path) => (
+        <Route key={path} path={path} element={
+          <ProtectedRoute allowedRoles={["CUSTOMER", "ADMIN"]}><InvoiceDetail /></ProtectedRoute>
+        } />
+      ))}
 
-      <Route path="/login" element={<Login />} />
 
-      <Route path="/register" element={<Register />} />
+      {/* =====================================================
+          PUBLIC
+      ====================================================== */}
 
-      <Route path="/fields" element={<FieldList />} />
+      <Route
+        path="/"
+        element={
+          <Home />
+        }
+      />
 
-      <Route path="/booking" element={<Booking />} />
 
-      <Route path="/pricing" element={<Pricing />} />
+      <Route
+        path="/login"
+        element={
+          <Login />
+        }
+      />
 
-      <Route path="/about" element={<About />} />
 
-      <Route path="/admin" element={<Admin />} />
+      <Route
+        path="/register"
+        element={
+          <Register />
+        }
+      />
+
+
+      <Route
+        path="/fields"
+        element={
+          <FieldList />
+        }
+      />
+      <Route path="/fields/:fieldId/reviews" element={<FieldReviews />} />
+
+
+      <Route
+        path="/pricing"
+        element={
+          <Pricing />
+        }
+      />
+
+
+      <Route
+        path="/about"
+        element={
+          <About />
+        }
+      />
+
+
+      {/* =====================================================
+          AUTHENTICATED USER
+      ====================================================== */}
+
+      <Route
+        path="/profile"
+        element={
+
+          <ProtectedRoute>
+
+            <Profile />
+
+          </ProtectedRoute>
+        }
+      />
+
+
+      {/* =====================================================
+          CUSTOMER
+      ====================================================== */}
+
+      <Route
+        path="/booking"
+        element={
+
+          <ProtectedRoute
+            allowedRoles={[
+              "CUSTOMER"
+            ]}
+          >
+
+            <Booking />
+
+          </ProtectedRoute>
+        }
+      />
+
+
+      <Route
+        path="/booking/confirm"
+        element={
+
+          <ProtectedRoute
+            allowedRoles={[
+              "CUSTOMER"
+            ]}
+          >
+
+            <BookingConfirm />
+
+          </ProtectedRoute>
+        }
+      />
+
+
+      <Route
+        path="/bookings"
+        element={
+
+          <ProtectedRoute
+            allowedRoles={[
+              "CUSTOMER"
+            ]}
+          >
+
+            <BookingHistory />
+
+          </ProtectedRoute>
+        }
+      />
+
+
+      <Route
+        path="/bookings/:bookingId"
+        element={
+
+          <ProtectedRoute
+            allowedRoles={[
+              "CUSTOMER"
+            ]}
+          >
+
+            <BookingDetail />
+
+          </ProtectedRoute>
+        }
+      />
+
+
+      {/* =====================================================
+          ADMIN
+          Giữ nguyên scope hiện tại của source.
+      ====================================================== */}
+
+      <Route
+        path="/admin"
+        element={
+
+          <ProtectedRoute
+            allowedRoles={[
+              "ADMIN",
+              "STAFF",
+            ]}
+          >
+
+            <AdminLayout />
+
+          </ProtectedRoute>
+        }
+      >
+
+        <Route
+          index
+          element={
+            <Admin />
+          }
+        />
+
+
+        <Route
+          path="fields"
+          element={
+            <FieldManagement />
+          }
+        />
+
+
+        <Route
+          path="bookings"
+          element={
+            <BookingManagement />
+          }
+        />
+
+        <Route path="profile" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Profile adminView /></ProtectedRoute>} />
+        <Route path="reviews" element={<ProtectedRoute allowedRoles={["ADMIN"]}><ReviewManagement /></ProtectedRoute>} />
+        <Route path="customers" element={<ProtectedRoute allowedRoles={["ADMIN"]}><CustomerManagement /></ProtectedRoute>} />
+        <Route path="customers/:customerId" element={<ProtectedRoute allowedRoles={["ADMIN"]}><AdminCustomerDetail /></ProtectedRoute>} />
+        <Route path="reports" element={<ProtectedRoute allowedRoles={["ADMIN"]}><ReportManagement /></ProtectedRoute>} />
+        <Route path="invoices" element={<ProtectedRoute allowedRoles={["ADMIN"]}><InvoiceManagement /></ProtectedRoute>} />
+        <Route path="invoice-management/:invoiceId" element={<ProtectedRoute allowedRoles={["ADMIN"]}><AdminInvoiceDetail /></ProtectedRoute>} />
+        {["bookings/:bookingId/invoice", "invoices/:invoiceId"].map((path) => (
+          <Route key={path} path={path} element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <InvoiceDetail adminView />
+            </ProtectedRoute>
+          } />
+        ))}
+
+      </Route>
+
     </Routes>
   );
 }
+
 
 export default AppRoutes;

@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/cancellation-requests/:request_id/decision"
+method: POST
+pathVariables:
+  request_id: "1"
+body:
+  type: json
+  content: "{\r
+
+    \    \"decision\":\"APPROVED\",\r
+
+    \    \"note\":\"Đồng ý yêu cầu hủy booking\"\r
+
+    }"
+order: 3000

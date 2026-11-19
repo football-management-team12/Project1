@@ -1,0 +1,52 @@
+{
+  "browser": "Edge headless",
+  "transport": "All API calls intercepted; synthetic registration data",
+  "requests": 6,
+  "results": [
+    {
+      "width": 375,
+      "result": "PASS",
+      "checks": [
+        "red field/server errors",
+        "placeholder policy",
+        "one custom reveal icon",
+        "native Edge reveal suppressed",
+        "toggle preserves value",
+        "weak password rejected",
+        "server error displayed",
+        "successful registration redirect",
+        "no horizontal overflow"
+      ]
+    },
+    {
+      "width": 768,
+      "result": "PASS",
+      "checks": [
+        "red field/server errors",
+        "placeholder policy",
+        "one custom reveal icon",
+        "native Edge reveal suppressed",
+        "toggle preserves value",
+        "weak password rejected",
+        "server error displayed",
+        "successful registration redirect",
+        "no horizontal overflow"
+      ]
+    },
+    {
+      "width": 1440,
+      "result": "PASS",
+      "checks": [
+        "red field/server errors",
+        "placeholder policy",
+        "one custom reveal icon",
+        "native Edge reveal suppressed",
+        "toggle preserves value",
+        "weak password rejected",
+        "server error displayed",
+        "successful registration redirect",
+        "no horizontal overflow"
+      ]
+    }
+  ]
+}

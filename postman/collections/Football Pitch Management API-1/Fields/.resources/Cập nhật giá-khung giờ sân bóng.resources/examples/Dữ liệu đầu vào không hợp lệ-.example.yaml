@@ -1,0 +1,54 @@
+$kind: http-example
+name: Dữ liệu đầu vào không hợp lệ.
+request:
+  url: "{{baseUrl}}/api/fields/price/:field_id"
+  method: PUT
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: field_id
+      value: "1"
+      disabled: false
+      description: ID của sân bóng
+  body:
+    type: json
+    content: |-
+      {
+        "StartTime": "06:00:00",
+        "EndTime": "07:30:00",
+        "Price": 300000
+      }
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "type": "string",
+        "nullable": true,
+        "example": "?date=2026-10-04"
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Thông tin yêu cầu không hợp lệ"
+          },
+          "example": {
+            "type": "string",
+            "example": "?date=2026-10-04"
+          }
+        }
+      }
+order: 2000

@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/cancellation-requests?status=UNKNOWN"
+method: GET
+queryParams:
+  status: UNKNOWN
+order: 4000

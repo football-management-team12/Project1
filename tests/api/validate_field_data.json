@@ -1,0 +1,50 @@
+[
+  {
+    "case_name": "Thieu ten san (FieldName rong)",
+    "FieldName": "",
+    "Location": "Nam Từ Liêm, Hà Nội",
+    "FieldType": "\"7 player\"",
+    "Image": "field1.jpg",
+    "expected_error": "VALIDATION_ERROR"
+  },
+  {
+    "case_name": "Thieu dia diem (Location rong)",
+    "FieldName": "Sân 1",
+    "Location": "",
+    "FieldType": "\"7 player\"",
+    "Image": "field1.jpg",
+    "expected_error": "VALIDATION_ERROR"
+  },
+  {
+    "case_name": "Sai enum FieldType (6 player)",
+    "FieldName": "Sân 1",
+    "Location": "Nam Từ Liêm, Hà Nội",
+    "FieldType": "\"6 player\"",
+    "Image": "field1.jpg",
+    "expected_error": "INVALID_FIELD_TYPE"
+  },
+  {
+    "case_name": "Sai enum FieldType (chuoi '5')",
+    "FieldName": "Sân 1",
+    "Location": "Nam Từ Liêm, Hà Nội",
+    "FieldType": "\"5\"",
+    "Image": "field1.jpg",
+    "expected_error": "INVALID_FIELD_TYPE"
+  },
+  {
+    "case_name": "Sai kieu du lieu FieldType (so 123)",
+    "FieldName": "Sân 1",
+    "Location": "Nam Từ Liêm, Hà Nội",
+    "FieldType": 123,
+    "Image": "field1.jpg",
+    "expected_error": "INVALID_FIELD_TYPE"
+  },
+  {
+    "case_name": "Vuot qua max length FieldName",
+    "FieldName": "Ten san bong cuc ky dai vuot qua gioi han so ky tu cho phep trong cot FieldName cua bang FootballFields de kiem tra co che validate do dai dau vao cua he thong quan ly san bong",
+    "Location": "Nam Từ Liêm, Hà Nội",
+    "FieldType": "\"11 player\"",
+    "Image": "field1.jpg",
+    "expected_error": "VALIDATION_ERROR"
+  }
+]

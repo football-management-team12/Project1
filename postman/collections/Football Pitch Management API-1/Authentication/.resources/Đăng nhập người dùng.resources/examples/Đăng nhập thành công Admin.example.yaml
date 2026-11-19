@@ -1,0 +1,49 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/auth/login"
+  method: POST
+  headers:
+    Content-Type: application/json
+    Accept: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "account": "admin",
+        "password": "123456"
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "accessToken": "eyJhbGciOiJIUzI1Ni...",
+        "tokenType": "Bearer",
+        "user": {
+          "value": "reference #/components/schemas/PublicUser not found in the OpenAPI spec"
+        }
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1Ni..."
+          },
+          "tokenType": {
+            "type": "string",
+            "example": "Bearer"
+          }
+        }
+      }
+order: 1000

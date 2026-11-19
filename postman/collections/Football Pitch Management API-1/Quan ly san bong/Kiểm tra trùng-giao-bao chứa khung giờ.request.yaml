@@ -1,0 +1,37 @@
+$kind: http-request
+name: Kiểm tra trùng/giao/bao chứa khung giờ
+url: "{{baseUrl}}/api/admin/fields/{{fieldId}}/prices"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"StartTime\": \"{{StartTime}}\",\r
+
+    \    \"EndTime\": \"{{EndTime}}\",\r
+
+    \    \"Price\": {{Price}}\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "var caseName = pm.iterationData.get(\"case_name\") || \"Test case\";\r
+
+      \r
+
+      // Nếu tên case có chứa từ khóa trùng, giao, bao chứa thì kỳ vọng mã lỗi
+      409, ngược lại là 400\r
+
+      var expectedStatus = (caseName.includes(\"Trung\") ||
+      caseName.includes(\"Giao\") || caseName.includes(\"Bao\")) ? 409 : 400;\r
+
+      \r
+
+      pm.test(\"[TC Overlap: \" + caseName + \"] ==> Status \" + expectedStatus,
+      function () {\r
+
+      \    pm.response.to.have.status(expectedStatus);\r
+
+      });"
+    language: text/javascript
+order: 17000

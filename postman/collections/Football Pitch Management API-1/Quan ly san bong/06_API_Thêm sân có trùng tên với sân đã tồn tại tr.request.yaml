@@ -1,0 +1,20 @@
+$kind: http-request
+name: 06_API_Thêm sân có trùng tên với sân đã tồn tại tròng cùng 1 cơ sở
+url: "{{baseUrl}}/api/admin/fields"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"FieldName\": \"Sân Test A\",\r
+
+    \    \"FieldType\": \"7 player\",\r
+
+    \    \"Image\": \"field1.jpg\",\r
+
+    \    \"IsArchived\": false,\r
+
+    \    \"Location\": \"Hà Nội\"\r
+
+    }"
+order: 8000

@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/fields/1024/status"
+method: PATCH
+body:
+  type: json
+  content: "{\r\n  \"Status\": \"AVAILABLE\"\r\n}"
+order: 9278

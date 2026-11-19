@@ -1,0 +1,40 @@
+$kind: http-example
+description: ""
+request:
+  url: "{{baseUrl}}/api/auth/login"
+  method: POST
+  headers:
+    Content-Type: application/json
+    Accept: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "account": "admin@gmail.com",
+        "password": ""
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string",
+            "example": "admin"
+          },
+          "password": {
+            "type": "string",
+            "example": "123456"
+          }
+        },
+        "required": [
+          "account",
+          "password"
+        ]
+      }
+response:
+  statusCode: 200
+  statusText: ""
+  body:
+    type: json
+    content: ""
+order: 7000

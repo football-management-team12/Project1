@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/fields/1025"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"FieldName\": \"Sân bóng cập nhật mới\",\r
+
+    \  \"Location\": \"Nam Từ Liêm, Hà Nội\",\r
+
+    \  \"FieldType\": \"7 player\",\r
+
+    \  \"Image\": \"field1.jpg\"\r
+
+    }"
+order: 6000

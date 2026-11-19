@@ -1,0 +1,39 @@
+$kind: http-request
+name: 03 - GET - Kiểm tra trạng thái Booking không bị CANCELLED
+url: "{{baseUrl}}/api/admin/cancellation-requests"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "// Kiểm tra Status Code là 200 OK\r
+
+      pm.test(\"Status code is 200 OK\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      // Kiểm tra trạng thái sân KHÔNG tự động chuyển thành CANCELLED ngay cả khi chưa có cọc\r
+
+      pm.test(\"Booking status is NOT automatically set to CANCELLED upon request\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    var requests = jsonData.requests || jsonData;\r
+
+      \    \r
+
+      \    if (requests.length > 0) {\r
+
+      \        var firstReq = requests[0];\r
+
+      \        // Đảm bảo trạng thái đơn không bị đổi nhầm thành CANCELLED trước khi Admin duyệt\r
+
+      \        pm.expect(firstReq.bookingStatus).to.not.equal(\"CANCELLED\");\r
+
+      \    }\r
+
+      });"
+    language: text/javascript
+order: 2231

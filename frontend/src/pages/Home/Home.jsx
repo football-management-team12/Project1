@@ -169,13 +169,6 @@ function Home() {
               Trải nghiệm tuyệt vời
             </h1>
 
-            <p>
-              Hệ thống tìm kiếm và đặt sân trực tuyến
-              thông minh. Hỗ trợ thanh toán nhanh chóng,
-              an toàn và đảm bảo lịch chính xác 100%
-              không bị trùng lặp.
-            </p>
-
             <Link
               to="/fields"
               className="hero-button"

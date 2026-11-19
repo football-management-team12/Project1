@@ -1,0 +1,34 @@
+$kind: http-request
+description: ""
+url: "{{baseUrl}}/api/bookings/:booking_id"
+method: GET
+headers:
+  Accept: application/json
+pathVariables:
+  - key: booking_id
+    value: "50"
+    disabled: false
+    description: ID của lượt đặt sân
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "example": 50
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Lấy thông tin chi tiết của một lượt đặt sân.resources/examples
+order: 4000

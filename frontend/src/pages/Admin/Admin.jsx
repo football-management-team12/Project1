@@ -1,862 +1,476 @@
 import { useEffect, useState } from "react";
+import { Link, useOutletContext } from "react-router-dom";
 import {
-    getFields,
-    updateFieldPrice
-} from "../../services/field_service";
+  CalendarDays,
+  TrendingUp,
+  CircleX,
+  Star,
+  RefreshCw,
+  Clock,
+  BarChart3,
+} from "lucide-react";
+import { apiRequest } from "../../services/api";
+import { getReportSummary } from "../../services/report_service";
+import { getAdminReviews } from "../../services/review_service";
+import { vietnamDate } from "../../utils/bookingTime";
+import useBookingClock from "../../hooks/useBookingClock";
+import "./Dashboard.css";
 
-import "./Admin.css";
-
-
-function Admin(){
-
-
-const [user,setUser]=useState(null);
-
-const [fields,setFields]=useState([]);
-
-const [editField,setEditField]=useState(null);
-
-
-
-useEffect(()=>{
-
-
-const userData=localStorage.getItem("user");
-
-
-if(userData){
-
-setUser(
-JSON.parse(userData)
-);
-
-}
-
-
-loadFields();
-
-
-},[]);
-
-
-
-
-
-const loadFields=async()=>{
-
-
-try{
-
-
-const data=await getFields();
-
-setFields(data);
-
-
-}
-catch(err){
-
-console.log(err);
-
-}
-
-
+const money = (value) => `${Number(value).toLocaleString("vi-VN")} đ`;
+const count = (value) => Number(value).toLocaleString("vi-VN");
+const statuses = {
+  PENDING: "Chờ xác nhận",
+  CONFIRMED: "Đã xác nhận",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
 };
-
-
-
-
-
-// đếm sân không trùng
-
-const totalFields=
-new Set(
-fields.map(
-f=>f.FieldID
-)
-).size;
-
-
-
-const activeFields=
-new Set(
-fields
-.filter(
-f=>f.Status==="AVAILABLE"
-)
-.map(
-f=>f.FieldID
-)
-).size;
-
-
-
-const maintenanceFields=
-new Set(
-fields
-.filter(
-f=>f.Status!=="AVAILABLE"
-)
-.map(
-f=>f.FieldID
-)
-).size;
-
-
-
-
-
-return (
-
-
-<div className="admin-container">
-
-
-
-{/* SIDEBAR */}
-
-<aside className="sidebar">
-
-
-<h2>
-⚽ SÂN BÓNG
-</h2>
-
-
-
-<ul>
-
-
-<li>
-Tổng quan
-</li>
-
-
-<li className="active">
-Quản lý sân bóng
-</li>
-
-
-<li>
-Quản lý đặt sân
-</li>
-
-
-<li>
-Quản lý khách hàng
-</li>
-
-
-<li>
-Quản lý nhân viên
-</li>
-
-
-<li>
-Hóa đơn & thanh toán
-</li>
-
-
-<li>
-Thống kê & báo cáo
-</li>
-
-
-<li>
-Cài đặt
-</li>
-
-
-</ul>
-
-
-
-<div className="logout">
-
-↪ Đăng xuất
-
-</div>
-
-
-</aside>
-
-
-
-
-
-
-{/* MAIN */}
-
-
-<main className="admin-content">
-
-
-
-
-
-{/* HEADER */}
-
-<div className="top-header">
-
-
-<input
-placeholder="🔍 Tìm kiếm nhanh..."
-/>
-
-
-
-<div className="admin-user">
-
-
-<span>
-🔔
-</span>
-
-
-<div>
-
-<b>
-{
-user?.FullName || "Admin sân bóng"
-}
-</b>
-
-
-<small>
-Quản trị viên
-</small>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<div className="title-row">
-
-
-<h1>
-QUẢN LÝ SÂN BÓNG
-</h1>
-
-
-
-<button className="add-btn">
-
-+ Thêm sân mới
-
-</button>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-{/* CARD */}
-
-
-<div className="cards">
-
-
-<div className="card">
-
-<p>
-Tổng số sân
-</p>
-
-
-<h2>
-{totalFields}
-</h2>
-
-
-</div>
-
-
-
-<div className="card">
-
-<p>
-Đang hoạt động
-</p>
-
-
-<h2>
-{activeFields}
-</h2>
-
-
-</div>
-
-
-
-<div className="card">
-
-<p>
-Đang bảo trì
-</p>
-
-
-<h2>
-{maintenanceFields}
-</h2>
-
-
-</div>
-
-
-
-
-<div className="card">
-
-<p>
-Đã đặt hôm nay
-</p>
-
-
-<h2>
-0
-</h2>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-{/* FILTER */}
-
-<div className="filter">
-
-
-<input
-placeholder="🔍 Tìm kiếm tên sân..."
-/>
-
-
-<select>
-
-<option>
-Loại sân
-</option>
-
-<option>
-5 player
-</option>
-
-<option>
-7 player
-</option>
-
-
-<option>
-11 player
-</option>
-
-</select>
-
-
-
-
-<select>
-
-<option>
-Trạng thái
-</option>
-
-
-<option>
-AVAILABLE
-</option>
-
-
-<option>
-MAINTENANCE
-</option>
-
-
-</select>
-
-
-</div>
-
-
-
-
-
-
-
-
-
-{/* TABLE */}
-
-
-<div className="table-box">
-
-
-<table>
-
-
-<thead>
-
-
-<tr>
-
-
-<th>
-Tên sân
-</th>
-
-
-<th>
-Loại sân
-</th>
-
-
-<th>
-Địa điểm
-</th>
-
-
-<th>
-Khung giờ
-</th>
-
-
-<th>
-Giá / giờ
-</th>
-
-
-<th>
-Trạng thái
-</th>
-
-
-<th>
-Thao tác
-</th>
-
-
-</tr>
-
-
-</thead>
-
-
-
-
-
-
-<tbody>
-
-
-{
-
-fields.map(
-(field)=>(
-
-
-<tr
-key={
-field.FieldID+"-"+field.StartTime
-}
->
-
-
-
-<td>
-{field.FieldName}
-</td>
-
-
-
-<td>
-{field.FieldType}
-</td>
-
-
-
-<td>
-{field.Location}
-</td>
-
-
-
-
-
-<td>
-
-
-<div className="time">
-
-
-{field.StartTime}
-
--
-
-{field.EndTime}
-
-
-</div>
-
-
-
-</td>
-
-
-
-
-
-
-<td>
-
-
-<strong>
-
-{
-field.Price
-?
-field.Price.toLocaleString()
-:
-0
+const initial = { loading: true, data: null, error: "" };
+
+function previousDays(day, amount) {
+  const date = new Date(`${day}T12:00:00+07:00`);
+  date.setUTCDate(date.getUTCDate() - amount);
+  return vietnamDate(date.getTime());
 }
 
-đ
-
-</strong>
-
-
-
-</td>
-
-
-
-
-
-
-<td>
-
-
-<span
-
-className={
-field.Status==="AVAILABLE"
-?
-"status available"
-:
-"status maintenance"
+function ResourceState({ resource, empty, children }) {
+  if (resource.loading)
+    return (
+      <p className="dash-state" role="status">
+        Đang tải dữ liệu…
+      </p>
+    );
+  if (resource.error)
+    return (
+      <p className="dash-state dash-error" role="alert">
+        {resource.error} Hãy bấm Làm mới để thử lại.
+      </p>
+    );
+  if (empty) return <p className="dash-state">Chưa có dữ liệu.</p>;
+  return children;
 }
 
->
-
-{field.Status}
-
-
-</span>
-
-
-</td>
-
-
-
-
-
-
-<td>
-
-
-<button
-
-className="edit-btn"
-
-onClick={()=>setEditField(field)}
-
->
-
-Sửa
-
-</button>
-
-
-
-</td>
-
-
-
-
-
-
-</tr>
-
-
-)
-
-)
-
-
+function RevenueChart({ rows }) {
+  const values = rows.map((row) => Number(row.revenue));
+  const min = Math.min(0, ...values);
+  const max = Math.max(0, ...values);
+  const span = max - min || 1;
+  const y = (value) => 190 - ((value - min) / span) * 150;
+  return (
+    <>
+      <svg
+        className="dash-chart"
+        viewBox="0 0 700 240"
+        role="img"
+        aria-label="Doanh thu thuần 7 ngày, gồm cả khoản âm và bằng không"
+      >
+        <line x1="15" x2="685" y1={y(0)} y2={y(0)} stroke="#b6cdbf" />
+        {rows.map((row, index) => {
+          const value = Number(row.revenue);
+          const x = index * 98 + 23;
+          return (
+            <g key={row.date}>
+              <rect
+                x={x}
+                y={Math.min(y(value), y(0))}
+                width="64"
+                height={Math.max(Math.abs(y(value) - y(0)), 2)}
+                rx="4"
+                fill={value < 0 ? "#d75b55" : "#07935f"}
+              />
+              <text
+                x={x + 32}
+                y={value < 0 ? y(value) + 17 : y(value) - 9}
+                textAnchor="middle"
+              >
+                {count(value)}
+              </text>
+              <text x={x + 32} y="225" textAnchor="middle">
+                {row.date.slice(8)}/{row.date.slice(5, 7)}
+              </text>
+              <title>
+                {row.date}: {money(value)}
+              </title>
+            </g>
+          );
+        })}
+      </svg>
+      <details>
+        <summary>Xem số liệu doanh thu</summary>
+        <div className="dash-table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Ngày</th>
+                <th>Doanh thu thuần</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.date}>
+                  <td>{row.date}</td>
+                  <td>{money(row.revenue)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </>
+  );
 }
 
-
-
-</tbody>
-
-
-
-</table>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-</main>
-
-
-
-
-
-
-
-
-
-{/* POPUP EDIT */}
-
-
-
-{
-
-editField &&
-
-
-<div className="modal">
-
-
-<div className="modal-content">
-
-
-<h2>
-Sửa giá sân
-</h2>
-
-
-
-<label>
-Giờ bắt đầu
-</label>
-
-
-<input
-
-type="time"
-
-value={
-editField.StartTime
+export default function Admin() {
+  const { user, isAdmin, cancellationInbox } = useOutletContext();
+  const now = useBookingClock();
+  const today = vietnamDate(now);
+  const [revision, setRevision] = useState(0);
+  const [schedule, setSchedule] = useState(initial);
+  const [week, setWeek] = useState(initial);
+  const [daily, setDaily] = useState(initial);
+  const [reviews, setReviews] = useState(initial);
+  // Key responses by date/role so a previous day or account never appears as current.
+  const key = `${today}:${isAdmin}:${user?.UserID}`;
+  useEffect(() => {
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    const load = (setter, request) =>
+      request()
+        .then((data) => {
+          if (!controller.signal.aborted)
+            setter({ key, data, error: "", loading: false });
+        })
+        .catch((error) => {
+          if (!controller.signal.aborted)
+            setter({
+              key,
+              data: null,
+              error: error.message || "Không tải được dữ liệu",
+              loading: false,
+            });
+        });
+    const refresh = () => {
+      load(setSchedule, () =>
+        apiRequest(`/api/management/dashboard/schedule?date=${today}`, options),
+      );
+      if (isAdmin) {
+        load(setWeek, () =>
+          getReportSummary(
+            { from: previousDays(today, 6), to: today },
+            options,
+          ),
+        );
+        load(setDaily, () =>
+          getReportSummary({ from: today, to: today }, options),
+        );
+        load(setReviews, () =>
+          getAdminReviews({ status: "unanswered", pageSize: 3 }, options),
+        );
+      }
+    };
+    refresh();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") refresh();
+    }, 30_000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      controller.abort();
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [today, isAdmin, user?.UserID, key, revision]);
+  const current = (state) => (state.key === key ? state : initial);
+  const scheduleState = current(schedule);
+  const weekState = current(week);
+  const dailyState = current(daily);
+  const reviewState = current(reviews);
+  const pending = cancellationInbox?.requests || [];
+  const cancelError = cancellationInbox?.error;
+  const metrics = [
+    {
+      label: "Lượt đặt sân hôm nay",
+      icon: CalendarDays,
+      value: scheduleState.data?.total,
+      error: scheduleState.error,
+      to: "/admin/bookings",
+      hint: "Theo ngày đặt sân, gồm mọi trạng thái",
+    },
+    ...(isAdmin
+      ? [
+          {
+            label: "Doanh thu thuần hôm nay",
+            icon: TrendingUp,
+            value: dailyState.data?.revenue,
+            error: dailyState.error,
+            to: "/admin/reports",
+            currency: true,
+            hint: "Tiền thực nhận − đã hoàn, theo ngày đá",
+          },
+          {
+            label: "Yêu cầu hủy chờ duyệt",
+            icon: CircleX,
+            value:
+              cancellationInbox && !cancellationInbox.loading
+                ? pending.length
+                : null,
+            error: cancelError,
+            to: "/admin/bookings#cancellation-requests",
+            hint: "Tất cả yêu cầu đang chờ",
+          },
+          {
+            label: "Đánh giá chưa phản hồi",
+            icon: Star,
+            value: reviewState.data?.unansweredCount,
+            error: reviewState.error,
+            to: "/admin/reviews?status=unanswered",
+            hint: "Tất cả đánh giá chưa có phản hồi",
+          },
+        ]
+      : []),
+  ];
+  return (
+    <section className="dash-page">
+      <header className="dash-heading">
+        <div>
+          <p>
+            Xin chào,{" "}
+            <strong>
+              {user?.FullName || user?.Email || "Tài khoản quản lý"}
+            </strong>
+            !
+          </p>
+          <h1>Tổng quan hoạt động</h1>
+        </div>
+        <div className="dash-toolbar">
+          <span>
+            <CalendarDays size={18} />
+            {new Intl.DateTimeFormat("vi-VN", {
+              dateStyle: "full",
+              timeZone: "Asia/Ho_Chi_Minh",
+            }).format(new Date(now))}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setRevision((value) => value + 1);
+              cancellationInbox?.refresh();
+            }}
+          >
+            <RefreshCw size={16} />
+            Làm mới
+          </button>
+        </div>
+      </header>
+      <div className={`dash-metrics ${isAdmin ? "" : "is-staff"}`}>
+        {metrics.map(
+          ({ label, icon: Icon, value, error, to, hint, currency }) => (
+            <Link className="dash-metric" to={to} key={label}>
+              <span className="dash-metric-icon">
+                <Icon size={26} />
+              </span>
+              <div>
+                <h2>{label}</h2>
+                <strong>
+                  {error
+                    ? "Không tải được"
+                    : value == null
+                      ? "…"
+                      : currency
+                        ? money(value)
+                        : count(value)}
+                </strong>
+                <small>{hint}</small>
+              </div>
+            </Link>
+          ),
+        )}
+      </div>
+      <div className={`dash-middle ${isAdmin ? "" : "is-staff"}`}>
+        <section className="dash-card">
+          <header>
+            <h2>
+              <CalendarDays size={21} />
+              Lịch đặt sân hôm nay
+            </h2>
+            <Link to="/admin/bookings">
+              Xem tất cả
+            </Link>
+          </header>
+          <ResourceState
+            resource={scheduleState}
+            empty={scheduleState.data?.items.length === 0}
+          >
+            <div className="dash-table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Khung giờ</th>
+                    <th>Sân bóng</th>
+                    <th>Khách hàng</th>
+                    <th>Trạng thái đơn</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {scheduleState.data?.items.map((item) => (
+                    <tr key={item.bookingId}>
+                      <td className="dash-time">
+                        {item.startTime}–{item.endTime}
+                      </td>
+                      <td>{item.fieldName || "Sân đã lưu trữ"}</td>
+                      <td>
+                        <strong>{item.customerName || "Khách hàng"}</strong>
+                        <small>{item.phone || "—"}</small>
+                      </td>
+                      <td>
+                        <span
+                          className={`dash-status ${item.status.toLowerCase()}`}
+                        >
+                          {statuses[item.status] || item.status}
+                        </span>
+                      </td>
+                      <td>
+                        <Link
+                          to={`/admin/bookings?bookingId=${item.bookingId}`}
+                        >
+                          Chi tiết
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </ResourceState>
+        </section>
+        {isAdmin && (
+          <section className="dash-card">
+            <header>
+              <h2>
+                <Clock size={21} />
+                Cần xử lý
+              </h2>
+              <span className="dash-muted">Hủy đơn &amp; đánh giá</span>
+            </header>
+            {cancelError ? (
+              <p role="alert" className="dash-error">
+                Không tải được yêu cầu hủy. Hãy làm mới.
+              </p>
+            ) : cancellationInbox?.loading ? (
+              <p role="status" className="dash-state">
+                Đang tải yêu cầu hủy…
+              </p>
+            ) : pending.length === 0 ? (
+              <p className="dash-note">Không có yêu cầu hủy đang chờ.</p>
+            ) : (
+              <div className="dash-tasks">
+                {pending.slice(0, 3).map((item) => (
+                  <article
+                    className="dash-task cancellation"
+                    key={item.requestId}
+                  >
+                    <CircleX size={20} />
+                    <div>
+                      <strong>Yêu cầu hủy đơn #{item.bookingId}</strong>
+                      <p>{item.customerName || "Khách hàng"}</p>
+                      <small>{item.reason}</small>
+                    </div>
+                    <Link
+                      to={`/admin/bookings?bookingId=${item.bookingId}#cancellation-requests`}
+                    >
+                      Xem yêu cầu
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            )}
+            <ResourceState resource={reviewState} empty={false}>
+              {reviewState.data?.items.length === 0 ? (
+                <p className="dash-note">Không có đánh giá chờ phản hồi.</p>
+              ) : (
+                <div className="dash-tasks">
+                  {reviewState.data?.items.map((item) => (
+                    <article className="dash-task review" key={item.reviewId}>
+                      <Star size={20} />
+                      <div>
+                        <strong>
+                          {item.fieldName} · {item.rating}/5 sao
+                        </strong>
+                        <p>{item.customerName || "Khách hàng"}</p>
+                        <small>{item.comment}</small>
+                      </div>
+                      <Link
+                        to={`/admin/reviews?status=unanswered#review-${item.reviewId}`}
+                      >
+                        Xem đánh giá
+                      </Link>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </ResourceState>
+          </section>
+        )}
+      </div>
+      {isAdmin && (
+        <div className="dash-bottom">
+          <section className="dash-card">
+            <header>
+              <h2>
+                <BarChart3 size={21} />
+                Doanh thu 7 ngày gần nhất
+              </h2>
+              <Link to="/admin/reports">
+                Xem báo cáo
+              </Link>
+            </header>
+            <ResourceState resource={weekState} empty={false}>
+              {weekState.data && (
+                <RevenueChart rows={weekState.data.dailyRevenue} />
+              )}
+            </ResourceState>
+          </section>
+          <section className="dash-card">
+            <header>
+              <h2>
+                <Clock size={21} />
+                Mức sử dụng sân hôm nay
+              </h2>
+            </header>
+            <ResourceState
+              resource={dailyState}
+              empty={dailyState.data?.fieldUtilization.length === 0}
+            >
+              <div className="dash-utilization">
+                {dailyState.data?.fieldUtilization.map((field) => (
+                  <div key={field.fieldId}>
+                    <strong>
+                      {field.fieldName}
+                      {field.isArchived ? " (đã lưu trữ)" : ""}
+                    </strong>
+                    <div
+                      className="dash-progress"
+                      role="meter"
+                      aria-label={field.fieldName}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={field.utilizationPercent}
+                    >
+                      <span
+                        style={{
+                          width: `${Math.max(0, Math.min(100, field.utilizationPercent))}%`,
+                        }}
+                      />
+                    </div>
+                    <small>
+                      {field.utilizationPercent}% · {field.bookedHours}/24 giờ
+                    </small>
+                  </div>
+                ))}
+              </div>
+            </ResourceState>
+          </section>
+        </div>
+      )}
+    </section>
+  );
 }
-
-
-onChange={
-e=>
-
-setEditField({
-
-...editField,
-
-StartTime:e.target.value
-
-})
-
-}
-
-
-/>
-
-
-
-
-
-
-<label>
-Giờ kết thúc
-</label>
-
-
-<input
-
-type="time"
-
-value={
-editField.EndTime
-}
-
-
-onChange={
-e=>
-
-setEditField({
-
-...editField,
-
-EndTime:e.target.value
-
-})
-
-}
-
-
-/>
-
-
-
-
-
-<label>
-Giá tiền
-</label>
-
-
-
-<input
-
-type="number"
-
-value={
-editField.Price
-}
-
-
-onChange={
-e=>
-
-setEditField({
-
-...editField,
-
-Price:e.target.value
-
-})
-
-}
-
-
-/>
-
-
-
-
-
-<button
-
-className="save-btn"
-
-
-onClick={async()=>{
-
-
-await updateFieldPrice(
-
-editField.FieldID,
-
-{
-
-StartTime:editField.StartTime,
-
-EndTime:editField.EndTime,
-
-Price:Number(editField.Price)
-
-}
-
-);
-
-
-
-setEditField(null);
-
-
-loadFields();
-
-
-}}
-
-
->
-
-Lưu thay đổi
-
-</button>
-
-
-
-
-
-<button
-
-className="cancel-btn"
-
-onClick={
-()=>setEditField(null)
-}
-
->
-
-Hủy
-
-</button>
-
-
-
-
-
-</div>
-
-
-</div>
-
-
-}
-
-
-
-</div>
-
-
-)
-
-
-}
-
-
-export default Admin;

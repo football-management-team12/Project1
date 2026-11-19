@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/fields/1006"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 1000

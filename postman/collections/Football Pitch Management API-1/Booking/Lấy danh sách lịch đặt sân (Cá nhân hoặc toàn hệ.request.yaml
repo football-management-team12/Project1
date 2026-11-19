@@ -1,0 +1,48 @@
+$kind: http-request
+name: Lấy danh sách lịch đặt sân (Cá nhân hoặc toàn hệ thống đối với Admin)
+description: ""
+url: "{{baseUrl}}/api/bookings/?status=CONFIRMED&date=2026-10-05"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: status
+    value: CONFIRMED
+    disabled: false
+    description: Lọc theo trạng thái (PENDING, CONFIRMED, CANCELLED)
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "example": "CONFIRMED"
+          }
+        }
+      }
+  - key: date
+    value: 2026-10-05
+    disabled: false
+    description: Lọc theo ngày đặt (YYYY-MM-DD)
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-05"
+          }
+        }
+      }
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Lấy danh sách lịch đặt sân (Cá nhân hoặc toàn
+  hệ.resources/examples
+order: 3000

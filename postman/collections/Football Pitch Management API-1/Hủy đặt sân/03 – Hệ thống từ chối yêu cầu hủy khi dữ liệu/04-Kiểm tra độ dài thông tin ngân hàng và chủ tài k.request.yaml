@@ -1,0 +1,56 @@
+$kind: http-request
+name: 04-Kiểm tra độ dài thông tin ngân hàng và chủ tài khoản
+url: "{{baseUrl}}/api/bookings/26/cancellation-requests"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"reason\": \"Tôi muốn hủy lịch đặt sân.\",\r
+
+    \  \"refundAccount\": {\r
+
+    \    \"bankName\": \"MB Bank\",\r
+
+    \    \"accountNumber\": \"01234567890123456789012345678901234\",\r
+
+    \    \"accountHolder\": \"NGUYEN VAN A\"\r
+
+    \  }\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "// 1. Kiểm tra hệ thống phải từ chối yêu cầu (thường trả về mã lỗi 400
+      Bad Request hoặc 422 Unprocessable Entity)\r
+
+      pm.test(\"Status code is 400 Bad Request (Validation Error)\", function ()
+      {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([400, 422]);\r
+
+      });\r
+
+      \r
+
+      // 2. Kiểm tra nội dung phản hồi (Response Body) xác định rõ trường dữ
+      liệu không hợp lệ\r
+
+      pm.test(\"Verify error response details for exceeded length\", function ()
+      {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    \r
+
+      \    // Kiểm tra xem response có chứa thông báo lỗi, mã lỗi hoặc chỉ định
+      trường vi phạm không\r
+
+      \    var hasErrorIndicator = jsonData.message || jsonData.error ||
+      jsonData.errors;\r
+
+      \    pm.expect(hasErrorIndicator).to.be.true;\r
+
+      });"
+    language: text/javascript
+order: 4874

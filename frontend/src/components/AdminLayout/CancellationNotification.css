@@ -1,0 +1,21 @@
+.sidebar .admin-bookings-nav { position: relative; padding-right: 42px; }
+.sidebar .admin-bookings-nav .admin-cancellation-notification {
+  position: absolute; top: 3px; right: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; min-width: 26px;
+  margin: 0; padding: 0;
+  border: 0; border-radius: 0;
+  background: transparent; color: #fde68a;
+  cursor: pointer; box-shadow: none;
+}
+.sidebar .admin-bookings-nav .admin-cancellation-notification span {
+  position: absolute; top: -5px; right: -5px;
+  display: flex; align-items: center; justify-content: center;
+  min-width: 15px; height: 15px; padding: 0 3px;
+  border: 1.5px solid #176f58; border-radius: 9px;
+  background: #ef4444; color: #fff;
+  font-size: 9px; font-weight: 700; line-height: 1;
+}
+.sidebar .admin-bookings-nav .admin-cancellation-notification:hover { background: transparent; color: #fff2b2; }
+.sidebar .admin-bookings-nav .admin-cancellation-notification:focus-visible { outline: 2px solid #fde68a; outline-offset: 3px; }
+#cancellation-requests { scroll-margin-top: 24px; }

@@ -1,0 +1,195 @@
+
+.uc07-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.uc07-modal {
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.uc07-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.uc07-modal-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #172033;
+}
+
+.uc07-modal-close {
+  display: flex;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.uc07-modal-warning {
+  display: flex;
+  gap: 12px;
+  padding: 15px;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #9a3412;
+  margin-bottom: 18px;
+}
+
+.uc07-modal-warning p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.uc07-modal-deposit {
+  padding: 14px;
+  margin-bottom: 18px;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  background: #fffbeb;
+}
+
+.uc07-modal-deposit strong {
+  color: #92400e;
+}
+
+.uc07-modal-deposit p {
+  margin: 8px 0 0;
+  color: #78350f;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.uc07-modal-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #334155;
+}
+
+.uc07-modal textarea,
+.uc07-modal input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  resize: vertical;
+  font: inherit;
+  outline: none;
+}
+
+.uc07-modal textarea:focus,
+.uc07-modal input:focus {
+  border-color: #16a34a;
+}
+
+.uc07-refund-account {
+  margin: 20px 0 0;
+  padding: 16px;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  background: #f0fdf4;
+  min-width: 0;
+}
+
+.uc07-refund-account legend {
+  font-weight: 700;
+  color: #166534;
+}
+
+.uc07-refund-account p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.uc07-refund-account label {
+  display: block;
+  margin: 12px 0 6px;
+  font-weight: 600;
+}
+
+.uc07-refund-account input {
+  background: #fff;
+}
+
+.uc07-modal-counter {
+  display: block;
+  margin-top: 5px;
+  text-align: right;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.uc07-modal-error {
+  color: #dc2626;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+.uc07-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.uc07-btn-back,
+.uc07-btn-confirm {
+  padding: 11px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.uc07-btn-back {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.uc07-btn-confirm {
+  background: #dc2626;
+  color: white;
+}
+
+.uc07-btn-confirm:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.uc07-modal button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .uc07-modal {
+    padding: 18px;
+  }
+
+  .uc07-modal-actions {
+    flex-direction: column;
+  }
+
+  .uc07-modal-actions button {
+    width: 100%;
+  }
+}

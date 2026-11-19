@@ -1,0 +1,6 @@
+$kind: http-request
+name: 03 – Hệ thống không trả hóa đơn tạm khi Booking chưa có giao dịch đặt cọc
+  SUCCESS
+url: "{{baseUrl}}/api/bookings/43/invoice"
+method: GET
+order: 8000

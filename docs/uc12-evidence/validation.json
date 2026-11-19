@@ -1,0 +1,14 @@
+{
+  "apiRegressionTests": 44,
+  "healthTests": 2,
+  "frontendBuild": "passed",
+  "targetedEslint": "passed",
+  "sqlReadOnlyChecks": 25,
+  "existingInvoicesChecked": 4,
+  "browserScenarios": 9,
+  "legacyPaymentServicesModified": false,
+  "databaseWritesByVerification": 0,
+  "limitations": [
+    "Live SQL cancellation, rollback fault injection and concurrent mutations require isolated QA fixtures; mutation tests used SQL mocks and UI interception."
+  ]
+}

@@ -36,12 +36,6 @@ function About() {
                 Kiến tạo không gian <br />
                 Đam mê sân cỏ
               </h1>
-
-              <p>
-                Chúng tôi tự hào là đơn vị tiên phong cung cấp tổ hợp sân bóng
-                đá nhân tạo hiện đại, quy chuẩn và tích hợp công nghệ đặt sân
-                trực tuyến nhanh chóng nhất hiện nay.
-              </p>
             </div>
 
             <div className="about-hero-image">

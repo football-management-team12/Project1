@@ -1,0 +1,8 @@
+$kind: http-request
+name: 02-Gửi yêu cầu với lý do rỗng hoặc chỉ chứa khoảng trắng
+url: "{{baseUrl}}/api/bookings/26/cancellation-requests"
+method: POST
+body:
+  type: json
+  content: '{"reason":"   "}'
+order: 3000

@@ -1,0 +1,257 @@
+{
+  "info": {
+    "name": "UC12 ADMIN invoice management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Use QA data after migration 010. Last two requests WRITE cancellation audit: configure cancelInvoiceId for an issued unpaid invoice whose booking is already CANCELLED. Run with CUSTOMER/STAFF tokens separately expecting 403. See docs/UC12-invoice-management.md."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5001"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "invoiceId",
+      "value": ""
+    },
+    {
+      "key": "cancelInvoiceId",
+      "value": ""
+    },
+    {
+      "key": "customer",
+      "value": ""
+    },
+    {
+      "key": "from",
+      "value": "2026-11-01"
+    },
+    {
+      "key": "to",
+      "value": "2026-11-30"
+    }
+  ],
+  "item": [
+    {
+      "name": "List issued invoices",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/admin/invoices"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Filter paid by customer and date",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/admin/invoices?status=PAID&customer={{customer}}&from={{from}}&to={{to}}&page=1&pageSize=20"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invoice detail and payments",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/admin/invoices/{{invoiceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invalid status filter",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/admin/invoices?status=UNKNOWN"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject manual amount edit",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/invoices/{{invoiceId}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"status\": \"CANCELLED\", \"reason\": \"QA\", \"paidAmount\": 0}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject PAID transition",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/invoices/{{invoiceId}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"status\": \"PAID\", \"reason\": \"QA\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "QA ONLY - cancel eligible invoice (writes audit)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/invoices/{{cancelInvoiceId}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"status\": \"CANCELLED\", \"reason\": \"QA cancelled booking without receipts\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "QA ONLY - duplicate cancel returns conflict",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/invoices/{{cancelInvoiceId}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"status\": \"CANCELLED\", \"reason\": \"QA duplicate\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

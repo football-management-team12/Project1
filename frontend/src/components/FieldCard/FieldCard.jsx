@@ -1,84 +1,431 @@
-import { Link } from "react-router-dom";
-import {
-  MapPin,
-  Users,
-  Star,
-} from "lucide-react";
+import { useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import useBookingClock from "../../hooks/useBookingClock";
+import { slotHasStarted } from "../../utils/bookingTime";
 
 import "./FieldCard.css";
 
-function FieldCard({
+
+const formatTime = (value) => {
+  if (!value) {
+    return "--:--";
+  }
+
+  const text =
+    String(value);
+
+  const match =
+    text.match(
+      /(\d{1,2}):(\d{2})/
+    );
+
+  if (!match) {
+    return text;
+  }
+
+  return `${match[1].padStart(
+    2,
+    "0"
+  )}:${match[2]}`;
+};
+
+
+const formatPrice = (value) => {
+  const amount =
+    Number(value || 0);
+
+  return new Intl.NumberFormat(
+    "vi-VN"
+  ).format(amount);
+};
+
+
+const normalizeStatus = (status) =>
+  String(status || "")
+    .trim()
+    .toUpperCase();
+
+
+const FieldCard = ({
   id,
-  image,
   name,
   address,
-  price,
-  type = "Sân 7 người",
-  rating = 4.8,
-}) {
+  type,
+  status,
+  slots = [],
+  selectedDate = "",
+  availabilityLoaded = false,
+  availabilityLoading = false,
+  availabilityError = "",
+}) => {
+
+  const navigate =
+    useNavigate();
+  const now = useBookingClock();
+  const isPast = slot => slot.reason === "PAST_TIME" || slotHasStarted(selectedDate, slot.StartTime ?? slot.startTime, now);
+  const allSlotsPast = slots.length > 0 && slots.every(isPast);
+
+
+  const normalizedStatus =
+    normalizeStatus(status);
+
+
+  const fieldUnavailable =
+    normalizedStatus &&
+    normalizedStatus !==
+      "AVAILABLE";
+
+
+  // =========================================================
+  // MIN PRICE
+  // =========================================================
+
+  const minPrice =
+    useMemo(() => {
+
+      const prices =
+        slots
+          .map(
+            (slot) =>
+              Number(
+                slot.Price ??
+                slot.price ??
+                0
+              )
+          )
+          .filter(
+            (price) =>
+              Number.isFinite(
+                price
+              ) &&
+              price > 0
+          );
+
+
+      return prices.length > 0
+        ? Math.min(...prices)
+        : null;
+
+    }, [slots]);
+
+
+  const availableSlotExists =
+    slots.some(
+      (slot) =>
+        slot.available === true && !isPast(slot)
+    );
+
+
+  const canBook =
+    Boolean(selectedDate) &&
+    availabilityLoaded &&
+    !fieldUnavailable &&
+    availableSlotExists;
+
+
+  // =========================================================
+  // CURRENT USER
+  // =========================================================
+
+  const getCurrentUser = () => {
+    try {
+      const rawUser =
+        localStorage.getItem(
+          "user"
+        );
+
+      if (!rawUser) {
+        return null;
+      }
+
+      return JSON.parse(
+        rawUser
+      );
+
+    } catch {
+      return null;
+    }
+  };
+
+
+  // =========================================================
+  // BOOKING
+  // =========================================================
+
+  const handleBooking = () => {
+
+    if (!canBook || !slots.some(slot => slot.available === true && !slotHasStarted(selectedDate, slot.StartTime ?? slot.startTime))) {
+      return;
+    }
+
+
+    const params =
+      new URLSearchParams({
+        fieldId:
+          String(id),
+
+        date:
+          selectedDate,
+      });
+
+
+    const bookingUrl =
+      `/booking?${params.toString()}`;
+
+
+    const user =
+      getCurrentUser();
+
+
+    // =======================================================
+    // NOT LOGGED IN
+    // =======================================================
+
+    if (!user?.UserID) {
+
+      navigate(
+        `/login?redirect=${encodeURIComponent(
+          bookingUrl
+        )}`
+      );
+
+      return;
+    }
+
+
+    // =======================================================
+    // LOGGED IN
+    // =======================================================
+
+    navigate(
+      bookingUrl
+    );
+  };
+
+
   return (
     <article className="field-card">
-      <div className="field-image-wrapper">
-        <img
-          src={image}
-          alt={name}
-          className="field-image"
-        />
+
+      <div
+        className="field-card-cover"
+        aria-hidden="true"
+      >
+        <span>
+          SÂN BÓNG
+        </span>
       </div>
 
-      <div className="field-content">
-        <div className="field-title-row">
-          <h3 title={name}>
-            {name}
-          </h3>
 
-          <div className="field-rating">
-            <Star
-              size={17}
-              fill="currentColor"
-            />
-            <span>{rating}</span>
-          </div>
-        </div>
+      <div className="field-card-body">
 
-        <div className="field-info">
-          <div className="field-info-row">
-            <MapPin size={16} />
-            <span>{address}</span>
-          </div>
+        <div className="field-card-title-row">
 
-          <div className="field-info-row">
-            <Users size={16} />
-            <span>{type}</span>
-          </div>
-        </div>
-
-        <div className="field-divider" />
-
-        <div className="field-bottom">
           <div>
-            <span className="price-label">
-              GIÁ THUÊ TỪ
+            <h2>
+              {name || `Sân ${id}`}
+            </h2>
+
+            <p className="field-card-type">
+              {type || "Sân bóng"}
+            </p>
+          </div>
+
+
+          {fieldUnavailable && (
+            <span className="field-status field-status-maintenance">
+              Bảo trì
             </span>
+          )}
+
+        </div>
+
+
+        <Link
+          className="field-card-review-link"
+          to={`/fields/${id}/reviews`}
+          aria-label={`Xem đánh giá ${name || `Sân ${id}`}`}
+        >
+          <span aria-hidden="true">★</span> Xem đánh giá của sân
+        </Link>
+
+        <p className="field-card-address">
+          {address ||
+            "Chưa cập nhật địa chỉ"}
+        </p>
+
+
+        {minPrice !== null && (
+          <p className="field-card-price">
+
+            Từ{" "}
 
             <strong>
-              {typeof price === "number"
-                ? price.toLocaleString("vi-VN")
-                : price}
-              đ/h
+              {formatPrice(
+                minPrice
+              )}
+              đ
             </strong>
-          </div>
 
-          <Link
-            to={id ? `/fields/${id}` : "/fields"}
-            className="field-detail-button"
-          >
-            Chi tiết
-          </Link>
+            {" "}/ khung giờ
+
+          </p>
+        )}
+
+
+        <div className="field-card-availability">
+
+          {!selectedDate && (
+            <p className="field-card-hint">
+              Chọn ngày ở phía trên để kiểm tra lịch trống.
+            </p>
+          )}
+
+
+          {selectedDate &&
+            availabilityLoading && (
+              <p className="field-card-hint">
+                Đang kiểm tra lịch...
+              </p>
+            )}
+
+
+          {selectedDate &&
+            !availabilityLoading &&
+            availabilityError && (
+              <p className="field-card-error">
+                {availabilityError}
+              </p>
+            )}
+
+
+          {selectedDate &&
+            !availabilityLoading &&
+            !availabilityError &&
+            fieldUnavailable && (
+              <p className="field-card-error">
+                Sân đang bảo trì và không thể đặt trong thời gian này.
+              </p>
+            )}
+
+
+          {selectedDate &&
+            !availabilityLoading &&
+            !availabilityError &&
+            !fieldUnavailable &&
+            availabilityLoaded &&
+            slots.length === 0 && (
+              <p className="field-card-hint">
+                Sân chưa có khung giá để đặt.
+              </p>
+            )}
+
+
+          {selectedDate &&
+            !availabilityLoading &&
+            !availabilityError &&
+            !fieldUnavailable &&
+            availabilityLoaded &&
+            slots.length > 0 && (
+
+              <div className="field-slot-list">
+
+                {slots.map(
+                  (slot, index) => {
+
+                    const available =
+                      slot.available ===
+                      true && !isPast(slot);
+
+
+                    const slotKey =
+                      slot.PriceID ??
+                      `${slot.StartTime ||
+                        slot.startTime}-${slot.EndTime ||
+                        slot.endTime}-${index}`;
+
+
+                    return (
+                      <div
+                        key={slotKey}
+                        className={`field-slot ${
+                          available
+                            ? "field-slot-available"
+                            : "field-slot-unavailable"
+                        }`}
+                      >
+
+                        <div>
+
+                          <strong>
+                            {formatTime(
+                              slot.StartTime ??
+                              slot.startTime
+                            )}
+
+                            {" - "}
+
+                            {formatTime(
+                              slot.EndTime ??
+                              slot.endTime
+                            )}
+                          </strong>
+
+
+                          {(slot.Price ??
+                            slot.price) !==
+                            undefined && (
+
+                            <span>
+                              {formatPrice(
+                                slot.Price ??
+                                slot.price
+                              )}
+                              đ
+                            </span>
+
+                          )}
+
+                        </div>
+
+
+                        <span className="field-slot-state">
+                          {available
+                            ? "Trống"
+                            : isPast(slot) ? "Đã qua giờ" : "Đã đặt"}
+                        </span>
+
+                      </div>
+                    );
+                  }
+                )}
+
+              </div>
+            )}
+
         </div>
+
+
+        <button
+          type="button"
+          className="field-card-booking-button"
+          disabled={!canBook}
+          onClick={handleBooking}
+        >
+          {fieldUnavailable
+            ? "Sân đang bảo trì"
+            : !selectedDate
+              ? "Chọn ngày để đặt sân"
+              : canBook
+                ? "Đặt sân"
+                : allSlotsPast ? "Đã qua giờ" : "Không có khung giờ trống"}
+        </button>
+
+
       </div>
+
     </article>
   );
-}
+};
+
 
 export default FieldCard;

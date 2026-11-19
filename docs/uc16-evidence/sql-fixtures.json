@@ -1,0 +1,97 @@
+{
+  "fixture_only": true,
+  "live_table_writes": 0,
+  "expected": {
+    "grossRevenue": 450,
+    "refundedAmount": 100,
+    "revenue": 350,
+    "bookingCount": 4,
+    "invoiceCount": 2
+  },
+  "response": {
+    "bookingBreakdown": {
+      "cancelled": 3,
+      "completedPaid": 4,
+      "deposited": 1,
+      "invalidAmount": 2,
+      "invalidBalance": 1,
+      "invalidStatus": 0,
+      "paidAwaitingCompletion": 3,
+      "partiallyPaid": 2,
+      "refunded": 1,
+      "total": 25,
+      "unpaid": 8
+    },
+    "bookingCount": 4,
+    "bookingStatusCount": {
+      "COMPLETED": 4
+    },
+    "currency": "VND",
+    "dailyRevenue": [
+      {
+        "date": "2026-11-01",
+        "grossRevenue": 150.0,
+        "refundedAmount": 0.0,
+        "revenue": 150.0
+      },
+      {
+        "date": "2026-11-02",
+        "grossRevenue": 300.0,
+        "refundedAmount": 100.0,
+        "revenue": 200.0
+      }
+    ],
+    "dateBasis": "database-local",
+    "dayCount": 2,
+    "fieldUtilization": [
+      {
+        "bookedHours": 6.0,
+        "capacityHours": 48,
+        "fieldId": 5,
+        "fieldName": "QA Main",
+        "isArchived": false,
+        "utilizationPercent": 12.5
+      },
+      {
+        "bookedHours": 2.0,
+        "capacityHours": 48,
+        "fieldId": 6,
+        "fieldName": "QA Archived",
+        "isArchived": true,
+        "utilizationPercent": 4.17
+      },
+      {
+        "bookedHours": 1.0,
+        "capacityHours": 48,
+        "fieldId": 7,
+        "fieldName": "QA Free",
+        "isArchived": false,
+        "utilizationPercent": 2.08
+      }
+    ],
+    "from": "2026-11-01",
+    "grossRevenue": 450.0,
+    "invoiceCount": 2,
+    "invoiceStatusCount": {
+      "PAID": 1,
+      "PARTIALLY_PAID": 1
+    },
+    "refundedAmount": 100.0,
+    "revenue": 350.0,
+    "revenueBasis": "cash-receipts-minus-confirmed-refunds",
+    "to": "2026-11-02",
+    "utilizationBasis": "confirmed-completed-union-over-24h-per-day"
+  },
+  "checks": [
+    "Cash receipts: successful positive DEPOSIT/FINAL_PAYMENT/EXTRA only; no invoice double count",
+    "Upcoming deposited booking excluded before its BookingDate and included when filter end covers it; fully paid prior deposit not counted as partial",
+    "Deposit-only completed booking excluded from completed-paid count; explicit booking categories partition all 25 bookings exactly once, excluding cancelled/refunded deposits",
+    "Only completed fully paid bookings counted: includes free and combined successful receipts; excludes unpaid, partial, pending/failed/unknown payments, refunded shortfall, cancelled/confirmed and invalid totals",
+    "Start midnight inclusive, end-of-day inclusive, next midnight excluded; success-date fallbacks",
+    "SQL interval union: overlap, nested and adjacent slots, separate days, archived/free fields; excludes cancelled/pending/invalid overnight intervals",
+    "Single-day and no-data ranges",
+    "Refund-only day reports negative net revenue",
+    "JWT role, current DB role/status and invalid-range guards",
+    "All fixture tables identical before/after reporting; no application-table writes"
+  ]
+}

@@ -1,0 +1,52 @@
+$kind: http-example
+name: Không thể hủy lượt đặt sân này (ví dụ đã qua giờ đá).
+request:
+  url: "{{baseUrl}}/api/bookings/:booking_id/cancel"
+  method: PUT
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: booking_id
+      value: "50"
+      disabled: false
+      description: ID lượt đặt sân cần hủy
+  body:
+    type: json
+    content: |-
+      {
+        "reason": "Bận đột xuất không đá được"
+      }
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "type": "string",
+        "nullable": true,
+        "example": "?date=2026-10-04"
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Thông tin yêu cầu không hợp lệ"
+          },
+          "example": {
+            "type": "string",
+            "example": "?date=2026-10-04"
+          }
+        }
+      }
+order: 2000

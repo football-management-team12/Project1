@@ -1,0 +1,5 @@
+$kind: http-request
+name: 01 – Admin xem danh sách và lọc hóa đơn
+url: "{{baseUrl}}/api/admin/invoices/1"
+method: GET
+order: 2000

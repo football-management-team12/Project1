@@ -1,0 +1,551 @@
+{
+  "info": {
+    "name": "UC16 — ADMIN Statistics & Reports",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "T123-67 / T123-139. Read-only. Tiền thu/hoàn theo ngày ghi nhận; chỉ đếm đơn COMPLETED đã thu đủ tiền, lọc theo BookingDate. Đã bỏ trạng thái thanh toán. Xem tài liệu metric, fixture và timezone database-local trước khi chạy. Tests contract không thay thế đối chiếu số liệu QA độc lập."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5001"
+    },
+    {
+      "key": "from",
+      "value": "2026-11-01"
+    },
+    {
+      "key": "to",
+      "value": "2026-11-02"
+    },
+    {
+      "key": "emptyFrom",
+      "value": "2090-01-01"
+    },
+    {
+      "key": "emptyTo",
+      "value": "2090-01-02"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "customerToken",
+      "value": ""
+    },
+    {
+      "key": "staffToken",
+      "value": ""
+    },
+    {
+      "key": "inactiveAdminToken",
+      "value": ""
+    },
+    {
+      "key": "invalidToken",
+      "value": "invalid-test-token"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Admin — báo cáo khoảng ngày",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{from}}&to={{to}}",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200',()=>pm.response.to.have.status(200));",
+              "const b=pm.response.json();",
+              "pm.test('Contract and cash equation',()=>{pm.expect(b.currency).eq('VND');pm.expect(b).not.to.have.property('paymentStatusCount');pm.expect(Object.keys(b.bookingStatusCount).every(s=>s==='COMPLETED')).eq(true);pm.expect(b.revenue).closeTo(b.grossRevenue-b.refundedAmount,0.01);pm.expect(b.fieldUtilization).to.be.an('array');pm.expect(b.dailyRevenue.length).eq(b.dayCount);});",
+              "pm.test('Daily totals reconcile',()=>{for(const k of ['revenue','grossRevenue','refundedAmount'])pm.expect(b.dailyRevenue.reduce((s,r)=>s+r[k],0)).closeTo(b[k],0.01);});",
+              "pm.test('Booking breakdown reconciles without counting deposits as completed',()=>{const c=b.bookingBreakdown;pm.expect(c.completedPaid).eq(b.bookingCount);pm.expect(Object.entries(c).filter(([k])=>k!=='total').reduce((s,[,v])=>s+v,0)).eq(c.total);});",
+              "pm.test('Counts and utilization reconcile',()=>{pm.expect(Object.values(b.bookingStatusCount).reduce((a,v)=>a+v,0)).eq(b.bookingCount);pm.expect(Object.values(b.invoiceStatusCount).reduce((a,v)=>a+v,0)).eq(b.invoiceCount);b.fieldUtilization.forEach(f=>{pm.expect(f.capacityHours).eq(b.dayCount*24);pm.expect(f.utilizationPercent).within(0,100);});});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Admin — một ngày",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{from}}&to={{from}}",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200',()=>pm.response.to.have.status(200));",
+              "const b=pm.response.json();",
+              "pm.test('Contract and cash equation',()=>{pm.expect(b.currency).eq('VND');pm.expect(b).not.to.have.property('paymentStatusCount');pm.expect(Object.keys(b.bookingStatusCount).every(s=>s==='COMPLETED')).eq(true);pm.expect(b.revenue).closeTo(b.grossRevenue-b.refundedAmount,0.01);pm.expect(b.fieldUtilization).to.be.an('array');pm.expect(b.dailyRevenue.length).eq(b.dayCount);});",
+              "pm.test('Daily totals reconcile',()=>{for(const k of ['revenue','grossRevenue','refundedAmount'])pm.expect(b.dailyRevenue.reduce((s,r)=>s+r[k],0)).closeTo(b[k],0.01);});",
+              "pm.test('Booking breakdown reconciles without counting deposits as completed',()=>{const c=b.bookingBreakdown;pm.expect(c.completedPaid).eq(b.bookingCount);pm.expect(Object.entries(c).filter(([k])=>k!=='total').reduce((s,[,v])=>s+v,0)).eq(c.total);});",
+              "pm.test('Counts and utilization reconcile',()=>{pm.expect(Object.values(b.bookingStatusCount).reduce((a,v)=>a+v,0)).eq(b.bookingCount);pm.expect(Object.values(b.invoiceStatusCount).reduce((a,v)=>a+v,0)).eq(b.invoiceCount);b.fieldUtilization.forEach(f=>{pm.expect(f.capacityHours).eq(b.dayCount*24);pm.expect(f.utilizationPercent).within(0,100);});});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Admin — kỳ không có dữ liệu (QA chọn emptyFrom/emptyTo)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{emptyFrom}}&to={{emptyTo}}",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200',()=>pm.response.to.have.status(200));",
+              "const b=pm.response.json();",
+              "pm.test('Contract and cash equation',()=>{pm.expect(b.currency).eq('VND');pm.expect(b).not.to.have.property('paymentStatusCount');pm.expect(Object.keys(b.bookingStatusCount).every(s=>s==='COMPLETED')).eq(true);pm.expect(b.revenue).closeTo(b.grossRevenue-b.refundedAmount,0.01);pm.expect(b.fieldUtilization).to.be.an('array');pm.expect(b.dailyRevenue.length).eq(b.dayCount);});",
+              "pm.test('Daily totals reconcile',()=>{for(const k of ['revenue','grossRevenue','refundedAmount'])pm.expect(b.dailyRevenue.reduce((s,r)=>s+r[k],0)).closeTo(b[k],0.01);});",
+              "pm.test('Booking breakdown reconciles without counting deposits as completed',()=>{const c=b.bookingBreakdown;pm.expect(c.completedPaid).eq(b.bookingCount);pm.expect(Object.entries(c).filter(([k])=>k!=='total').reduce((s,[,v])=>s+v,0)).eq(c.total);});",
+              "pm.test('Counts and utilization reconcile',()=>{pm.expect(Object.values(b.bookingStatusCount).reduce((a,v)=>a+v,0)).eq(b.bookingCount);pm.expect(Object.values(b.invoiceStatusCount).reduce((a,v)=>a+v,0)).eq(b.invoiceCount);b.fieldUtilization.forEach(f=>{pm.expect(f.capacityHours).eq(b.dayCount*24);pm.expect(f.utilizationPercent).within(0,100);});});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Không token",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "noauth"
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{from}}&to={{to}}",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 401',()=>pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Token sai",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{invalidToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{from}}&to={{to}}",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 401',()=>pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 CUSTOMER không được xem",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{from}}&to={{to}}",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 403',()=>pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 STAFF không được xem",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{staffToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{from}}&to={{to}}",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 403',()=>pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Token ADMIN nhưng tài khoản INACTIVE trong DB",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{inactiveAdminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{from}}&to={{to}}",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 403',()=>pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 Thiếu ngày",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{from}}",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400',()=>pm.response.to.have.status(400));",
+              "pm.test('Business code',()=>pm.expect(pm.response.json().code).eq('INVALID_DATE_RANGE')); "
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Ngày không tồn tại",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from=2026-02-29&to=2026-03-01",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400',()=>pm.response.to.have.status(400));",
+              "pm.test('Business code',()=>pm.expect(pm.response.json().code).eq('INVALID_DATE_RANGE')); "
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Ngày đảo",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from=2026-11-03&to=2026-11-01",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400',()=>pm.response.to.have.status(400));",
+              "pm.test('Business code',()=>pm.expect(pm.response.json().code).eq('INVALID_DATE_RANGE')); "
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Quá 366 ngày",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from=2025-01-01&to=2026-01-02",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400',()=>pm.response.to.have.status(400));",
+              "pm.test('Business code',()=>pm.expect(pm.response.json().code).eq('INVALID_DATE_RANGE')); "
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Tham số trùng",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{from}}&from={{to}}&to={{to}}",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400',()=>pm.response.to.have.status(400));",
+              "pm.test('Business code',()=>pm.expect(pm.response.json().code).eq('INVALID_DATE_RANGE')); "
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 Tham số không hỗ trợ",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from={{from}}&to={{to}}&fieldId=1",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400',()=>pm.response.to.have.status(400));",
+              "pm.test('Business code',()=>pm.expect(pm.response.json().code).eq('INVALID_DATE_RANGE')); "
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 Ngày sai định dạng",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from=2026-1-01&to=2026-11-02",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400',()=>pm.response.to.have.status(400));",
+              "pm.test('Business code',()=>pm.expect(pm.response.json().code).eq('INVALID_DATE_RANGE')); "
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 Năm nhuận tối đa 366 ngày",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/admin/reports/summary?from=2024-01-01&to=2024-12-31",
+        "description": "Read-only. Chạy trên QA riêng với token tương ứng. Công thức và fixture: docs/UC16-statistics-reports.md. Không mặc định dữ liệu deploy trùng fixture SQL."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200',()=>pm.response.to.have.status(200));",
+              "const b=pm.response.json();",
+              "pm.test('Contract and cash equation',()=>{pm.expect(b.currency).eq('VND');pm.expect(b).not.to.have.property('paymentStatusCount');pm.expect(Object.keys(b.bookingStatusCount).every(s=>s==='COMPLETED')).eq(true);pm.expect(b.revenue).closeTo(b.grossRevenue-b.refundedAmount,0.01);pm.expect(b.fieldUtilization).to.be.an('array');pm.expect(b.dailyRevenue.length).eq(b.dayCount);});",
+              "pm.test('Daily totals reconcile',()=>{for(const k of ['revenue','grossRevenue','refundedAmount'])pm.expect(b.dailyRevenue.reduce((s,r)=>s+r[k],0)).closeTo(b[k],0.01);});",
+              "pm.test('Booking breakdown reconciles without counting deposits as completed',()=>{const c=b.bookingBreakdown;pm.expect(c.completedPaid).eq(b.bookingCount);pm.expect(Object.entries(c).filter(([k])=>k!=='total').reduce((s,[,v])=>s+v,0)).eq(c.total);});",
+              "pm.test('Counts and utilization reconcile',()=>{pm.expect(Object.values(b.bookingStatusCount).reduce((a,v)=>a+v,0)).eq(b.bookingCount);pm.expect(Object.values(b.invoiceStatusCount).reduce((a,v)=>a+v,0)).eq(b.invoiceCount);b.fieldUtilization.forEach(f=>{pm.expect(f.capacityHours).eq(b.dayCount*24);pm.expect(f.utilizationPercent).within(0,100);});});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

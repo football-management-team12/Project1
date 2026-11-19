@@ -1,0 +1,57 @@
+{
+  "verifiedAt": "2026-11-09T19:15:40.103907+00:00",
+  "engine": "SQL Server",
+  "mode": "Flask/JWT APIs with connection-local #temp table fixtures",
+  "applicationTableWrites": 0,
+  "checks": [
+    {
+      "method": "get",
+      "path": "/api/bookings/10/deposit",
+      "status": 200
+    },
+    {
+      "method": "patch",
+      "path": "/api/payments/1/demo-status",
+      "status": 409
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/10/deposit",
+      "status": 200
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/10/deposit",
+      "status": 200
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/11/deposit",
+      "status": 409
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/12/deposit",
+      "status": 409
+    },
+    {
+      "method": "patch",
+      "path": "/api/payments/3/demo-status",
+      "status": 200
+    },
+    {
+      "method": "post",
+      "path": "/api/bookings/13/deposit",
+      "status": 201
+    }
+  ],
+  "freePaymentRowsCreated": 0,
+  "freeInvoicesCreated": 0,
+  "legacyPendingAttempt": "EXPIRED",
+  "repeatConfirmation": "idempotent",
+  "expiryZeroVsPositive": {
+    "14": "PENDING",
+    "15": "CANCELLED"
+  },
+  "limitations": "Does not test independent concurrent sessions."
+}

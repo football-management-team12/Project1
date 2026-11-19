@@ -1,0 +1,89 @@
+$kind: http-example
+name: Lấy danh sách sân bóng thành công.
+request:
+  url: "{{baseUrl}}/api/fields/"
+  method: GET
+  headers:
+    Accept: application/json
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      [
+        {
+          "FieldID": 1,
+          "FieldName": "Sân 7 A1",
+          "FieldType": "Sân 7 người",
+          "Location": "Khu A",
+          "Image": "san_a1.jpg",
+          "Status": "AVAILABLE",
+          "StartTime": "06:00:00",
+          "EndTime": "07:30:00",
+          "Price": 300000
+        },
+        {
+          "FieldID": 1,
+          "FieldName": "Sân 7 A1",
+          "FieldType": "Sân 7 người",
+          "Location": "Khu A",
+          "Image": "san_a1.jpg",
+          "Status": "AVAILABLE",
+          "StartTime": "06:00:00",
+          "EndTime": "07:30:00",
+          "Price": 300000
+        }
+      ]
+    $type: |-
+      {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "FieldID": {
+              "type": "integer",
+              "example": 1
+            },
+            "FieldName": {
+              "type": "string",
+              "example": "Sân 7 A1"
+            },
+            "FieldType": {
+              "type": "string",
+              "example": "Sân 7 người"
+            },
+            "Location": {
+              "type": "string",
+              "example": "Khu A"
+            },
+            "Image": {
+              "type": "string",
+              "example": "san_a1.jpg"
+            },
+            "Status": {
+              "type": "string",
+              "example": "AVAILABLE"
+            },
+            "StartTime": {
+              "type": "string",
+              "example": "06:00:00"
+            },
+            "EndTime": {
+              "type": "string",
+              "example": "07:30:00"
+            },
+            "Price": {
+              "type": "number",
+              "example": 300000,
+              "format": "float"
+            }
+          }
+        }
+      }
+order: 1000

@@ -1,0 +1,149 @@
+{
+  "fixture_only": true,
+  "live_table_writes": 0,
+  "history_unchanged": [
+    "Bookings",
+    "Payments",
+    "Invoices"
+  ],
+  "protected_fields_unchanged": [
+    "Username",
+    "Role",
+    "Status",
+    "PasswordHash"
+  ],
+  "checks": [
+    {
+      "method": "get",
+      "path": "/api/admin/customers",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers?keyword=alice",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers?keyword=qa_alice",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers?keyword=alice@example.invalid",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers?keyword=0900000002",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers?keyword=not-found",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers?keyword=%25",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers?status=INACTIVE",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers/1",
+      "status": 404
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers/2",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers/2/bookings",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers/3/bookings",
+      "status": 200
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/customers/2",
+      "status": 200
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/customers/2",
+      "status": 409
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/customers/2",
+      "status": 409
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/customers/2",
+      "status": 200
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/customers/2",
+      "status": 400
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/customers/2",
+      "status": 400
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/customers/2",
+      "status": 400
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers",
+      "status": 403
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/customers/2",
+      "status": 403
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers",
+      "status": 403
+    },
+    {
+      "method": "put",
+      "path": "/api/admin/customers/4",
+      "status": 200
+    },
+    {
+      "case": "concurrent_contact_collision",
+      "statuses": [
+        200,
+        409
+      ]
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers?page=1&pageSize=2",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/admin/customers?page=2&pageSize=2",
+      "status": 200
+    }
+  ]
+}

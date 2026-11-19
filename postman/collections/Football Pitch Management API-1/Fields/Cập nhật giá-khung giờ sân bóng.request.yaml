@@ -1,0 +1,65 @@
+$kind: http-request
+name: Cập nhật giá/khung giờ sân bóng
+description: ""
+url: "{{baseUrl}}/api/fields/price/:field_id"
+method: PUT
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  - key: field_id
+    value: "1"
+    disabled: false
+    description: ID của sân bóng
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: json
+  content: |-
+    {
+      "StartTime": "06:00:00",
+      "EndTime": "07:30:00",
+      "Price": 300000
+    }
+  $type: |-
+    {
+      "type": "object",
+      "properties": {
+        "StartTime": {
+          "type": "string",
+          "example": "06:00:00"
+        },
+        "EndTime": {
+          "type": "string",
+          "example": "07:30:00"
+        },
+        "Price": {
+          "type": "number",
+          "example": 300000,
+          "format": "float"
+        }
+      },
+      "required": [
+        "StartTime",
+        "EndTime",
+        "Price"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Cập nhật giá-khung giờ sân bóng.resources/examples
+order: 2000

@@ -1,0 +1,52 @@
+$kind: http-request
+name: Tạo lượt đặt sân bóng mới (Booking)
+description: ""
+url: "{{baseUrl}}/api/bookings/"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "FieldID": 1,
+      "BookingDate": "2026-10-05",
+      "PriceID": 101,
+      "Note": "Cần chuẩn bị sẵn 2 bộ áo lưới"
+    }
+  $type: |-
+    {
+      "type": "object",
+      "properties": {
+        "FieldID": {
+          "type": "integer",
+          "example": 1
+        },
+        "BookingDate": {
+          "type": "string",
+          "example": "2026-10-05",
+          "format": "date"
+        },
+        "PriceID": {
+          "type": "integer",
+          "example": 101
+        },
+        "Note": {
+          "type": "string",
+          "example": "Cần chuẩn bị sẵn 2 bộ áo lưới"
+        }
+      },
+      "required": [
+        "FieldID",
+        "BookingDate",
+        "PriceID"
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Tạo lượt đặt sân bóng mới (Booking)-1.resources/examples
+order: 1525

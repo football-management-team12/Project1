@@ -1,0 +1,20 @@
+$kind: http-request
+name: Đăng kí tài khoản thành công
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"fullName\": \"Nguyen Van B\",\r
+
+    \  \"username\": \"test_userB\",\r
+
+    \  \"email\": \"testB@example.com\",\r
+
+    \  \"phone\": \"0901234556\",\r
+
+    \  \"password\": \"Abc@1234\"\r
+
+    }"
+order: 8000

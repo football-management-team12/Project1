@@ -25,4 +25,26 @@ dist-ssr
 __pycache__/
 *.pyc
 venv/
+.env.*
 .env
+!.env.example
+# Ignore Postman workspace local resources path configuration
+.postman/
+resources.yaml
+backend/.env
+credentials.json
+gmail_token.json
+*gmail*token*.json
+client_secret*.json
+
+/.worktrees/
+/tash show --stat stash@{0}
+# Runtime SQL Server databases, backups and telemetry must not enter Git.
+sqlserver/data/
+sqlserver/backup/
+sqlserver/log/
+*.mdf
+*.ldf
+*.bak
+*.xel
+*.trc

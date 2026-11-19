@@ -1,12 +1,21 @@
 services:
-  frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "5173:5173"
-
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
+    image: football-booking-backend:staging
+    container_name: backend
+    restart: unless-stopped
     ports:
       - "5000:5000"
+    # On the VPS, .env already exists and must remain outside Git.
+    # CI only exercises endpoints that do not require the database.
+    env_file:
+      - path: .env
+        required: false
+    networks:
+      - football-network
+
+networks:
+  football-network:
+    external: true

@@ -1,0 +1,50 @@
+[
+  {
+    "case_name": "Gia tri am (-100)",
+    "StartTime": "06:00",
+    "EndTime": "08:00",
+    "Price": -100
+  },
+  {
+    "case_name": "Gia tri bang 0",
+    "StartTime": "06:00",
+    "EndTime": "08:00",
+    "Price": 0
+  },
+  {
+    "case_name": "Gia tri la null",
+    "StartTime": "06:00",
+    "EndTime": "08:00",
+    "Price": null
+  },
+  {
+    "case_name": "Gia tri la boolean (true)",
+    "StartTime": "06:00",
+    "EndTime": "08:00",
+    "Price": true
+  },
+  {
+    "case_name": "Gia tri la chuoi NaN",
+    "StartTime": "06:00",
+    "EndTime": "08:00",
+    "Price": "NaN"
+  },
+  {
+    "case_name": "Gia qua 2 chu so thap phan (100.123)",
+    "StartTime": "06:00",
+    "EndTime": "08:00",
+    "Price": 100.123
+  },
+  {
+    "case_name": "Thoi gian bat dau lon hon ket thuc (10:00 - 09:00)",
+    "StartTime": "10:00",
+    "EndTime": "09:00",
+    "Price": 200000
+  },
+  {
+    "case_name": "Sai dinh dang thoi gian (25:99)",
+    "StartTime": "25:99",
+    "EndTime": "27:00",
+    "Price": 200000
+  }  
+]

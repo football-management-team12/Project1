@@ -1,0 +1,10 @@
+name: New Environment
+values:
+  - key: baseUrl
+    value: ''
+  - key: accessToken
+    secret: true
+  - key: bookingId
+    value: ''
+  - key: largeEvidence
+    value: ''

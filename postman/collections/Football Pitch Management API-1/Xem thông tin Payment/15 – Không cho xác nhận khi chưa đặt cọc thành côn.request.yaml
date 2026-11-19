@@ -1,0 +1,12 @@
+$kind: http-request
+name: 15 – Không cho xác nhận khi chưa đặt cọc thành công
+url: "{{baseUrl}}/api/admin/bookings/33/confirm-final-payment"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"Status\": \"COMPLETED\"\r
+
+    }"
+order: 21000

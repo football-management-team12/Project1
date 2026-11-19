@@ -1,0 +1,35 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/fields/1029"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"FieldName\": \"{{FieldName}}\",\r
+
+    \  \"Location\": \"{{Location}}\",\r
+
+    \  \"FieldType\": {{FieldType}},\r
+
+    \  \"Image\": \"{{Image}}\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 400\", function () {\r
+
+      \    pm.response.to.have.status(400);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Validate error response structure\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData.error).to.eql(\"INVALID_FIELD_TYPE\");\r
+
+      });"
+    language: text/javascript
+order: 4000

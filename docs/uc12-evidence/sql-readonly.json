@@ -1,0 +1,114 @@
+{
+  "verifiedAt": "2026-11-09T16:40:27.308282+00:00",
+  "migration010Present": true,
+  "invoiceCount": 4,
+  "checks": [
+    {
+      "path": "/api/admin/invoices?page=1&pageSize=100",
+      "status": 200
+    },
+    {
+      "path": "/api/admin/invoices?status=ACTIVE",
+      "status": 200
+    },
+    {
+      "path": "/api/admin/invoices?status=CANCELLED",
+      "status": 200
+    },
+    {
+      "path": "/api/admin/invoices?status=UNPAID",
+      "status": 200
+    },
+    {
+      "path": "/api/admin/invoices?status=PARTIALLY_PAID",
+      "status": 200
+    },
+    {
+      "path": "/api/admin/invoices?status=PAID",
+      "status": 200
+    },
+    {
+      "path": "/api/admin/invoices?customer=%25_%5B&from=2026-01-01&to=2026-12-31",
+      "status": 200
+    },
+    {
+      "path": "/api/admin/invoices?from=2026-11-10&to=2026-11-09",
+      "status": 400
+    },
+    {
+      "path": "/api/admin/invoices/2147483647",
+      "status": 404
+    },
+    {
+      "path": "/api/admin/invoices/2002",
+      "status": 200
+    },
+    {
+      "path": "/api/invoices/2002",
+      "status": 200
+    },
+    {
+      "path": "/api/bookings/7021/settlement",
+      "status": 200
+    },
+    {
+      "path": "/api/admin/invoices/1002",
+      "status": 200
+    },
+    {
+      "path": "/api/invoices/1002",
+      "status": 200
+    },
+    {
+      "path": "/api/bookings/6023/settlement",
+      "status": 200
+    },
+    {
+      "path": "/api/admin/invoices/3",
+      "status": 200
+    },
+    {
+      "path": "/api/invoices/3",
+      "status": 200
+    },
+    {
+      "path": "/api/bookings/5017/settlement",
+      "status": 200
+    },
+    {
+      "path": "/api/admin/invoices/2",
+      "status": 200
+    },
+    {
+      "path": "/api/invoices/2",
+      "status": 200
+    },
+    {
+      "path": "/api/bookings/5022/settlement",
+      "status": 200
+    },
+    {
+      "role": "CUSTOMER",
+      "path": "/api/admin/invoices",
+      "status": 403
+    },
+    {
+      "role": "CUSTOMER",
+      "path": "/api/admin/invoices/1",
+      "status": 403
+    },
+    {
+      "role": "STAFF",
+      "path": "/api/admin/invoices",
+      "status": 403
+    },
+    {
+      "role": "STAFF",
+      "path": "/api/admin/invoices/1",
+      "status": 403
+    }
+  ],
+  "selectStatements": 78,
+  "writes": 0,
+  "note": "Real SQL reads; all service SQL restricted to SELECT, commit refused. No PATCH or cash confirmation executed."
+}

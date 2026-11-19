@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/bookings/31/confirm-final-payment"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"Status\": \"COMPLETED\"\r
+
+    }"
+auth:
+  type: noauth
+order: 23000

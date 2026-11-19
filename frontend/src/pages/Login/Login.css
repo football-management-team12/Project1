@@ -101,6 +101,18 @@
   background: #ffffff;
 }
 
+.login-input-wrapper.input-error {
+  border-color: #dc2626;
+  background: #fff7f7;
+}
+
+.login-input-wrapper.input-error:focus-within {
+  border-color: #dc2626;
+  background: #ffffff;
+
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+}
+
 .login-input-wrapper input {
   flex: 1;
 
@@ -245,6 +257,20 @@
   color: #16a34a;
 }
 
+.form-error {
+  margin: 6px 0 0;
+
+  color: #dc2626;
+
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.form-error::before {
+  content: "⚠ ";
+}
+
 @media (max-width: 576px) {
   .login-card {
     padding: 32px 22px;
@@ -258,22 +284,6 @@
   .login-options {
     gap: 15px;
   }
-  .form-error {
-  margin: 6px 0 0;
-  color: #dc2626;
-  font-size: 13px;
-  font-weight: 400;
-}
-
-.login-input-wrapper.input-error {
-  border-color: #dc2626;
-}
-
-.login-input-wrapper.input-error:focus-within {
-  border-color: #dc2626;
-
-  box-shadow:
-    0 0 0 3px rgba(220, 38, 38, 0.08);
 }
 
 .server-message {
@@ -286,4 +296,7 @@
 
   text-align: center;
 }
+
+.login-register a:hover {
+  text-decoration: underline;
 }

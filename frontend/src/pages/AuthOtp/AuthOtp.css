@@ -1,0 +1,6 @@
+.otp-card { max-width: 460px; width: 100%; box-sizing: border-box; }
+.otp-card input { min-width: 0; width: 100%; }
+.otp-card input[autocomplete="one-time-code"] { letter-spacing: .35em; font-size: 1.4rem; }
+.otp-card .otp-resend { margin-top: 16px; padding: 12px; width: 100%; border: 1px solid #166534; border-radius: 8px; color: #166534; background: white; cursor: pointer; }
+.otp-card button:disabled { opacity: .55; cursor: wait; }
+.otp-card p { overflow-wrap: anywhere; }

@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/21/deposit-refund"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"transactionReference\": \"REFUND-20261027-001\",\r
+
+    \  \"evidenceBase64\":
+    \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAW\
+    jR9awAAAABJRU5ErkJggg==\",\r
+
+    \  \"evidenceMimeType\": \"image/png\",\r
+
+    \  \"evidenceFileName\": \"refund-proof.png\"\r
+
+    }"
+order: 5000

@@ -1,0 +1,10 @@
+{
+  "passed": 5,
+  "checks": [
+    "23:00 today slots locked and labeled past time despite stale available=true API",
+    "Tomorrow remains bookable",
+    "Open field page locks when start time arrives",
+    "Direct booking page disables past slots",
+    "Already selected slot locks Continue when its time arrives"
+  ]
+}

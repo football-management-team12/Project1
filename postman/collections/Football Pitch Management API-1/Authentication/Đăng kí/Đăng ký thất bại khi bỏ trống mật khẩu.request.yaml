@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"fullName\": \"Nguyen Van A 12345678999999999999999999\",\r
+
+    \  \"username\": \"test_user12\",\r
+
+    \  \"email\": \"test12@example.com\",\r
+
+    \  \"phone\": \"0901234567\",\r
+
+    \  \"password\": \"Abc@1238\"\r
+
+    }"
+order: 16000

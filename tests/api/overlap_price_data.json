@@ -1,0 +1,20 @@
+[
+  {
+    "case_name": "Trung khung gio (Trung hoan toan)",
+    "StartTime": "06:00",
+    "EndTime": "08:00",
+    "Price": 200000
+  },
+  {
+    "case_name": "Giao nhau mot phan khung gio",
+    "StartTime": "07:00",
+    "EndTime": "09:00",
+    "Price": 200000
+  },
+  {
+    "case_name": "Bao chua khung gio cu",
+    "StartTime": "05:00",
+    "EndTime": "11:00",
+    "Price": 200000
+  }
+]

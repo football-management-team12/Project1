@@ -1,44 +1,1638 @@
-swagger: "2.0"
+openapi: "3.0.0"
 info:
   title: "Football Pitch Management API"
   description: "Tài liệu API Hệ thống Quản lý Sân bóng"
   version: "1.0.0"
-host: "127.0.0.1:5000"
-basePath: "/"
-schemes:
-  - "http"
+servers:
+  - url: "http://127.0.0.1:5001"
+
+    description: "Local Server"
 
 paths:
-  # ------------------------------------
-  # 1. API Authentication (routes/auth.py)
-  # ------------------------------------
+  /api/management/dashboard/schedule:
+    get:
+      tags: [Dashboard]
+      summary: Lịch đặt sân theo ngày dành cho ADMIN và STAFF đang hoạt động
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: date
+          in: query
+          description: YYYY-MM-DD, mặc định ngày hiện tại tại Việt Nam
+          schema: {type: string, format: date}
+      responses:
+        '200':
+          description: Chỉ đọc; date, total (mọi trạng thái), items (tối đa 7 đơn theo giờ bắt đầu); Cache-Control no-store
+        '400': {description: Ngày không hợp lệ}
+        '401': {description: Thiếu hoặc sai JWT}
+        '403': {description: Không phải ADMIN hoặc STAFF đang hoạt động}
+        '503': {description: Không tải được lịch đặt sân}
+  /api/time:
+    get:
+      summary: Giờ máy chủ, không phụ thuộc đồng hồ thiết bị
+      responses:
+        '200':
+          description: serverTimeMs (Unix milliseconds), serverTime (ISO có timezone), timeZone=Asia/Ho_Chi_Minh; Cache-Control no-store
+  /api/admin/bookings/{bookingId}/operations/{action}:
+    post:
+      tags: [Booking operations]
+      summary: ADMIN ACTIVE ghi nhận khách đến, không đến hoặc đính chính hủy
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - {name: bookingId, in: path, required: true, schema: {type: integer}}
+        - name: action
+          in: path
+          required: true
+          schema: {type: string, enum: [check-in, no-show, restore-cancellation, approve-rejected-cancellation]}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {reason: {type: string, maxLength: 500}}
+      responses:
+        '200': {description: Đã cập nhật và lưu snapshot lịch sử trong cùng transaction}
+        '400': {description: Thiếu lý do hoặc dữ liệu không hợp lệ}
+        '401': {description: Thiếu hoặc sai JWT}
+        '403': {description: Không phải ADMIN ACTIVE}
+        '409': {description: Trùng lịch, đã hoàn tiền, sai thời điểm hoặc không phù hợp trạng thái}
+  /api/bookings/{bookingId}/operations:
+    get:
+      tags: [Booking operations]
+      summary: Lịch sử thao tác của đơn; ADMIN hoặc CUSTOMER sở hữu đơn
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - {name: bookingId, in: path, required: true, schema: {type: integer}}
+      responses:
+        '200': {description: Danh sách events; snapshot chi tiết chỉ dành cho ADMIN}
+        '403': {description: Không đủ quyền}
+        '404': {description: Không có đơn hoặc không sở hữu đơn}
+  /api/admin/reports/summary:
+    get:
+      tags: [UC16 - Reports]
+      summary: ADMIN ACTIVE đọc thống kê tiền thu, hoàn cọc, đặt sân và giao dịch
+      description: 'Khoảng ngày đá BookingDate, bao gồm cả ngày cuối, tối đa 366 ngày. Tiền cọc, tiền thu tại sân và khoản hoàn đã xác nhận được phân bổ vào ngày đá của đơn tương ứng; chỉ cộng giao dịch thành công. Chỉ đọc; không cập nhật trạng thái nghiệp vụ.'
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+          description: 'YYYY-MM-DD; năm 1900–9998, không được sau to.'
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date }
+          description: 'Ngày cuối tính cả ngày; không truyền trùng tham số hoặc thêm tham số khác.'
+      responses:
+        '200':
+          description: 'Báo cáo; không có dữ liệu trả 0 và danh sách sân rỗng, dailyRevenue đủ ngày. Cache-Control no-store.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UC16Summary' }
+        '400': { description: INVALID_DATE_RANGE }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Chỉ ADMIN ACTIVE trong token và database được xem }
+        '503': { description: DB_UNAVAILABLE hoặc REPORT_UNAVAILABLE; không trả số liệu một phần }
+        '500': { description: REPORT_ERROR }
+  /api/admin/customers:
+    get:
+      tags: [UC13 - Customers]
+      summary: ADMIN ACTIVE tìm và phân trang tài khoản CUSTOMER
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: keyword, in: query, schema: { type: string, maxLength: 100 }, description: 'Tìm tên, username, email hoặc phone. Trim; ký tự %, _ và [ được tìm như chữ thường, không phải wildcard.' }
+        - { name: status, in: query, schema: { type: string, enum: ['', ACTIVE, INACTIVE] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, maximum: 1000000, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 } }
+      responses:
+        '200':
+          description: 'items chỉ CUSTOMER, có bookingCount; tổng, phân trang và totalPages. UserID giảm dần. Không có kết quả trả items=[] và total=0.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/UC13Customer' } }
+                  total: { type: integer }
+                  page: { type: integer }
+                  pageSize: { type: integer }
+                  totalPages: { type: integer }
+        '400': { description: INVALID_KEYWORD / INVALID_STATUS / INVALID_PAGINATION }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '503': { description: DB_UNAVAILABLE }
+  /api/admin/customers/{customerId}:
+    parameters:
+      - { name: customerId, in: path, required: true, schema: { type: integer, minimum: 1, maximum: 2147483647 } }
+    get:
+      tags: [UC13 - Customers]
+      summary: ADMIN xem hồ sơ khách hàng
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200':
+          description: Chỉ trường hồ sơ công khai cho quản trị, không trả PasswordHash
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UC13Customer' }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '404': { description: CUSTOMER_NOT_FOUND, bao gồm ID của ADMIN/STAFF }
+    put:
+      tags: [UC13 - Customers]
+      summary: ADMIN sửa riêng họ tên, email hoặc điện thoại của CUSTOMER
+      description: 'Chấp nhận 1..3 trường; trường không gửi được giữ nguyên. Không sửa Role/Status/Username/Password hay dữ liệu giao dịch. Kiểm tra trùng liên hệ trên tất cả tài khoản; SERIALIZABLE và rollback khi lỗi. Không thay đổi trả 200, updatedFields rỗng.'
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                fullName: { type: string, minLength: 1, maxLength: 100, description: 'Sau trim, tối đa 100 đơn vị UTF-16; không chứa ký tự điều khiển' }
+                email: { type: string, format: email, maxLength: 100, description: 'ASCII, trim và lowercase' }
+                phone: { type: string, pattern: '^0[0-9]{9}$' }
+            example: { phone: '0912345678' }
+      responses:
+        '200':
+          description: Kết quả cập nhật
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  customer: { $ref: '#/components/schemas/UC13Customer' }
+                  updatedFields: { type: array, items: { type: string, enum: [fullName, email, phone] } }
+        '400': { description: INVALID_BODY / INVALID_FIELDS / INVALID_CUSTOMER_DATA / INVALID_FULL_NAME / INVALID_EMAIL / INVALID_PHONE }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '404': { description: CUSTOMER_NOT_FOUND }
+        '409': { description: CONTACT_ALREADY_USED / CUSTOMER_CHANGED }
+        '413': { description: BODY_TOO_LARGE, giới hạn 16 KB }
+        '500': { description: Lỗi cập nhật hoặc commit, rollback }
+        '503': { description: DB_UNAVAILABLE }
+  /api/admin/customers/{customerId}/bookings:
+    get:
+      tags: [UC13 - Customers]
+      summary: ADMIN đọc lịch sử Booking của một CUSTOMER, không cập nhật trạng thái
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: customerId, in: path, required: true, schema: { type: integer, minimum: 1, maximum: 2147483647 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, maximum: 1000000, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 } }
+      responses:
+        '200':
+          description: 'customerId, items, total, page, pageSize, totalPages. Mỗi item: bookingId, fieldId, fieldName, fieldType, bookingDate, startTime, endTime, totalAmount, status. Giữ lịch sử sân Archive. Sắp ngày/giờ/BookingID giảm dần. Không có Booking trả items=[].'
+        '400': { description: ID hoặc phân trang không hợp lệ }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '404': { description: CUSTOMER_NOT_FOUND }
+  /api/admin/reviews:
+    get:
+      tags: [UC10 - Reviews]
+      summary: ADMIN ACTIVE xem inbox đánh giá và tổng số chờ phản hồi
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1, minimum: 1, maximum: 1000000 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 10, minimum: 1, maximum: 50 } }
+        - { name: status, in: query, schema: { type: string, enum: [all, answered, unanswered], default: all } }
+        - { name: rating, in: query, schema: { type: integer, minimum: 1, maximum: 5 } }
+      responses:
+        '200':
+          description: 'items gồm reviewId, bookingId, fieldId, fieldName, customerName, rating, comment, createdAt, reply. Metadata: total, page, pageSize, totalPages, totalReviews, unansweredCount. Hai tổng cuối theo toàn bộ inbox, không theo bộ lọc.'
+        '400': { description: INVALID_FILTER }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '503': { description: DB không sẵn sàng hoặc chưa áp dụng migration 012 }
+  /api/admin/reviews/{reviewId}/reply:
+    put:
+      tags: [UC10 - Reviews]
+      summary: ADMIN ACTIVE tạo hoặc cập nhật phản hồi duy nhất của đánh giá
+      description: 'Khóa review trong transaction SERIALIZABLE. Một phản hồi mỗi review; cập nhật giữ CreatedAt, đổi UpdatedAt. AdminUserID lấy từ JWT và kiểm tra role thực trong DB. Không đổi nội dung review của khách.'
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: reviewId, in: path, required: true, schema: { type: integer, minimum: 1, maximum: 2147483647 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [comment]
+              properties:
+                comment: { type: string, minLength: 1, maxLength: 1000 }
+            example: { comment: 'Cảm ơn bạn, chủ sân đã ghi nhận góp ý.' }
+      responses:
+        '200':
+          description: Phản hồi được lưu, bao gồm tạo mới và cập nhật
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviewId: { type: integer }
+                  reply: { $ref: '#/components/schemas/UC10Reply' }
+        '400': { description: INVALID_BODY / INVALID_COMMENT / INVALID_REVIEW_ID }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải ADMIN ACTIVE }
+        '404': { description: REVIEW_NOT_FOUND }
+        '413': { description: Body vượt 16 KB }
+        '500': { description: Lỗi ghi hoặc commit; rollback }
+        '503': { description: DB không sẵn sàng hoặc chưa áp dụng migration 012 }
+  /api/bookings/{bookingId}/reviews:
+    parameters:
+      - { name: bookingId, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    get:
+      tags: [UC10 - Reviews]
+      summary: CUSTOMER xem đánh giá của chính đơn và điều kiện gửi
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200':
+          description: Chỉ đọc, không thay đổi booking hoặc tài chính
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [bookingId, fieldId, canReview, reason, review]
+                properties:
+                  bookingId: { type: integer }
+                  fieldId: { type: integer }
+                  canReview: { type: boolean }
+                  reason: { type: string, nullable: true, enum: [REVIEW_ALREADY_EXISTS, BOOKING_NOT_COMPLETED, null] }
+                  review:
+                    allOf: [{ $ref: '#/components/schemas/UC10Review' }]
+                    nullable: true
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Không phải CUSTOMER ACTIVE hoặc không sở hữu booking }
+        '404': { description: Booking không tồn tại }
+        '503': { description: DB không sẵn sàng hoặc chưa áp dụng migration 011 }
+    post:
+      tags: [UC10 - Reviews]
+      summary: CUSTOMER đánh giá một lần cho đơn của mình đã hết giờ và thu đủ tiền
+      description: 'Không yêu cầu hóa đơn PAID. rating phải là JSON integer 1..5, không nhận bool/string/float. comment trim còn 1..1000 đơn vị UTF-16. UserID và FieldID lấy từ booking trên server, không từ body. Không sửa Booking, Payment hoặc Invoice.'
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating, comment]
+              properties:
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                comment: { type: string, minLength: 1, maxLength: 1000 }
+            example: { rating: 5, comment: 'Sân tốt, đúng giờ' }
+      responses:
+        '201':
+          description: Review được tạo và commit thành công
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UC10Review' }
+        '400': { description: INVALID_BODY / INVALID_RATING / INVALID_COMMENT }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Sai role, inactive hoặc BOOKING_NOT_OWNED }
+        '404': { description: BOOKING_NOT_FOUND }
+        '409': { description: BOOKING_NOT_COMPLETED / REVIEW_ALREADY_EXISTS }
+        '413': { description: Body vượt 16 KB }
+        '500': { description: Lỗi hệ thống; rollback, không báo thành công }
+        '503': { description: DB_UNAVAILABLE / REVIEWS_NOT_READY }
+  /api/fields/{fieldId}/reviews:
+    get:
+      tags: [UC10 - Reviews]
+      summary: Công khai danh sách review hợp lệ của sân chưa Archive
+      description: 'Mới nhất trước, sắp xếp CreatedAt DESC rồi ReviewID DESC. Không công bố UserID, BookingID, tên/email/điện thoại tài khoản. Trang vượt tổng số trang trả items rỗng.'
+      security: []
+      parameters:
+        - { name: fieldId, in: path, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, maximum: 1000000, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 } }
+      responses:
+        '200':
+          description: Đúng sân, có phân trang và điểm trung bình
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [fieldId, fieldName, page, pageSize, total, totalPages, averageRating, items]
+                properties:
+                  fieldId: { type: integer }
+                  fieldName: { type: string }
+                  page: { type: integer }
+                  pageSize: { type: integer }
+                  total: { type: integer }
+                  totalPages: { type: integer }
+                  averageRating: { type: number, nullable: true }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        reviewId: { type: integer }
+                        fieldId: { type: integer }
+                        rating: { type: integer }
+                        comment: { type: string }
+                        createdAt: { type: string, format: date-time }
+                        reviewerName: { type: string, example: 'Khách đã đặt sân' }
+                        reply:
+                          allOf: [{ $ref: '#/components/schemas/UC10Reply' }]
+                          nullable: true
+        '400': { description: INVALID_PAGINATION / INVALID_FIELD_ID }
+        '404': { description: Sân không tồn tại hoặc đã Archive }
+        '503': { description: DB không sẵn sàng hoặc chưa áp dụng migration 011 }
+  /api/admin/invoices:
+    get:
+      tags:
+      - UC12 - Invoice Management
+      summary: ADMIN lists issued invoices without writes
+      security: &id001
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                - page
+                - pageSize
+                - hasNext
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UC12Invoice'
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  hasNext:
+                    type: boolean
+        '400': &id002
+          description: Invalid filters, payload or transition
+        '401': &id003
+          description: Missing, invalid or expired JWT
+        '403': &id004
+          description: Requires ACTIVE ADMIN
+        '404': &id005
+          description: Invoice not found
+        '409': &id006
+          description: Financial mismatch, disallowed or duplicate transition
+        '500': &id007
+          description: Operation failed; transaction rolled back for PATCH
+      parameters:
+      - name: status
+        in: query
+        description: Payment filters exclude cancelled invoices; ACTIVE includes all
+          non-cancelled invoices.
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - CANCELLED
+          - UNPAID
+          - PARTIALLY_PAID
+          - PAID
+      - name: customer
+        in: query
+        description: Literal substring of customer name/email.
+        schema:
+          type: string
+          maxLength: 100
+      - name: from
+        in: query
+        description: Invoice CreatedDate, inclusive start, SQL Server local date.
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        description: Inclusive end date.
+        schema:
+          type: string
+          format: date
+      - name: page
+        in: query
+        description: Page number.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          default: 1
+      - name: pageSize
+        in: query
+        description: Page size.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+  /api/admin/invoices/{invoiceId}:
+    get:
+      tags:
+      - UC12 - Invoice Management
+      summary: ADMIN invoice detail, payment history and separate refund
+      security: *id001
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC12InvoiceDetail'
+        '400': *id002
+        '401': *id003
+        '403': *id004
+        '404': *id005
+        '409': *id006
+        '500': *id007
+      parameters: &id008
+      - name: invoiceId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+  /api/admin/invoices/{invoiceId}/status:
+    patch:
+      tags:
+      - UC12 - Invoice Management
+      summary: Cancel an unpaid invoice only after its booking is CANCELLED
+      security: *id001
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoiceId:
+                    type: integer
+                  invoiceStatus:
+                    type: string
+                    enum:
+                    - CANCELLED
+                  status:
+                    type: string
+                    enum:
+                    - CANCELLED
+                  message:
+                    type: string
+        '400': *id002
+        '401': *id003
+        '403': *id004
+        '404': *id005
+        '409': *id006
+        '500': *id007
+      parameters: *id008
+      description: Only ACTIVE -> CANCELLED with zero SUCCESS DEPOSIT/FINAL_PAYMENT/EXTRA
+        receipts and an already CANCELLED booking. Refunded receipts still block cancellation.
+        Does not alter financial records or UC06/07/08/09. Inserts an immutable cancellation
+        audit in its own table under a booking lock and SERIALIZABLE transaction. PaidAmount
+        and all extra fields are rejected. See docs/UC12-invoice-management.md; migration
+        010 required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - status
+              - reason
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - CANCELLED
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+            example:
+              status: CANCELLED
+              reason: Booking cancelled without any receipts
+
+  /api/invoices/{invoiceId}:
+    get:
+      tags:
+      - UC08 - Invoice View
+      operationId: getInvoiceById
+      summary: View issued invoice by ID
+      description: Requires an existing Invoices row. A booking ID or provisional invoice cannot be looked up as an invoice ID. Missing invoice returns 404. Valid Bearer JWT and an ACTIVE SQL Server account are required. CUSTOMER may view only their own booking; ADMIN may view any booking. Total is Bookings.TotalAmount, never the current field price. Paid amount sums SUCCESS DEPOSIT, FINAL_PAYMENT and EXTRA records; remaining = total - paid. UNPAID means zero paid, PARTIALLY_PAID means a positive balance, PAID means zero remaining. UC07 refunds are reported separately from receipts. Archived fields remain visible. GET performs no writes and never issues an invoice. canConfirm is always false; use UC09 for settlement eligibility and cash confirmation.
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: invoiceId
+        in: path
+        required: true
+        description: Existing invoice ID
+        schema:
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: Invoice details and actual payment amounts in VND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Invoice'
+              examples:
+                unpaid:
+                  summary: Unpaid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: CONFIRMED
+                    totalAmount: 500000
+                    depositAmount: 0
+                    paidAmount: 0
+                    remainingAmount: 500000
+                    status: UNPAID
+                    paymentMethod: NOT_RECORDED
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: UNPAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+                partiallyPaid:
+                  summary: Partially paid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: CONFIRMED
+                    totalAmount: 500000
+                    depositAmount: 150000
+                    paidAmount: 150000
+                    remainingAmount: 350000
+                    status: PARTIALLY_PAID
+                    paymentMethod: NOT_RECORDED
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: PARTIALLY_PAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+                paid:
+                  summary: Fully paid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: COMPLETED
+                    totalAmount: 500000
+                    depositAmount: 150000
+                    paidAmount: 500000
+                    remainingAmount: 0
+                    status: PAID
+                    paymentMethod: CASH
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: PAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+        '401':
+          description: Missing, invalid or expired JWT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Missing access token
+        '403':
+          description: Unsupported role, inactive account or invoice belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice access forbidden
+                code: FORBIDDEN
+        '404':
+          description: Invoice or booking not found; or no issued invoice and no successful deposit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice or booking not found
+                code: INVOICE_NOT_FOUND
+        '409':
+          description: Invoice/booking totals or paid amounts are inconsistent, or payment data is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice total does not match booking
+                code: INVOICE_MISMATCH
+        '500':
+          description: SQL Server unavailable or unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Database unavailable
+                code: DB_UNAVAILABLE
+  /api/bookings/{bookingId}/invoice:
+    get:
+      tags:
+      - UC08 - Invoice View
+      operationId: getBookingInvoice
+      summary: View booking invoice or provisional invoice
+      description: 'Without an Invoices row, a positive SUCCESS deposit returns a provisional view: invoiceId=null, isProvisional=true, createdDate=null. A confirmed/completed/cancelled zero-total booking may also return a complimentary provisional view without payment. Otherwise, without an issued invoice or successful deposit, returns 404. An issued invoice has isProvisional=false. Valid Bearer JWT and an ACTIVE SQL Server account are required. CUSTOMER may view only their own booking; ADMIN may view any booking. Total is Bookings.TotalAmount, never the current field price. Paid amount sums SUCCESS DEPOSIT, FINAL_PAYMENT and EXTRA records; remaining = total - paid. UNPAID means zero paid, PARTIALLY_PAID means a positive balance, PAID means zero remaining. UC07 refunds are reported separately from receipts. Archived fields remain visible. GET performs no writes and never issues an invoice. canConfirm is always false; use UC09 for settlement eligibility and cash confirmation.'
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: bookingId
+        in: path
+        required: true
+        description: Booking ID
+        schema:
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: Invoice details and actual payment amounts in VND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Invoice'
+              examples:
+                provisional:
+                  summary: Provisional invoice after successful deposit
+                  value:
+                    bookingId: 7021
+                    invoiceId: null
+                    isProvisional: true
+                    bookingStatus: CONFIRMED
+                    totalAmount: 500000
+                    depositAmount: 150000
+                    paidAmount: 150000
+                    remainingAmount: 350000
+                    status: PARTIALLY_PAID
+                    paymentMethod: NOT_RECORDED
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: null
+                    refundedAmount: 0
+                    paymentStatus: PARTIALLY_PAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+                unpaid:
+                  summary: Unpaid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: CONFIRMED
+                    totalAmount: 500000
+                    depositAmount: 0
+                    paidAmount: 0
+                    remainingAmount: 500000
+                    status: UNPAID
+                    paymentMethod: NOT_RECORDED
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: UNPAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+                partiallyPaid:
+                  summary: Partially paid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: CONFIRMED
+                    totalAmount: 500000
+                    depositAmount: 150000
+                    paidAmount: 150000
+                    remainingAmount: 350000
+                    status: PARTIALLY_PAID
+                    paymentMethod: NOT_RECORDED
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: PARTIALLY_PAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+                paid:
+                  summary: Fully paid issued invoice
+                  value:
+                    bookingId: 7021
+                    invoiceId: 120
+                    isProvisional: false
+                    bookingStatus: COMPLETED
+                    totalAmount: 500000
+                    depositAmount: 150000
+                    paidAmount: 500000
+                    remainingAmount: 0
+                    status: PAID
+                    paymentMethod: CASH
+                    canConfirm: false
+                    fieldId: 5
+                    fieldName: Field 5
+                    fieldType: 5-a-side
+                    location: Ha Noi
+                    bookingDate: '2026-11-06'
+                    startTime: '18:00'
+                    endTime: '19:00'
+                    createdDate: '2026-11-06 10:00:00'
+                    refundedAmount: 0
+                    paymentStatus: PAID
+                    field:
+                      fieldId: 5
+                      fieldName: Field 5
+                      fieldType: 5-a-side
+                      location: Ha Noi
+        '401':
+          description: Missing, invalid or expired JWT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Missing access token
+        '403':
+          description: Unsupported role, inactive account or invoice belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice access forbidden
+                code: FORBIDDEN
+        '404':
+          description: Invoice or booking not found; or no issued invoice and no successful deposit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice or booking not found
+                code: INVOICE_NOT_FOUND
+        '409':
+          description: Invoice/booking totals or paid amounts are inconsistent, or payment data is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Invoice total does not match booking
+                code: INVOICE_MISMATCH
+        '500':
+          description: SQL Server unavailable or unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UC08Error'
+              example:
+                message: Database unavailable
+                code: DB_UNAVAILABLE
+
+  # =========================================================
+  # UC15 - ADMIN FIELD MANAGEMENT
+  # =========================================================
+
+  /api/admin/fields:
+    get:
+      tags:
+        - UC15 - Field Management
+      summary: Danh sách sân cho ADMIN
+      description: |
+        ADMIN có thể xem cả sân đang hoạt động,
+        đang bảo trì và đã lưu trữ.
+        archived=0: chưa lưu trữ.
+        archived=1: đã lưu trữ.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: archived
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        '200':
+          description: Danh sách sân
+        '401':
+          description: Chưa đăng nhập
+        '403':
+          description: Không phải ADMIN
+
+    post:
+      tags:
+        - UC15 - Field Management
+      summary: Thêm sân bóng mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - FieldName
+                - FieldType
+                - Location
+              properties:
+                FieldName:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  example: "Sân bóng số 5"
+                FieldType:
+                  type: string
+                  minLength: 1
+                  maxLength: 30
+                  enum: [5 player, 7 player, 11 player]
+                  example: "5 player"
+                Location:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  example: "Hà Nội"
+                Image:
+                  type: string
+                  maxLength: 255
+                  example: ""
+                Status:
+                  type: string
+                  enum:
+                    - AVAILABLE
+                    - MAINTENANCE
+                  example: AVAILABLE
+      responses:
+        '201':
+          description: Thêm sân thành công
+        '400':
+          description: Dữ liệu không hợp lệ
+        '401':
+          description: Thiếu hoặc sai JWT
+        '403':
+          description: Không có quyền ADMIN
+
+  /api/admin/fields/{field_id}:
+    parameters:
+      - name: field_id
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    get:
+      tags:
+        - UC15 - Field Management
+      summary: Chi tiết sân và bảng giá
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Chi tiết sân
+        '404':
+          description: Không tìm thấy sân
+
+    put:
+      tags:
+        - UC15 - Field Management
+      summary: Sửa thông tin sân
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                FieldName:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  example: "Sân số 5 - Mới"
+                FieldType:
+                  type: string
+                  minLength: 1
+                  maxLength: 30
+                  enum: [5 player, 7 player, 11 player]
+                  example: "5 player"
+                Location:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  example: "Hà Nội"
+                Image:
+                  type: string
+                  maxLength: 255
+                  example: ""
+      responses:
+        '200':
+          description: Cập nhật thành công
+        '400':
+          description: Dữ liệu không hợp lệ
+        '404':
+          description: Không tìm thấy sân
+        '409':
+          description: Sân đã được lưu trữ
+
+  /api/admin/fields/{field_id}/status:
+    patch:
+      tags:
+        - UC15 - Field Management
+      summary: Đổi trạng thái sân
+      description: |
+        Chuyển giữa AVAILABLE và MAINTENANCE.
+        Không áp dụng cho sân đã Archive.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - Status
+              properties:
+                Status:
+                  type: string
+                  enum:
+                    - AVAILABLE
+                    - MAINTENANCE
+                  example: MAINTENANCE
+      responses:
+        '200':
+          description: Đổi trạng thái thành công
+        '400':
+          description: Trạng thái không hợp lệ
+        '404':
+          description: Không tìm thấy sân
+        '409':
+          description: Sân đang có booking hoặc đã Archive
+
+  /api/admin/fields/{field_id}/archive:
+    patch:
+      tags:
+        - UC15 - Field Management
+      summary: Lưu trữ sân bóng
+      description: |
+        Soft Archive - KHÔNG xóa sân.
+        Đặt IsArchived = 1 và ghi ArchivedAt/ArchivedBy.
+        Booking và lịch sử thanh toán vẫn được giữ nguyên.
+        Sân có booking hiệu lực sẽ không thể Archive.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lưu trữ thành công
+        '401':
+          description: Thiếu JWT
+        '403':
+          description: Không phải ADMIN
+        '404':
+          description: Không tìm thấy sân
+        '409':
+          description: |
+            Có booking hiệu lực hoặc sân đã được lưu trữ
+
+  /api/admin/fields/{field_id}/restore:
+    patch:
+      tags:
+        - UC15 - Field Management
+      summary: Khôi phục sân đã lưu trữ
+      description: |
+        Đặt IsArchived = 0.
+        Giữ nguyên Status của sân.
+        Giữ ArchivedAt/ArchivedBy của lần lưu trữ gần nhất.
+        Không xóa hoặc thay đổi booking.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Khôi phục thành công
+        '404':
+          description: Không tìm thấy sân
+        '409':
+          description: Sân chưa được lưu trữ
+
+  /api/admin/fields/{field_id}/prices:
+    post:
+      tags:
+        - UC15 - Field Management
+      summary: Thêm khung giá sân
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - StartTime
+                - EndTime
+                - Price
+              properties:
+                StartTime:
+                  type: string
+                  example: "06:00"
+                EndTime:
+                  type: string
+                  example: "07:00"
+                Price:
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+                  maximum: 999999999
+                  multipleOf: 0.01
+                  example: 300000
+      responses:
+        '201':
+          description: Thêm khung giá thành công
+        '400':
+          description: Giá hoặc thời gian không hợp lệ
+        '409':
+          description: |
+            Trùng khung giờ, có booking hiệu lực
+            hoặc sân đã lưu trữ
+
+  /api/admin/fields/{field_id}/prices/{price_id}:
+    parameters:
+      - name: field_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: price_id
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    put:
+      tags:
+        - UC15 - Field Management
+      summary: Cập nhật một khung giá
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - StartTime
+                - EndTime
+                - Price
+              properties:
+                StartTime:
+                  type: string
+                  example: "17:00"
+                EndTime:
+                  type: string
+                  example: "18:00"
+                Price:
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+                  maximum: 999999999
+                  multipleOf: 0.01
+                  example: 450000
+      responses:
+        '200':
+          description: Cập nhật thành công
+        '400':
+          description: Giá hoặc thời gian không hợp lệ
+        '404':
+          description: Không tìm thấy sân hoặc khung giá
+        '409':
+          description: Không được phép thay đổi
+
+  /api/auth/register:
+    post:
+      tags:
+      - Authentication
+      summary: Create pending CUSTOMER registration; email OTP, no active user yet
+      description: 'Cache-Control: no-store. OTP expires in 5 minutes, max 5 failed
+        guesses. Resend after 60 seconds; max 10 send attempts per email or IP per hour.
+        Secrets never returned except resetGrant after reset OTP verification. See docs/auth-gmail-otp.md.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - fullName
+              - username
+              - email
+              - phone
+              - password
+              properties:
+                fullName:
+                  type: string
+                  maxLength: 100
+                username:
+                  type: string
+                  pattern: ^[A-Za-z0-9_]{4,30}$
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                  pattern: ^0[0-9]{9}$
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  description: ASCII upper/lower and digit/symbol; max 72 UTF-8 bytes
+      responses:
+        '202':
+          description: Accepted/success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  challengeId:
+                    type: string
+                    format: uuid
+                  expiresIn:
+                    type: integer
+                    example: 300
+                  resendAfter:
+                    type: integer
+                    example: 60
+        '400':
+          description: Invalid input, expired, consumed, or incorrect OTP/grant
+        '409':
+          description: Username/email/phone conflict
+        '429':
+          description: 'Rate limit or cooldown; Retry-After: 60'
+        '503':
+          description: Database, Gmail or configuration unavailable; no activation
+  /api/auth/register/verify-otp:
+    post:
+      tags:
+      - Authentication
+      summary: Verify registration and create ACTIVE CUSTOMER atomically
+      description: 'Cache-Control: no-store. OTP expires in 5 minutes, max 5 failed
+        guesses. Resend after 60 seconds; max 10 send attempts per email or IP per hour.
+        Secrets never returned except resetGrant after reset OTP verification. See docs/auth-gmail-otp.md.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - challengeId
+              - otp
+              properties:
+                challengeId:
+                  type: string
+                  format: uuid
+                otp:
+                  type: string
+                  pattern: ^[0-9]{6}$
+      responses:
+        '201':
+          description: Accepted/success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      userId:
+                        type: integer
+                      role:
+                        type: string
+                        enum:
+                        - CUSTOMER
+        '400':
+          description: Invalid input, expired, consumed, or incorrect OTP/grant
+        '409':
+          description: Username/email/phone conflict
+        '429':
+          description: 'Rate limit or cooldown; Retry-After: 60'
+        '503':
+          description: Database, Gmail or configuration unavailable; no activation
+  /api/auth/register/resend-otp:
+    post:
+      tags:
+      - Authentication
+      summary: Resend registration OTP; invalidate old challenge
+      description: 'Cache-Control: no-store. OTP expires in 5 minutes, max 5 failed
+        guesses. Resend after 60 seconds; max 10 send attempts per email or IP per hour.
+        Secrets never returned except resetGrant after reset OTP verification. See docs/auth-gmail-otp.md.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - challengeId
+              properties:
+                challengeId:
+                  type: string
+                  format: uuid
+      responses:
+        '202':
+          description: Accepted/success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  challengeId:
+                    type: string
+                    format: uuid
+                  expiresIn:
+                    type: integer
+                    example: 300
+                  resendAfter:
+                    type: integer
+                    example: 60
+        '400':
+          description: Invalid input, expired, consumed, or incorrect OTP/grant
+        '409':
+          description: Username/email/phone conflict
+        '429':
+          description: 'Rate limit or cooldown; Retry-After: 60'
+        '503':
+          description: Database, Gmail or configuration unavailable; no activation
+  /api/auth/forgot-password:
+    post:
+      tags:
+      - Authentication
+      summary: Generic response with opaque challenge, whether email exists or not
+      description: 'Cache-Control: no-store. OTP expires in 5 minutes, max 5 failed
+        guesses. Resend after 60 seconds; max 10 send attempts per email or IP per hour.
+        Secrets never returned except resetGrant after reset OTP verification. See docs/auth-gmail-otp.md.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '202':
+          description: Accepted/success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  challengeId:
+                    type: string
+                    format: uuid
+                  expiresIn:
+                    type: integer
+                    example: 300
+                  resendAfter:
+                    type: integer
+                    example: 60
+        '400':
+          description: Invalid input, expired, consumed, or incorrect OTP/grant
+        '409':
+          description: Username/email/phone conflict
+        '429':
+          description: 'Rate limit or cooldown; Retry-After: 60'
+        '503':
+          description: Database, Gmail or configuration unavailable; no activation
+  /api/auth/forgot-password/verify-otp:
+    post:
+      tags:
+      - Authentication
+      summary: Verify reset OTP and issue one-use 10-minute resetGrant
+      description: 'Cache-Control: no-store. OTP expires in 5 minutes, max 5 failed
+        guesses. Resend after 60 seconds; max 10 send attempts per email or IP per hour.
+        Secrets never returned except resetGrant after reset OTP verification. See docs/auth-gmail-otp.md.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - challengeId
+              - otp
+              properties:
+                challengeId:
+                  type: string
+                  format: uuid
+                otp:
+                  type: string
+                  pattern: ^[0-9]{6}$
+      responses:
+        '200':
+          description: Accepted/success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  resetGrant:
+                    type: string
+                  expiresIn:
+                    type: integer
+                    example: 600
+        '400':
+          description: Invalid input, expired, consumed, or incorrect OTP/grant
+        '409':
+          description: Username/email/phone conflict
+        '429':
+          description: 'Rate limit or cooldown; Retry-After: 60'
+        '503':
+          description: Database, Gmail or configuration unavailable; no activation
+  /api/auth/forgot-password/resend-otp:
+    post:
+      tags:
+      - Authentication
+      summary: Resend password reset OTP with cooldown
+      description: 'Cache-Control: no-store. OTP expires in 5 minutes, max 5 failed
+        guesses. Resend after 60 seconds; max 10 send attempts per email or IP per hour.
+        Secrets never returned except resetGrant after reset OTP verification. See docs/auth-gmail-otp.md.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - challengeId
+              properties:
+                challengeId:
+                  type: string
+                  format: uuid
+      responses:
+        '202':
+          description: Accepted/success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  challengeId:
+                    type: string
+                    format: uuid
+                  expiresIn:
+                    type: integer
+                    example: 300
+                  resendAfter:
+                    type: integer
+                    example: 60
+        '400':
+          description: Invalid input, expired, consumed, or incorrect OTP/grant
+        '409':
+          description: Username/email/phone conflict
+        '429':
+          description: 'Rate limit or cooldown; Retry-After: 60'
+        '503':
+          description: Database, Gmail or configuration unavailable; no activation
+  /api/auth/reset-password:
+    post:
+      tags:
+      - Authentication
+      summary: Update bcrypt password and consume all reset grants and challenges
+      description: 'Cache-Control: no-store. OTP expires in 5 minutes, max 5 failed
+        guesses. Resend after 60 seconds; max 10 send attempts per email or IP per hour.
+        Secrets never returned except resetGrant after reset OTP verification. See docs/auth-gmail-otp.md.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - resetGrant
+              - newPassword
+              properties:
+                resetGrant:
+                  type: string
+                  minLength: 32
+                  maxLength: 128
+                newPassword:
+                  type: string
+                  format: password
+                  minLength: 8
+      responses:
+        '200':
+          description: Accepted/success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid input, expired, consumed, or incorrect OTP/grant
+        '409':
+          description: Username/email/phone conflict
+        '429':
+          description: 'Rate limit or cooldown; Retry-After: 60'
+        '503':
+          description: Database, Gmail or configuration unavailable; no activation
+
   /api/auth/login:
     post:
       tags:
         - Authentication
       summary: "Đăng nhập người dùng"
-      consumes:
-        - "application/json"
-      produces:
-        - "application/json"
-      parameters:
-        - in: "body"
-          name: "body"
-          required: true
-          schema:
-            type: "object"
-            properties:
-              account:
-                type: "string"
-                example: "admin"
-              password:
-                type: "string"
-                example: "123456"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              anyOf:
+                - required: [account]
+                - required: [email]
+              properties:
+                account:
+                  type: string
+                  description: "Username, email hoặc số điện thoại"
+                  example: "nguyenvana"
+                email:
+                  type: string
+                  format: email
+                  example: "admin@gmail.com"
+                password:
+                  type: string
+                  format: password
+                  example: "123456"
       responses:
-        200:
+        '200':
           description: "Đăng nhập thành công"
-        401:
-          description: "Sai tài khoản hoặc mật khẩu"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  accessToken: { type: string, example: "eyJhbGciOiJIUzI1NiJ9..." }
+                  tokenType: { type: string, example: "Bearer" }
+                  user:
+                    type: object
+                    properties:
+                      id: { type: integer, example: 123 }
+                      userId: { type: integer, example: 123 }
+                      email: { type: string, format: email, example: "admin@gmail.com" }
+                      role: { type: string, example: "ADMIN" }
+        '401':
+          description: "Tên đăng nhập hoặc mật khẩu không hợp lệ"
+        '400':
+          description: "Thiếu trường hoặc account không đúng định dạng"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: false }
+                  message: { type: string, example: "Vui lòng kiểm tra thông tin đăng nhập" }
+                  errors:
+                    type: object
+                    properties:
+                      account: { type: array, items: { type: string }, example: ["Vui lòng nhập tên đăng nhập, email hoặc số điện thoại"] }
+                      email: { type: array, items: { type: string }, example: ["Email không đúng định dạng, vui lòng nhập lại"] }
+                      password: { type: array, items: { type: string }, example: ["Vui lòng nhập mật khẩu"] }
 
   # ------------------------------------
   # 2. API Fields (routes/field.py)
@@ -47,43 +1641,1642 @@ paths:
     get:
       tags:
         - Fields
-      summary: "Lấy danh sách sân bóng kèm bảng giá"
-      produces:
-        - "application/json"
+      summary: "Lấy danh sách tất cả các sân bóng (BE-03)"
+      operationId: getFields
+      parameters:
+        - name: FieldType
+          in: query
+          description: "Lọc loại sân; nhận 5, 7, 11 hoặc dạng 5 player. Alias fieldType. Chỉ một giá trị; bỏ qua tham số để lấy mọi loại sân chưa Archive."
+          schema: { type: string, example: "5 player" }
       responses:
-        200:
-          description: "Trả về danh sách sân bóng thành công"
+        '200':
+          description: "Danh sách theo FieldType; không có kết quả trả []. API này không tính lịch trống theo ngày."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FieldWithPrice'
+        '400': { description: "FieldType không hợp lệ hoặc truyền nhiều giá trị." }
+        '500':
+          description: "Lỗi máy chủ nội bộ."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/fields/price/{field_id}:
     put:
       tags:
         - Fields
-      summary: "Cập nhật giá sân bóng theo FieldID"
-      consumes:
-        - "application/json"
-      produces:
-        - "application/json"
+      summary: "Cập nhật giá/khung giờ sân bóng"
+      operationId: updateFieldPrice
+      security:
+        - BearerAuth: []
       parameters:
-        - in: "path"
-          name: "field_id"
+        - name: field_id
+          in: path
           required: true
-          type: "integer"
-          description: "ID của sân bóng cần cập nhật"
-        - in: "body"
-          name: "body"
-          required: true
+          description: "ID của sân bóng"
           schema:
-            type: "object"
-            properties:
-              StartTime:
-                type: "string"
-                example: "06:00:00"
-              EndTime:
-                type: "string"
-                example: "17:00:00"
-              Price:
-                type: "number"
-                example: 200000
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - StartTime
+                - EndTime
+                - Price
+              properties:
+                StartTime:
+                  type: string
+                  example: "06:00:00"
+                EndTime:
+                  type: string
+                  example: "07:30:00"
+                Price:
+                  type: number
+                  format: float
+                  example: 300000.0
       responses:
-        200:
-          description: "Cập nhật giá thành công"
+        '200':
+          description: "Cập nhật giá thành công."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Update price successfully"
+        '400':
+          description: "Dữ liệu đầu vào không hợp lệ."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: "Không tìm thấy sân bóng."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ------------------------------------
+  # 3. AVAILABILITY ENDPOINTS
+  # ------------------------------------
+  /api/fields/{field_id}/availability:
+    get:
+      tags:
+        - Availability
+      summary: "Kiểm tra lịch trống của một sân bóng theo ngày (BE-05 / T123-59)"
+      operationId: getFieldAvailability
+      parameters:
+        - name: field_id
+          in: path
+          required: true
+          description: "ID của sân bóng"
+          schema:
+            type: integer
+            example: 1
+        - name: date
+          in: query
+          required: true
+          description: "Ngày cần kiểm tra (YYYY-MM-DD)"
+          schema:
+            type: string
+            format: date
+            example: "2026-09-26"
+      responses:
+        '200':
+          description: "Chi tiết lịch trống sân bóng."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleFieldAvailabilityResponse'
+        '400':
+          description: "Thiếu thông số date hoặc sai định dạng."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: "Không tìm thấy sân bóng."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/fields/availability:
+    get:
+      tags:
+        - Availability
+      summary: "Kiểm tra lịch trống của toàn bộ sân bóng theo ngày (BE-05.1)"
+      operationId: getAllFieldsAvailability
+      parameters:
+        - name: FieldType
+          in: query
+          description: "Lọc loại sân, nhận 5/7/11 hoặc dạng 5 player; alias fieldType."
+          schema: { type: string, example: "5 player" }
+        - name: availableOnly
+          in: query
+          description: "true chỉ trả sân AVAILABLE có ít nhất một slot trống trong ngày; các bộ đếm tính trên danh sách sau lọc."
+          schema: { type: boolean, default: false }
+        - name: date
+          in: query
+          required: true
+          description: "Ngày cần kiểm tra (YYYY-MM-DD)"
+          schema:
+            type: string
+            format: date
+            example: "2026-10-04"
+      responses:
+        '200':
+          description: "Lịch trống của toàn bộ sân bóng."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllFieldsAvailabilityResponse'
+        '400':
+          description: "Thiếu thông số date hoặc sai định dạng."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ------------------------------------
+  # 4. BOOKING ENDPOINTS
+  # ------------------------------------
+  /api/bookings/:
+    get:
+      tags: [Booking]
+      summary: ADMIN/STAFF lấy danh sách booking, hỗ trợ phạm vi BookingDate
+      description: from và to phải cùng có hoặc cùng bỏ; tính bao gồm hai ngày. Không truyền ngày giữ hợp đồng toàn lịch sử. KPI trên giao diện chỉ theo phạm vi ngày; search/status lọc thêm danh sách.
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: from
+          in: query
+          description: YYYY-MM-DD, năm 1900–9998; bắt buộc đi cùng to
+          schema: {type: string, format: date}
+        - name: to
+          in: query
+          description: YYYY-MM-DD, không trước from, bao gồm cả ngày cuối
+          schema: {type: string, format: date}
+        - name: status
+          in: query
+          schema: {type: string, enum: [PENDING, CONFIRMED, COMPLETED, CANCELLED]}
+        - name: search
+          in: query
+          schema: {type: string}
+      responses:
+        '200': {description: Total và Bookings trong phạm vi được chọn; không truyền ngày trả toàn bộ như trước}
+        '400': {description: Thiếu hoặc sai phạm vi ngày/trạng thái}
+        '401': {description: Thiếu hoặc sai JWT}
+        '403': {description: Không phải ADMIN/STAFF đang hoạt động}
+    post:
+      tags:
+        - Booking
+      summary: "Tạo lượt đặt sân bóng mới (Booking)"
+      operationId: createBooking
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - FieldID
+                - BookingDate
+                - PriceID
+              properties:
+                FieldID:
+                  type: integer
+                  example: 1
+                BookingDate:
+                  type: string
+                  format: date
+                  example: "2026-10-05"
+                PriceID:
+                  type: integer
+                  example: 101
+                Note:
+                  type: string
+                  example: "Cần chuẩn bị sẵn 2 bộ áo lưới"
+      responses:
+        '201':
+          description: "Đặt sân thành công."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Booking created successfully"
+                  booking:
+                    $ref: '#/components/schemas/BookingDetail'
+        '400':
+          description: "Dữ liệu không hợp lệ."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: "Khung giờ đã được người khác đặt."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Booking
+      summary: "Lấy danh sách lịch đặt sân (Cá nhân hoặc toàn hệ thống đối với Admin)"
+      operationId: getBookings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: "Lọc theo trạng thái (PENDING, CONFIRMED, CANCELLED)"
+          schema:
+            type: string
+            example: "CONFIRMED"
+        - name: date
+          in: query
+          required: false
+          description: "Lọc theo ngày đặt (YYYY-MM-DD)"
+          schema:
+            type: string
+            format: date
+            example: "2026-10-05"
+      responses:
+        '200':
+          description: "Danh sách lượt đặt sân."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingDetail'
+
+  /api/bookings/{booking_id}:
+    get:
+      tags:
+        - Booking
+      summary: "Lấy thông tin chi tiết của một lượt đặt sân"
+      operationId: getBookingById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          description: "ID của lượt đặt sân"
+          schema:
+            type: integer
+            example: 50
+      responses:
+        '200':
+          description: "Chi tiết đơn đặt sân."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDetail'
+        '404':
+          description: "Không tìm thấy lượt đặt sân."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/bookings/{booking_id}/cancel:
+    post:
+      tags: [Booking]
+      summary: "UC07 - ADMIN hủy trực tiếp (CUSTOMER phải gửi yêu cầu)"
+      operationId: cancelBookingUC07
+      description: |
+        Chỉ ADMIN ACTIVE được hủy booking trực tiếp.
+        CUSTOMER phải gửi yêu cầu qua cancellation-requests.
+        Backend kiểm tra trạng thái booking, thanh toán và
+        ghi lịch sử hủy trong transaction.
+        Không tự động hoàn tiền cọc thành công.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1, example: 50 }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string, maxLength: 500, example: "Bận đột xuất" }
+              additionalProperties: false
+      responses:
+        '200':
+          description: "Hủy booking thành công và lưu lịch sử"
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CancelBookingResponse' }
+        '400': { description: "Dữ liệu yêu cầu hoặc lý do hủy không hợp lệ" }
+        '401': { description: "Thiếu, sai hoặc hết hạn JWT" }
+        '403': { description: "Không đủ quyền hủy" }
+        '404': { description: "Không tìm thấy booking" }
+        '409': { description: "Booking không còn đủ điều kiện hủy" }
+        '500': { description: "Lỗi xử lý hoặc lỗi cơ sở dữ liệu" }
+
+  /api/user/profile:
+    get:
+      tags:
+        - Users
+      summary: "Lấy hồ sơ bằng Bearer token (legacy path)"
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: "Trả về hồ sơ tài khoản trong token"
+        '401':
+          description: "Access token thiếu, sai hoặc hết hạn"
+
+  /api/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: "Lấy thông tin tài khoản hiện tại qua Auth"
+      operationId: getCurrentUserAuth
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: "Lấy thông tin thành công"
+        '401':
+          description: "Chưa xác thực hoặc Token không hợp lệ"
+        '403':
+          description: "Tài khoản hiện không hoạt động"
+        '404':
+          description: "Không tìm thấy người dùng"
+
+  # ------------------------------------
+  # 2. API Users (routes/user.py)
+  # ------------------------------------
+  /api/bookings/{booking_id}/cancellation-requests:
+    post:
+      tags: [Booking]
+      summary: Khách gửi yêu cầu hủy và tài khoản nhận hoàn cọc
+      description: Khi đã thanh toán cọc thành công, phải gửi đầy đủ ngân hàng, số tài khoản và tên chủ tài khoản. Thông tin chỉ được xem bởi chủ đơn và ADMIN.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: booking_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string, maxLength: 500 }
+                refundAccount: { $ref: '#/components/schemas/RefundAccount' }
+      responses:
+        '201':
+          description: Đã lưu yêu cầu hủy và tài khoản nhận tiền
+        '400':
+          description: Tài khoản nhận hoàn cọc thiếu hoặc không hợp lệ
+        '401':
+          description: Thiếu hoặc sai JWT
+        '403':
+          description: Chỉ CUSTOMER đang hoạt động được gửi yêu cầu
+        '404':
+          description: Không tìm thấy đơn thuộc khách hàng
+        '409':
+          description: Đã có yêu cầu chờ duyệt hoặc đơn không thể hủy
+
+  /api/bookings/{booking_id}/deposit-refund:
+    post:
+      tags: [Booking]
+      summary: ADMIN xác nhận đã hoàn tiền cọc
+      description: Ghi nhận hoàn cọc thủ công cho đơn CANCELLED có cọc SUCCESS. Lưu số tiền, người và thời gian xác nhận; khách xem thông báo trong lịch sử và chi tiết đơn. Không thực hiện chuyển khoản.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: booking_id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [transactionReference, evidenceBase64, evidenceMimeType, evidenceFileName]
+              properties:
+                transactionReference: { type: string, minLength: 3, maxLength: 100 }
+                evidenceBase64: { type: string, format: byte, description: 'Biên lai tối đa 2 MB, base64 thuần không có tiền tố data URI' }
+                evidenceMimeType: { type: string, enum: [image/png, image/jpeg, application/pdf] }
+                evidenceFileName: { type: string, maxLength: 150 }
+      responses:
+        '400':
+          description: Thiếu mã giao dịch hoặc biên lai không hợp lệ
+        '200':
+          description: Đã ghi nhận hoàn cọc
+        '403':
+          description: Chỉ ADMIN đang hoạt động được xác nhận
+        '404':
+          description: Không tìm thấy đơn
+        '409':
+          description: Đã hoàn cọc hoặc đơn không đủ điều kiện
+        '413':
+          description: Biên lai vượt quá 2 MB
+
+  /api/bookings/{booking_id}/deposit-refund/evidence:
+    get:
+      tags: [Booking]
+      summary: Chủ đơn hoặc ADMIN tải biên lai hoàn cọc
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: booking_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Tệp biên lai, Content-Disposition attachment, không cache
+          content:
+            image/png:
+              schema: { type: string, format: binary }
+            image/jpeg:
+              schema: { type: string, format: binary }
+            application/pdf:
+              schema: { type: string, format: binary }
+        '401': { description: Thiếu hoặc sai JWT }
+        '403': { description: Role không được phép hoặc tài khoản inactive }
+        '404': { description: Không tìm thấy đơn thuộc người dùng hoặc chưa có biên lai }
+
+  /api/bookings/{booking_id}/cancellation:
+    get:
+      tags: [Booking]
+      summary: "UC07 - Kiểm tra điều kiện hủy đơn đặt sân"
+      operationId: getCancellationInfo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1, example: 50 }
+      responses:
+        '200':
+          description: "Thông tin trạng thái booking, quyền hủy và tiền cọc"
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CancellationInfoResponse' }
+        '401': { description: "Thiếu, sai hoặc hết hạn JWT" }
+        '403': { description: "Tài khoản không được phép truy cập" }
+        '404': { description: "Không tìm thấy booking hoặc không thuộc khách hàng" }
+        '500': { description: "Lỗi xử lý hoặc lỗi cơ sở dữ liệu" }
+
+  /api/bookings/{bookingId}/deposit:
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        description: BookingID của CUSTOMER đang đăng nhập.
+        schema: { type: integer, minimum: 1 }
+    get:
+      tags: [Payments]
+      operationId: getBookingDeposit
+      summary: UC06 - Thông tin đặt cọc
+      description: 'CUSTOMER ACTIVE chỉ được xem booking của mình. Trong transaction SERIALIZABLE, đồng bộ DEPOSIT PENDING quá Deadline đã lưu sang EXPIRED và cập nhật UpdatedAt. Booking PENDING hết hạn chuyển CANCELLED nếu không có payment còn hạn, khoản thu SUCCESS hoặc yêu cầu hủy PENDING_REVIEW. Deadline thiếu dùng CreatedAt và DEPOSIT_DEADLINE_MINUTES. Response đọc lại trạng thái DB sau cập nhật; lỗi rollback cả hai bảng. Availability dùng cùng cơ chế expiry; không có scheduler nền. Không sửa tiền hay payment SUCCESS.'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Thông tin cọc, trạng thái thanh toán và VietQR
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DepositInfoResponse' }
+        '401': { $ref: '#/components/responses/UC06Unauthorized' }
+        '403': { $ref: '#/components/responses/UC06Forbidden' }
+        '404': { $ref: '#/components/responses/UC06NotFound' }
+        '409': { $ref: '#/components/responses/UC06Conflict' }
+        '500': { $ref: '#/components/responses/UC06ServerError' }
+    post:
+      tags: [Payments]
+      operationId: createBookingDeposit
+      summary: UC06 - Tạo đặt cọc VietQR demo
+      description: 'Không cần request body. Backend dùng TotalAmount đã lưu, không nhận amount/TotalAmount/paymentMethod từ client. TotalAmount=0 trả 200, xác nhận booking và hết hạn cọc PENDING cũ, không tạo Payment/Invoice/QR. TotalAmount dương giữ luồng cọc hiện có và HTTP 201.'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Stored total is zero; booking confirmed without creating a payment, invoice or QR. Existing successful receipts or mismatched invoice return 409.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ComplimentaryBookingResponse' }
+        '201':
+          description: Tạo DEPOSIT / VIETQR / PENDING
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreateDepositResponse' }
+        '401': { $ref: '#/components/responses/UC06Unauthorized' }
+        '403': { $ref: '#/components/responses/UC06Forbidden' }
+        '404': { $ref: '#/components/responses/UC06NotFound' }
+        '409': { $ref: '#/components/responses/UC06Conflict' }
+        '410': { $ref: '#/components/responses/UC06Expired' }
+        '500': { $ref: '#/components/responses/UC06ServerError' }
+
+  /api/payments/{paymentId}/demo-status:
+    patch:
+      tags: [Payments]
+      operationId: updateDepositDemoStatus
+      summary: UC06 - Mô phỏng trạng thái giao dịch
+      description: 'Chỉ hoạt động khi PAYMENT_DEMO_MODE=true, CUSTOMER ACTIVE và payment thuộc booking của mình. SUCCESS xác nhận booking còn PENDING và chưa quá deadline. FAILED giữ booking để retry. EXPIRED đồng bộ booking PENDING sang CANCELLED trong cùng transaction nếu không có receipt SUCCESS, lần cọc khác còn hiệu lực hoặc yêu cầu hủy PENDING_REVIEW. Gửi EXPIRED lại sẽ kiểm tra đồng bộ legacy booking; không tạo payment mới hoặc sửa số tiền. Lỗi rollback cả payment và booking.'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [SUCCESS, FAILED, EXPIRED]
+              additionalProperties: false
+            example: { status: SUCCESS }
+      responses:
+        '200':
+          description: Thay đổi trạng thái demo thành công, hoặc gọi lặp cùng trạng thái
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DemoStatusResponse' }
+        '400': { $ref: '#/components/responses/UC06InvalidStatus' }
+        '401': { $ref: '#/components/responses/UC06Unauthorized' }
+        '403': { $ref: '#/components/responses/UC06Forbidden' }
+        '404': { $ref: '#/components/responses/UC06NotFound' }
+        '409': { $ref: '#/components/responses/UC06Conflict' }
+        '500': { $ref: '#/components/responses/UC06ServerError' }
+
+  /api/admin/cancellation-requests:
+    get:
+      tags: [Booking]
+      summary: "UC07 - ADMIN xem các yêu cầu hủy"
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [PENDING_REVIEW, APPROVED, REJECTED, ALL], default: PENDING_REVIEW }
+      responses:
+        '200': { description: "Danh sách yêu cầu hủy" }
+        '401': { description: "Thiếu/sai JWT" }
+        '403': { description: "Không có quyền ADMIN" }
+
+  /api/admin/cancellation-requests/{request_id}/decision:
+    post:
+      tags: [Booking]
+      summary: "UC07 - ADMIN duyệt hoặc từ chối yêu cầu hủy"
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: request_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [APPROVED, REJECTED] }
+                note:
+                  type: string
+                  maxLength: 500
+                  description: "Bắt buộc khi decision=REJECTED; không được rỗng/chỉ có khoảng trắng sau khi trim. Tùy chọn khi APPROVED."
+      responses:
+        '200': { description: "APPROVED -> CANCELLED + audit + release slot; REJECTED -> giữ booking" }
+        '400':
+          description: "REVIEW_NOTE_REQUIRED khi từ chối thiếu note/null/rỗng/chỉ khoảng trắng; INVALID_TEXT khi note sai kiểu hoặc quá dài. Không cập nhật trạng thái."
+        '401': { description: "Thiếu/sai JWT" }
+        '403': { description: "Không phải ADMIN" }
+        '404': { description: "Không có request" }
+        '409': { description: "Đã được xử lý/booking không hợp lệ" }
+        '500': { description: "Lỗi server" }
+
+  /api/users/me:
+
+    get:
+
+      tags:
+        - Users
+
+      summary: "Lấy thông tin cá nhân của người dùng đang đăng nhập"
+
+      operationId: getMyProfile
+
+      security:
+        - BearerAuth: []
+
+      responses:
+
+        '200':
+
+          description: "Lấy thông tin cá nhân thành công"
+
+          content:
+
+            application/json:
+
+              schema:
+
+                type: object
+
+                properties:
+
+                  userId:
+                    type: integer
+                    example: 1
+
+                  fullName:
+                    type: string
+                    example: "Nguyen Van A"
+
+                  username:
+                    type: string
+                    example: "nguyenvana"
+
+                  email:
+                    type: string
+                    format: email
+                    example: "a@example.com"
+
+                  phone:
+                    type: string
+                    example: "0901234567"
+
+                  role:
+                    type: string
+                    example: "CUSTOMER"
+
+                  status:
+                    type: string
+                    example: "ACTIVE"
+
+
+        '401':
+
+          description: "Access token thiếu, sai hoặc hết hạn"
+
+
+        '403':
+
+          description: "Tài khoản không hoạt động"
+
+
+        '404':
+
+          description: "Không tìm thấy người dùng"
+
+
+    put:
+
+      tags:
+        - Users
+
+      summary: "Cập nhật thông tin cá nhân của người dùng đang đăng nhập"
+
+      operationId: updateMyProfile
+
+      security:
+        - BearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+
+              type: object
+
+              minProperties: 1
+              additionalProperties: false
+              description: "Cho phép gửi 1..3 trường; trường không gửi giữ nguyên. null/rỗng bị từ chối."
+
+              properties:
+
+                fullName:
+                  type: string
+                  example: "Nguyen Van B"
+
+                email:
+                  type: string
+                  format: email
+                  example: "b@example.com"
+
+                phone:
+                  type: string
+                  example: "0907654321"
+
+
+      responses:
+
+        '200':
+
+          description: "Cập nhật thông tin thành công"
+
+          content:
+
+            application/json:
+
+              schema:
+
+                type: object
+
+                properties:
+
+                  success:
+                    type: boolean
+                    example: true
+
+                  message:
+                    type: string
+                    example: "Cập nhật thông tin thành công"
+
+                  user:
+
+                    type: object
+
+                    properties:
+
+                      userId:
+                        type: integer
+                        example: 1
+
+                      fullName:
+                        type: string
+                        example: "Nguyen Van B"
+
+                      username:
+                        type: string
+                        example: "nguyenvana"
+
+                      email:
+                        type: string
+                        example: "b@example.com"
+
+                      phone:
+                        type: string
+                        example: "0907654321"
+
+                      role:
+                        type: string
+                        example: "CUSTOMER"
+
+                      status:
+                        type: string
+                        example: "ACTIVE"
+
+
+        '400':
+
+          description: "Dữ liệu sai hoặc request chứa trường không được phép"
+
+
+        '401':
+
+          description: "Access token thiếu, sai hoặc hết hạn"
+
+
+        '409':
+
+          description: "Email hoặc số điện thoại đã tồn tại"
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UC16Summary:
+      type: object
+      required: [from, to, dayCount, currency, dateBasis, revenueBasis, utilizationBasis, revenue, grossRevenue, refundedAmount, bookingCount, bookingStatusCount, bookingBreakdown, invoiceCount, invoiceStatusCount, fieldUtilization, dailyRevenue]
+      properties:
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        dayCount: { type: integer, minimum: 1, maximum: 366 }
+        currency: { type: string, enum: [VND] }
+        dateBasis: { type: string, enum: [booking-date] }
+        revenueBasis: { type: string, enum: [booking-receipts-minus-confirmed-refunds] }
+        utilizationBasis: { type: string, enum: [confirmed-completed-union-over-24h-per-day] }
+        grossRevenue: { type: number, minimum: 0, description: 'Tổng tiền thành công theo BookingDate; bằng depositAmount + venueCollectedAmount. Giữ trường cũ để tương thích.' }
+        depositAmount: { type: number, minimum: 0, description: 'DEPOSIT SUCCESS dương của các đơn theo ngày đá.' }
+        venueCollectedAmount: { type: number, minimum: 0, description: 'FINAL_PAYMENT/EXTRA SUCCESS dương theo ngày đá; không gồm DEPOSIT.' }
+        refundedAmount: { type: number, minimum: 0, description: 'Khoản hoàn đã xác nhận của các đơn theo BookingDate.' }
+        revenue: { type: number, description: 'grossRevenue - refundedAmount; có thể âm.' }
+        bookingCount: { type: integer, minimum: 0, description: 'Đơn CONFIRMED/COMPLETED đã hết giờ và thu đủ sau hoàn, không NO_SHOW; lọc theo BookingDate, xét toàn bộ lịch sử thu/hoàn.' }
+        bookingLifecycleBreakdown:
+          type: object
+          description: Nhóm trạng thái như bookingDisplayStatus trên trang Quản lý đặt sân; giờ Việt Nam, tách NO_SHOW khỏi CANCELLED. total bằng tổng mọi nhóm.
+          properties:
+            pending: {type: integer, minimum: 0}
+            confirmed: {type: integer, minimum: 0}
+            in_progress: {type: integer, minimum: 0}
+            ended: {type: integer, minimum: 0}
+            no_show: {type: integer, minimum: 0}
+            cancelled: {type: integer, minimum: 0}
+            completed: {type: integer, minimum: 0}
+            unknown: {type: integer, minimum: 0}
+            total: {type: integer, minimum: 0}
+        bookingStatusCount:
+          type: object
+          additionalProperties: { type: integer, minimum: 0 }
+        bookingBreakdown:
+          type: object
+          description: 'Cùng BookingDate và toàn bộ lịch sử thu/hoàn. Mỗi đơn thuộc đúng một nhóm cụ thể; cộng tất cả các nhóm bằng total. Ưu tiên đơn đã hủy trước phân loại thu tiền.'
+          required: [completedPaid, deposited, cancelled, unpaid, paidAwaitingCompletion, partiallyPaid, refunded, invalidAmount, invalidStatus, invalidBalance, total]
+          properties:
+            completedPaid: { type: integer, minimum: 0, description: 'Bằng bookingCount: đã hết giờ và thu đủ tổng tiền, không hủy hoặc NO_SHOW.' }
+            deposited: { type: integer, minimum: 0, description: 'PENDING/CONFIRMED/COMPLETED, còn tiền cọc SUCCESS sau hoàn, NetPaid > 0 nhưng chưa đủ TotalAmount.' }
+            cancelled: { type: integer, minimum: 0, description: 'CANCELLED/CANCELED, bao gồm đơn đã hoàn cọc.' }
+            unpaid: { type: integer, minimum: 0, description: 'Chưa thu tiền, không có khoản hoàn; tổng tiền dương.' }
+            paidAwaitingCompletion: { type: integer, minimum: 0, description: 'Thu đủ nhưng chưa hết giờ đá, bao gồm đơn miễn phí được xác nhận.' }
+            partiallyPaid: { type: integer, minimum: 0, description: 'Thu một phần nhưng không còn khoản cọc hợp lệ.' }
+            refunded: { type: integer, minimum: 0, description: 'Chưa hủy nhưng đã hoàn hết khoản thu, NetPaid=0.' }
+            invalidAmount: { type: integer, minimum: 0, description: 'TotalAmount null hoặc âm.' }
+            invalidStatus: { type: integer, minimum: 0, description: 'Status không thuộc trạng thái booking hỗ trợ.' }
+            invalidBalance: { type: integer, minimum: 0, description: 'Số hoàn vượt khoản thu hợp lệ.' }
+            total: { type: integer, minimum: 0, description: 'Tổng tất cả nhóm, không đếm trùng.' }
+        invoiceCount: { type: integer, minimum: 0, description: 'Hóa đơn phát hành theo CreatedDate, không cộng tiền lần nữa.' }
+        invoiceStatusCount:
+          type: object
+          additionalProperties: { type: integer, minimum: 0 }
+        fieldUtilization:
+          type: array
+          items:
+            type: object
+            required: [fieldId, fieldName, isArchived, bookedHours, capacityHours, utilizationPercent]
+            properties:
+              fieldId: { type: integer }
+              fieldName: { type: string }
+              isArchived: { type: boolean }
+              bookedHours: { type: number, minimum: 0, description: 'Hợp các khoảng CONFIRMED/COMPLETED cùng sân/ngày, không cộng trùng giờ.' }
+              capacityHours: { type: integer, description: 'dayCount x 24; chưa trừ đóng cửa/bảo trì.' }
+              utilizationPercent: { type: number, minimum: 0, maximum: 100 }
+        dailyRevenue:
+          type: array
+          items:
+            type: object
+            required: [date, grossRevenue, refundedAmount, revenue]
+            properties:
+              date: { type: string, format: date }
+              grossRevenue: { type: number }
+              depositAmount: { type: number, minimum: 0 }
+              venueCollectedAmount: { type: number, minimum: 0 }
+              refundedAmount: { type: number }
+              revenue: { type: number }
+    UC12Invoice:
+      type: object
+      properties:
+        invoiceId:
+          type: integer
+        bookingId:
+          type: integer
+        totalAmount:
+          type: number
+          format: double
+        depositAmount:
+          type: number
+          format: double
+        extraAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Successful EXTRA credit already received against the booking total in VND.
+        finalPaymentAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Successful FINAL_PAYMENT receipts only; used to prevent duplicate final cash collection.
+        paidAmount:
+          type: number
+          format: double
+        remainingAmount:
+          type: number
+          format: double
+        bookingStatus:
+          type: string
+        status:
+          type: string
+        paymentMethod:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        invoiceStatus:
+          type: string
+          enum:
+          - ACTIVE
+          - CANCELLED
+        paymentStatus:
+          type: string
+          enum:
+          - UNPAID
+          - PARTIALLY_PAID
+          - PAID
+        createdDate:
+          type: string
+          nullable: true
+        bookingDate:
+          type: string
+          format: date
+        canCancel:
+          type: boolean
+        canConfirm:
+          type: boolean
+          enum:
+          - false
+        allowedTransitions:
+          type: array
+          items:
+            type: string
+            enum:
+            - CANCELLED
+        customer:
+          type: object
+          properties:
+            userId:
+              type: integer
+            name:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+        field:
+          type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+            location:
+              type: string
+              nullable: true
+        cancellation:
+          type: object
+          nullable: true
+          properties:
+            by:
+              type: integer
+            at:
+              type: string
+            reason:
+              type: string
+    UC12InvoiceDetail:
+      allOf:
+      - $ref: '#/components/schemas/UC12Invoice'
+      - type: object
+        properties:
+          payments:
+            type: array
+            items:
+              type: object
+              properties:
+                paymentId:
+                  type: integer
+                type:
+                  type: string
+                  nullable: true
+                amount:
+                  type: number
+                status:
+                  type: string
+                  nullable: true
+                method:
+                  type: string
+                  nullable: true
+                reference:
+                  type: string
+                  nullable: true
+                recordedAt:
+                  type: string
+                  nullable: true
+          refund:
+            type: object
+            nullable: true
+            properties:
+              amount:
+                type: number
+              at:
+                type: string
+    UC08Invoice:
+      type: object
+      required:
+      - invoiceId
+      - isProvisional
+      - bookingId
+      - bookingStatus
+      - fieldId
+      - fieldName
+      - fieldType
+      - location
+      - bookingDate
+      - startTime
+      - endTime
+      - createdDate
+      - totalAmount
+      - depositAmount
+      - paidAmount
+      - remainingAmount
+      - refundedAmount
+      - status
+      - paymentMethod
+      - canConfirm
+      - paymentStatus
+      - field
+      properties:
+        invoiceId:
+          type: integer
+          nullable: true
+          description: Issued invoice ID; null for a provisional invoice.
+        isComplimentary:
+          type: boolean
+          description: Zero-total booking; no deposit or cash collection required.
+        isProvisional:
+          type: boolean
+          description: True when no issued invoice exists and either a successful deposit exists or a confirmed/completed/cancelled booking has a zero total. GET never inserts an invoice or payment.
+        bookingId:
+          type: integer
+        bookingStatus:
+          type: string
+          description: Booking status stored in SQL Server.
+        fieldId:
+          type: integer
+          description: Compatibility alias of field.fieldId. Use the nested field object for UC08.
+        fieldName:
+          type: string
+          nullable: true
+          description: Compatibility alias of field.fieldName. Use the nested field object for UC08.
+        fieldType:
+          type: string
+          nullable: true
+          description: Compatibility alias of field.fieldType. Use the nested field object for UC08.
+        location:
+          type: string
+          nullable: true
+          description: Compatibility alias of field.location. Use the nested field object for UC08.
+        bookingDate:
+          type: string
+          format: date
+        startTime:
+          type: string
+          example: '18:00'
+        endTime:
+          type: string
+          example: '19:00'
+        createdDate:
+          type: string
+          nullable: true
+          description: SQL Server invoice creation timestamp as serialized by the API; null for provisional invoices or missing source date.
+          example: '2026-11-06 10:00:00'
+        totalAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Stored booking total in VND.
+        depositAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Total successful deposits in VND.
+        extraAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Successful EXTRA credit already received against the booking total in VND.
+        finalPaymentAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Successful FINAL_PAYMENT receipts only; used to prevent duplicate final cash collection.
+        paidAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Total successful DEPOSIT, FINAL_PAYMENT and EXTRA receipts in VND.
+        remainingAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: Total minus paid amount in VND.
+        refundedAmount:
+          type: number
+          format: double
+          minimum: 0
+          description: UC07 deposit refund in VND, reported separately from original receipts.
+        status:
+          type: string
+          enum:
+          - UNPAID
+          - PARTIALLY_PAID
+          - PAID
+          description: Compatibility alias of paymentStatus used by UC09; use paymentStatus for UC08.
+        paymentMethod:
+          type: string
+          enum:
+          - CASH
+          - NOT_RECORDED
+          description: CASH when a successful FINAL_PAYMENT exists; otherwise NOT_RECORDED, even after a deposit.
+        canConfirm:
+          type: boolean
+          enum:
+          - false
+          description: Always false in UC08; use UC09 for cash confirmation and eligibility.
+        paymentStatus:
+          type: string
+          enum:
+          - UNPAID
+          - PARTIALLY_PAID
+          - PAID
+          description: Canonical UC08 payment status required by T123-63.
+        field:
+          type: object
+          required:
+          - fieldId
+          - fieldName
+          - fieldType
+          - location
+          properties:
+            fieldId:
+              type: integer
+            fieldName:
+              type: string
+              nullable: true
+            fieldType:
+              type: string
+              nullable: true
+            location:
+              type: string
+              nullable: true
+    UC08Error:
+      type: object
+      required:
+      - message
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+          description: Optional business error code. JWT/role decorator errors and generic server errors may contain message only.
+          example: INVOICE_NOT_FOUND
+
+    UserProfile:
+      type: object
+      properties:
+        UserID:
+          type: integer
+          example: 1
+        Username:
+          type: string
+          example: "nguyenvana"
+        Email:
+          type: string
+          example: "nguyenvana@gmail.com"
+        FullName:
+          type: string
+          example: "Nguyễn Văn A"
+        PhoneNumber:
+          type: string
+          example: "0987654321"
+        Role:
+          type: string
+          example: "CUSTOMER"
+
+    # ------------------ FIELDS SCHEMAS ------------------
+    FieldWithPrice:
+      type: object
+      properties:
+        FieldID:
+          type: integer
+          example: 1
+        FieldName:
+          type: string
+          example: "Sân 7 A1"
+        FieldType:
+          type: string
+          example: "Sân 7 người"
+        Location:
+          type: string
+          example: "Khu A"
+        Image:
+          type: string
+          nullable: true
+          example: "san_a1.jpg"
+        Status:
+          type: string
+          example: "AVAILABLE"
+        StartTime:
+          type: string
+          example: "06:00:00"
+        EndTime:
+          type: string
+          example: "07:30:00"
+        Price:
+          type: number
+          format: float
+          example: 300000.0
+
+    Slot:
+      type: object
+      properties:
+        PriceID:
+          type: integer
+          example: 101
+        StartTime:
+          type: string
+          example: "06:00:00"
+        EndTime:
+          type: string
+          example: "07:30:00"
+        Price:
+          type: number
+          format: float
+          example: 300000.0
+        available:
+          type: boolean
+          example: true
+
+    # ------------------ AVAILABILITY SCHEMAS ------------------
+    SingleFieldAvailabilityResponse:
+      type: object
+      properties:
+        FieldID:
+          type: integer
+          example: 1
+        FieldName:
+          type: string
+          example: "Sân 7 A1"
+        FieldType:
+          type: string
+          example: "Sân 7 người"
+        Location:
+          type: string
+          example: "Khu A"
+        FieldStatus:
+          type: string
+          example: "AVAILABLE"
+        Date:
+          type: string
+          format: date
+          example: "2026-09-26"
+        FieldAvailable:
+          type: boolean
+          example: true
+        AvailableCount:
+          type: integer
+          example: 8
+        UnavailableCount:
+          type: integer
+          example: 2
+        Slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slot'
+
+    FieldAvailabilityItem:
+      type: object
+      properties:
+        FieldID:
+          type: integer
+          example: 1
+        FieldName:
+          type: string
+          example: "Sân 7 A1"
+        FieldType:
+          type: string
+          example: "Sân 7 người"
+        Location:
+          type: string
+          example: "Khu A"
+        FieldStatus:
+          type: string
+          example: "AVAILABLE"
+        FieldAvailable:
+          type: boolean
+          example: true
+        AvailableCount:
+          type: integer
+          example: 8
+        UnavailableCount:
+          type: integer
+          example: 2
+        HasAvailableSlot:
+          type: boolean
+          example: true
+        Slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slot'
+
+    AllFieldsAvailabilityResponse:
+      type: object
+      properties:
+        Date:
+          type: string
+          format: date
+          example: "2026-10-04"
+        TotalFields:
+          type: integer
+          example: 5
+        AvailableFields:
+          type: integer
+          example: 4
+        UnavailableFields:
+          type: integer
+          example: 1
+        Fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldAvailabilityItem'
+
+    # ------------------ BOOKING SCHEMAS ------------------
+    BookingDetail:
+      type: object
+      properties:
+        BookingID:
+          type: integer
+          example: 50
+        UserID:
+          type: integer
+          example: 1
+        FieldID:
+          type: integer
+          example: 1
+        FieldName:
+          type: string
+          example: "Sân 7 A1"
+        BookingDate:
+          type: string
+          format: date
+          example: "2026-10-05"
+        StartTime:
+          type: string
+          example: "06:00:00"
+        EndTime:
+          type: string
+          example: "07:30:00"
+        Price:
+          type: number
+          format: float
+          example: 300000.0
+        Status:
+          type: string
+          example: "CONFIRMED"
+        CreatedAt:
+          type: string
+          format: date-time
+          example: "2026-10-01T08:30:00Z"
+
+    # ------------------ ERROR SCHEMA ------------------
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Thông tin yêu cầu không hợp lệ"
+        example:
+          type: string
+          nullable: true
+          example: "?date=2026-10-04"
+    PublicUser:
+    UC06Error:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+        code: { type: string, description: Có thể không xuất hiện ở lỗi JWT và lỗi server không xác định }
+    DepositBooking:
+      type: object
+      properties:
+        bookingId: { type: integer, example: 1001 }
+        fieldId: { type: integer, example: 2 }
+        bookingDate: { type: string, example: '2026-10-25' }
+        startTime: { type: string, example: '18:00' }
+        endTime: { type: string, example: '19:30' }
+        totalAmount: { type: number, example: 600000 }
+        status: { type: string, example: PENDING }
+        createdAt: { type: string, format: date-time, nullable: true }
+    DepositPayment:
+      type: object
+      properties:
+        paymentId: { type: integer, example: 501 }
+        bookingId: { type: integer, example: 1001 }
+        paymentType: { type: string, example: DEPOSIT }
+        paymentMethod: { type: string, example: VIETQR }
+        amount: { type: number, example: 200000 }
+        status: { type: string, enum: [PENDING, SUCCESS, FAILED, EXPIRED] }
+        reference: { type: string, example: 'BOOKING-1001-DEPOSIT' }
+        deadline: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time, nullable: true }
+        updatedAt: { type: string, format: date-time, nullable: true }
+    DepositVietQr:
+      type: object
+      nullable: true
+      properties:
+        bankId: { type: string, nullable: true, example: MB }
+        accountNo: { type: string, nullable: true, example: '0000000000' }
+        accountName: { type: string, example: TEAM 12 }
+        amount: { type: number, example: 200000 }
+        content: { type: string, example: 'BOOKING-1001-DEPOSIT' }
+        imageUrl: { type: string, nullable: true, example: 'https://img.vietqr.io/image/MB-0000000000-compact2.png?amount=200000&addInfo=BOOKING-1001-DEPOSIT&accountName=TEAM%2012' }
+    DepositInfoResponse:
+      type: object
+      properties:
+        requiresDeposit: { type: boolean, description: False only for a stored zero-total booking; absent or true for ordinary deposits. }
+        isComplimentary: { type: boolean }
+        booking: { $ref: '#/components/schemas/DepositBooking' }
+        depositAmount: { type: number, example: 200000 }
+        depositRate: { type: number, example: 0.3333333333333333 }
+        depositRatio: { type: string, example: '1/3' }
+        depositRoundStep: { type: integer, example: 100000 }
+        depositMinAmount: { type: integer, example: 100000 }
+        deadline: { type: string, format: date-time, nullable: true }
+        isExpired: { type: boolean, example: false }
+        currentPaymentStatus: { type: string, example: NOT_CREATED }
+        payment:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/DepositPayment' }]
+        vietQr: { $ref: '#/components/schemas/DepositVietQr' }
+        demoMode: { type: boolean, example: true }
+    CreateDepositResponse:
+      allOf:
+        - { $ref: '#/components/schemas/DepositPayment' }
+        - type: object
+          properties:
+            depositRatio: { type: string, example: '1/3' }
+            vietQr: { $ref: '#/components/schemas/DepositVietQr' }
+            demoMode: { type: boolean, example: true }
+    ComplimentaryBookingResponse:
+      allOf:
+        - { $ref: '#/components/schemas/DepositInfoResponse' }
+        - type: object
+          properties:
+            status: { type: string, enum: [NOT_REQUIRED] }
+            bookingStatus: { type: string, enum: [CONFIRMED] }
+            paymentId: { type: integer, nullable: true }
+            message: { type: string }
+    DemoStatusResponse:
+      type: object
+      properties:
+        message: { type: string, example: 'Cập nhật trạng thái giao dịch thành công' }
+        payment: { $ref: '#/components/schemas/DepositPayment' }
+    RefundAccount:
+      type: object
+      nullable: true
+      required: [bankName, accountNumber, accountHolder]
+      properties:
+        bankName: { type: string, minLength: 1, maxLength: 100, example: Vietcombank }
+        accountNumber: { type: string, pattern: '^[A-Za-z0-9]{1,34}$', example: '001234567890' }
+        accountHolder: { type: string, minLength: 1, maxLength: 100, example: NGUYEN VAN A }
+    CancellationInfoResponse:
+      type: object
+      properties:
+        bookingId: { type: integer, example: 50 }
+        bookingStatus: { type: string, example: PENDING }
+        canCancel: { type: boolean, example: true }
+        code: { type: string, nullable: true }
+        message: { type: string, example: "Đơn đặt sân đủ điều kiện hủy" }
+        depositPaid: { type: number, example: 100000 }
+        refundStatus: { type: string, nullable: true, example: MANUAL_REVIEW }
+        refundNote: { type: string, nullable: true }
+        refundedAmount: { type: number }
+        refundedAt: { type: string, nullable: true }
+        refundTransactionReference: { type: string, nullable: true }
+        hasRefundEvidence: { type: boolean }
+        refundEvidenceFileName: { type: string, nullable: true }
+        cancellation:
+          type: object
+          nullable: true
+          additionalProperties: true
+        latestRequest:
+          type: object
+          nullable: true
+          properties:
+            refundAccount: { $ref: '#/components/schemas/RefundAccount' }
+          additionalProperties: true
+    CancelBookingResponse:
+      type: object
+      properties:
+        message: { type: string, example: "Hủy booking thành công" }
+        bookingId: { type: integer, example: 50 }
+        oldStatus: { type: string, example: CONFIRMED }
+        status: { type: string, example: CANCELLED }
+        cancelledByRole: { type: string, example: ADMIN }
+        cancellationId: { type: integer, example: 10 }
+        cancelledAt: { type: string, format: date-time }
+        reason: { type: string, nullable: true }
+        releasedSlot: { type: boolean, example: true }
+        depositPaid: { type: number, example: 100000 }
+        refundStatus: { type: string, nullable: true, example: MANUAL_REVIEW }
+        refundNote: { type: string, nullable: true }
+
+    # ------------------ AUTH SCHEMAS ------------------
+  responses:
+    UC06Unauthorized:
+      description: Thiếu, sai hoặc hết hạn JWT (401)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Access token đã hết hạn' }
+    UC06Forbidden:
+      description: Sai role, inactive hoặc demo disabled (403)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Demo payment status đang bị tắt', code: PAYMENT_DEMO_DISABLED }
+    UC06NotFound:
+      description: Booking/payment không tồn tại hoặc khác chủ sở hữu (404)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Không tìm thấy booking hoặc bạn không có quyền thao tác booking này', code: BOOKING_NOT_FOUND }
+    UC06InvalidStatus:
+      description: Status không hợp lệ (400)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Status demo không hợp lệ', code: INVALID_PAYMENT_STATUS }
+    UC06Conflict:
+      description: Trạng thái không thể xử lý, trùng deposit, số tiền sai hoặc payment đã FINAL (409)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Booking đang có giao dịch đặt cọc PENDING', code: DEPOSIT_PENDING_EXISTS }
+    UC06Expired:
+      description: Booking đã quá hạn tạo đặt cọc (410)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Booking đã quá thời hạn đặt cọc', code: DEPOSIT_DEADLINE_EXPIRED }
+    UC13Customer:
+      type: object
+      required: [customerId, username, fullName, email, phone, role, status]
+      properties:
+        customerId: { type: integer }
+        username: { type: string, nullable: true }
+        fullName: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        role: { type: string, enum: [CUSTOMER] }
+        status: { type: string }
+        bookingCount: { type: integer, description: Chỉ trả trong danh sách khách hàng }
+    UC10Review:
+      type: object
+      required: [reviewId, bookingId, fieldId, rating, comment, createdAt]
+      properties:
+        reviewId: { type: integer }
+        bookingId: { type: integer }
+        fieldId: { type: integer }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string, minLength: 1, maxLength: 1000 }
+        createdAt: { type: string, format: date-time }
+        reply:
+          allOf: [{ $ref: '#/components/schemas/UC10Reply' }]
+          nullable: true
+    UC10Reply:
+      type: object
+      required: [comment, createdAt, updatedAt]
+      properties:
+        comment: { type: string, maxLength: 1000 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    UC06ServerError:
+      description: Lỗi DB hoặc lỗi server (500)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UC06Error' }
+          example: { message: 'Không thể kết nối database', code: DATABASE_UNAVAILABLE }

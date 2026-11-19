@@ -1,0 +1,17 @@
+{
+  "passed": 11,
+  "scenarios": [
+    "History: review action only for COMPLETED",
+    "Submit: rating/comment, success, prevent repeat and safe text rendering",
+    "Reload: saved review persists, no new form",
+    "Duplicate 409: load existing review and remove form",
+    "Server error: preserve input, retry succeeds",
+    "Stale/ineligible booking: no submit form",
+    "Public field reviews: pagination switches page",
+    "Mobile: no horizontal overflow",
+    "Empty field: empty state, no fabricated rating",
+    "Public API unavailable: error/retry recovery",
+    "Mobile form: rating/comment visible without horizontal overflow"
+  ],
+  "note": "Intercepted API fixtures, no SQL or live customer writes."
+}

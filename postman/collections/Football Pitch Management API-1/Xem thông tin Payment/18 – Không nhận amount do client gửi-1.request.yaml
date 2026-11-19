@@ -1,0 +1,12 @@
+$kind: http-request
+name: 18 – Không nhận amount do client gửi
+url: "{{baseUrl}}/api/admin/bookings/31/confirm-final-payment"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"Status\": \"COMPLETED\"\r
+
+    }"
+order: 17000

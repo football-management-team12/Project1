@@ -1,0 +1,48 @@
+$kind: http-request
+description: ""
+url: "{{baseUrl}}/api/bookings/:booking_id/cancel"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  - key: booking_id
+    value: "50"
+    disabled: false
+    description: ID lượt đặt sân cần hủy
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "example": 50
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+body:
+  type: json
+  content: |-
+    {
+      "reason": "Bận đột xuất không đá được"
+    }
+  $type: |-
+    {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "example": "Bận đột xuất không đá được"
+        }
+      }
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{bearerToken}}"
+settings: {}
+examples: ./.resources/Hủy lượt đặt sân.resources/examples
+order: 5000

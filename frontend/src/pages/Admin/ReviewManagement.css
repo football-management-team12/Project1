@@ -1,0 +1,19 @@
+.uc10-admin { padding:32px; color:#173b30; max-width:1300px; margin:auto; }
+.uc10-admin-heading, .uc10-admin-review > header { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.uc10-admin h1 { font-size:34px; margin:9px 0; }
+.uc10-admin h2 { margin:9px 0; font-size:22px; }
+.uc10-admin-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin:26px 0; }
+.uc10-admin-stats > div { background:#fff; border:1px solid #dce9e3; border-radius:17px; padding:20px; display:grid; gap:12px; }
+.uc10-admin-stats span { color:#6a7c75; }
+.uc10-admin-stats strong { font-size:30px; color:#087b55; }
+.uc10-admin-stats .uc10-admin-time { font-size:22px; }
+.uc10-admin-filters { display:flex; gap:18px; margin:20px 0; flex-wrap:wrap; }
+.uc10-admin-filters label { display:grid; gap:8px; font-weight:700; min-width:180px; }
+.uc10-admin-filters select { background:#fff; border:1px solid #ccdcd3; padding:12px; font:inherit; border-radius:10px; }
+.uc10-reply-status { padding:8px 12px; border-radius:20px; color:#946113; background:#fff3ce; font-size:13px; font-weight:700; white-space:nowrap; }
+.uc10-reply-status.answered { color:#087b55; background:#e6f6ed; }
+.uc10-admin .uc10-form { margin-top:24px; }
+.uc10-admin .uc10-form button { margin-top:14px; }
+@media(max-width:700px) { .uc10-admin { padding:20px 14px; } .uc10-admin h1 { font-size:28px; }
+  .uc10-admin-stats { grid-template-columns:1fr; gap:10px; } .uc10-admin-heading, .uc10-admin-review > header { align-items:flex-start; flex-direction:column; gap:10px; }
+}

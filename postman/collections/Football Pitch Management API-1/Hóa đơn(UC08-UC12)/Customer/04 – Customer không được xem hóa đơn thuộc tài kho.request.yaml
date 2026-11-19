@@ -1,0 +1,5 @@
+$kind: http-request
+name: 04 – Customer không được xem hóa đơn thuộc tài khoản Customer khác
+url: "{{baseUrl}}/api/bookings/43/invoice"
+method: GET
+order: 7000

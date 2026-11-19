@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/api/fields?FieldType= 5 player"
+method: GET
+queryParams:
+  - key: FieldType
+    value: " 5 player"
+    disabled: false
+    description: ""
+body:
+  type: json
+  content: ""
+order: 2000

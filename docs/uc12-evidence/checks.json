@@ -1,0 +1,15 @@
+{
+  "results": [
+    "ADMIN issued invoice list",
+    "Customer filter sent to API",
+    "Next page uses server pagination",
+    "Empty result",
+    "API failure and retry",
+    "Cancellation confirmation, reason, refresh and terminal action hidden",
+    "UC09 settlement reused and invoice refreshed after payment",
+    "Mobile table scroll stays inside viewport",
+    "CUSTOMER denied Admin page before invoice API"
+  ],
+  "errors": [],
+  "note": "Synthetic intercepted APIs; no SQL writes or real credentials."
+}

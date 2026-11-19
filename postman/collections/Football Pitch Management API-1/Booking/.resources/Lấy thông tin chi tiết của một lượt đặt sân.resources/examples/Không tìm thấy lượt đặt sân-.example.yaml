@@ -1,0 +1,47 @@
+$kind: http-example
+name: Không tìm thấy lượt đặt sân.
+request:
+  url: "{{baseUrl}}/api/bookings/:booking_id"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: booking_id
+      value: "50"
+      disabled: false
+      description: ID của lượt đặt sân
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 404
+  statusText: Not Found
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "type": "string",
+        "nullable": true,
+        "example": "?date=2026-10-04"
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Thông tin yêu cầu không hợp lệ"
+          },
+          "example": {
+            "type": "string",
+            "example": "?date=2026-10-04"
+          }
+        }
+      }
+order: 2000

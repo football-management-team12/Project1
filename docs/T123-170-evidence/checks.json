@@ -1,0 +1,12 @@
+{
+  "passed": 6,
+  "checks": [
+    "Pending request clearly shown in history",
+    "History updates automatically to rejected with note",
+    "Admin note renders as text, not HTML",
+    "Detail updates automatically to approved",
+    "Approval does not claim refunded",
+    "Result persists after reload and return to history"
+  ],
+  "requests": 42
+}

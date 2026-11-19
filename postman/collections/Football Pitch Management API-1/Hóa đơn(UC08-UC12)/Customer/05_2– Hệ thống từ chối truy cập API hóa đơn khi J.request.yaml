@@ -1,0 +1,9 @@
+$kind: http-request
+name: 05_2– Hệ thống từ chối truy cập API hóa đơn khi JWT sai
+url: "{{baseUrl}}/api/bookings/43/invoice"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token_1e22}}"
+order: 6000

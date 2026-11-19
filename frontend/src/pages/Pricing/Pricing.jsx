@@ -80,7 +80,6 @@ function Pricing() {
         <section className="pricing-hero">
           <div className="pricing-container">
             <h1>BẢNG GIÁ THUÊ SÂN</h1>
-            <p>Bảng giá minh bạch theo loại sân và khung giờ</p>
           </div>
         </section>
 

@@ -1,0 +1,128 @@
+$kind: http-example
+name: Chi tiết lịch trống sân bóng.
+request:
+  url: "{{baseUrl}}/api/fields/:field_id/availability?date=2026-09-26"
+  method: GET
+  headers:
+    Accept: application/json
+  queryParams:
+    - key: date
+      value: 2026-09-26
+      disabled: false
+      description: Ngày cần kiểm tra (YYYY-MM-DD)
+  pathVariables:
+    - key: field_id
+      value: "1"
+      disabled: false
+      description: ID của sân bóng
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "FieldID": 1,
+        "FieldName": "Sân 7 A1",
+        "FieldType": "Sân 7 người",
+        "Location": "Khu A",
+        "FieldStatus": "AVAILABLE",
+        "Date": "2026-09-26",
+        "FieldAvailable": true,
+        "AvailableCount": 8,
+        "UnavailableCount": 2,
+        "Slots": [
+          {
+            "PriceID": 101,
+            "StartTime": "06:00:00",
+            "EndTime": "07:30:00",
+            "Price": 300000,
+            "available": true
+          },
+          {
+            "PriceID": 101,
+            "StartTime": "06:00:00",
+            "EndTime": "07:30:00",
+            "Price": 300000,
+            "available": true
+          }
+        ]
+      }
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "FieldID": {
+            "type": "integer",
+            "example": 1
+          },
+          "FieldName": {
+            "type": "string",
+            "example": "Sân 7 A1"
+          },
+          "FieldType": {
+            "type": "string",
+            "example": "Sân 7 người"
+          },
+          "Location": {
+            "type": "string",
+            "example": "Khu A"
+          },
+          "FieldStatus": {
+            "type": "string",
+            "example": "AVAILABLE"
+          },
+          "Date": {
+            "type": "string",
+            "example": "2026-09-26",
+            "format": "date"
+          },
+          "FieldAvailable": {
+            "type": "boolean",
+            "example": true
+          },
+          "AvailableCount": {
+            "type": "integer",
+            "example": 8
+          },
+          "UnavailableCount": {
+            "type": "integer",
+            "example": 2
+          },
+          "Slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "PriceID": {
+                  "type": "integer",
+                  "example": 101
+                },
+                "StartTime": {
+                  "type": "string",
+                  "example": "06:00:00"
+                },
+                "EndTime": {
+                  "type": "string",
+                  "example": "07:30:00"
+                },
+                "Price": {
+                  "type": "number",
+                  "example": 300000,
+                  "format": "float"
+                },
+                "available": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        }
+      }
+order: 1000

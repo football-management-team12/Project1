@@ -1,0 +1,18 @@
+{
+  "passed": 12,
+  "scenarios": [
+    "Admin menu/list with CUSTOMER rows and pagination",
+    "Search by contact text",
+    "Empty search",
+    "Inactive status filter",
+    "List page navigation",
+    "Customer detail and scoped booking history, including archived field",
+    "Partial contact save; history remains visible and unchanged",
+    "Duplicate conflict preserves draft; corrected email succeeds",
+    "Cancel editing restores contact values without request",
+    "Customer with no bookings",
+    "Booking history error and retry",
+    "List error and retry"
+  ],
+  "note": "Intercepted APIs, synthetic fixture data, no live writes."
+}

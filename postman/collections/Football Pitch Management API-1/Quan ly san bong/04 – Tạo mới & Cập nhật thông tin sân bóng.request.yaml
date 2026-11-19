@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/api/admin/fields"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"FieldName\": \"Sân Test A\",\r
+
+    \    \"FieldType\": \"7 player\",\r
+
+    \    \"Image\": \"field1.jpg\",\r
+
+    \    \"IsArchived\": false,\r
+
+    \    \"Location\": \"Hà Nội\"\r
+
+    }"
+order: 2000

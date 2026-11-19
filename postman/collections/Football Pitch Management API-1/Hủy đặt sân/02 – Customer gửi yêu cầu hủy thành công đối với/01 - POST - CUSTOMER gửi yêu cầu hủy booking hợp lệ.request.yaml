@@ -1,0 +1,47 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/24/cancellation-requests"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \  \"reason\": \"Tôi muốn thay đổi lịch đặt sân\"\r
+
+    \  \r
+
+    \  \r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "// Kiểm tra xem hệ thống phản hồi với mã trạng thái phù hợp (ví dụ: 201 Created hoặc 200 OK tùy cấu hình contract cho trường hợp chưa cọc)\r
+
+      pm.test(\"Status code is valid (201 or 200)\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r
+
+      });\r
+
+      \r
+
+      // Kiểm tra cấu trúc phản hồi trả về\r
+
+      pm.test(\"Verify Cancellation Request Response Structure without Success Deposit\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    \r
+
+      \    // Kiểm tra các trường cơ bản định danh\r
+
+      \    pm.expect(jsonData).to.have.property(\"requestId\");\r
+
+      \    pm.expect(jsonData).to.have.property(\"bookingId\");\r
+
+      \    pm.expect(jsonData.status).to.eql(\"PENDING_REVIEW\");\r
+
+      });"
+    language: text/javascript
+order: 1000

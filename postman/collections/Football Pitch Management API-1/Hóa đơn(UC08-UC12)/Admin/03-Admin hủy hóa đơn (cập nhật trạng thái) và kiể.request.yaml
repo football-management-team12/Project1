@@ -1,0 +1,20 @@
+$kind: http-request
+name: 03-Admin hủy hóa đơn (cập nhật trạng thái) và kiểm tra ràng buộc nghiệp vụ
+url: "{{baseUrl}}/api/admin/invoices/10/status"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \r
+
+    \  \"status\": \"CANCELLED\",\r
+
+    \r
+
+    \  \"reason\": \"Booking đã hủy, chưa thu tiền\"\r
+
+    \r
+
+    }"
+order: 3516

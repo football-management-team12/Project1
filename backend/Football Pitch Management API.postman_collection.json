@@ -1,0 +1,298 @@
+{
+  "info": {
+    "_postman_id": "e6b681fd-5392-494a-b4c4-64d56d69a564",
+    "name": "Football Pitch Management API",
+    "description": "Tài liệu API Hệ thống Quản lý Sân bóng",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53722792"
+  },
+  "item": [
+    {
+      "name": "api",
+      "item": [
+        {
+          "name": "auth",
+          "item": [
+            {
+              "name": "login",
+              "item": [
+                {
+                  "name": "Đăng nhập người dùng",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"account\": \"admin\",\n  \"password\": \"123456\"\n}",
+                      "options": {
+                        "raw": {
+                          "headerFamily": "json",
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/auth/login",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "auth",
+                        "login"
+                      ]
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "Đăng nhập thành công",
+                      "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                          {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                          }
+                        ],
+                        "body": {
+                          "mode": "raw",
+                          "raw": "{\n  \"account\": \"admin\",\n  \"password\": \"123456\"\n}",
+                          "options": {
+                            "raw": {
+                              "headerFamily": "json",
+                              "language": "json"
+                            }
+                          }
+                        },
+                        "url": {
+                          "raw": "{{baseUrl}}/api/auth/login",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "auth",
+                            "login"
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    },
+                    {
+                      "name": "Sai tài khoản hoặc mật khẩu",
+                      "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                          {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                          }
+                        ],
+                        "body": {
+                          "mode": "raw",
+                          "raw": "{\n  \"account\": \"admin\",\n  \"password\": \"123456\"\n}",
+                          "options": {
+                            "raw": {
+                              "headerFamily": "json",
+                              "language": "json"
+                            }
+                          }
+                        },
+                        "url": {
+                          "raw": "{{baseUrl}}/api/auth/login",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "auth",
+                            "login"
+                          ]
+                        }
+                      },
+                      "status": "Unauthorized",
+                      "code": 401,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "fields",
+          "item": [
+            {
+              "name": "price",
+              "item": [
+                {
+                  "name": "{field_id}",
+                  "item": [
+                    {
+                      "name": "Cập nhật giá sân bóng theo FieldID",
+                      "request": {
+                        "method": "PUT",
+                        "header": [
+                          {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                          }
+                        ],
+                        "body": {
+                          "mode": "raw",
+                          "raw": "{\n  \"EndTime\": \"17:00:00\",\n  \"Price\": 200000,\n  \"StartTime\": \"06:00:00\"\n}",
+                          "options": {
+                            "raw": {
+                              "headerFamily": "json",
+                              "language": "json"
+                            }
+                          }
+                        },
+                        "url": {
+                          "raw": "{{baseUrl}}/api/fields/price/:field_id",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "fields",
+                            "price",
+                            ":field_id"
+                          ],
+                          "variable": [
+                            {
+                              "key": "field_id",
+                              "value": "794",
+                              "description": "ID của sân bóng cần cập nhật"
+                            }
+                          ]
+                        }
+                      },
+                      "response": [
+                        {
+                          "name": "Cập nhật giá thành công",
+                          "originalRequest": {
+                            "method": "PUT",
+                            "header": [
+                              {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                              }
+                            ],
+                            "body": {
+                              "mode": "raw",
+                              "raw": "{\n  \"EndTime\": \"17:00:00\",\n  \"Price\": 200000,\n  \"StartTime\": \"06:00:00\"\n}",
+                              "options": {
+                                "raw": {
+                                  "headerFamily": "json",
+                                  "language": "json"
+                                }
+                              }
+                            },
+                            "url": {
+                              "raw": "{{baseUrl}}/api/fields/price/:field_id",
+                              "host": [
+                                "{{baseUrl}}"
+                              ],
+                              "path": [
+                                "api",
+                                "fields",
+                                "price",
+                                ":field_id"
+                              ],
+                              "variable": [
+                                {
+                                  "key": "field_id",
+                                  "value": "794",
+                                  "description": "ID của sân bóng cần cập nhật"
+                                }
+                              ]
+                            }
+                          },
+                          "status": "OK",
+                          "code": 200,
+                          "_postman_previewlanguage": "text",
+                          "header": [],
+                          "cookie": [],
+                          "body": ""
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Lấy danh sách sân bóng kèm bảng giá",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/fields/",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "fields",
+                    ""
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Trả về danh sách sân bóng thành công",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/fields/",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "fields",
+                        ""
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "New Folder",
+      "item": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5000"
+    }
+  ]
+}

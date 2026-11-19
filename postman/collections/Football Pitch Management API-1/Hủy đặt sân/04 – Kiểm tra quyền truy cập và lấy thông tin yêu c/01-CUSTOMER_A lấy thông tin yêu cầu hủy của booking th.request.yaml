@@ -1,0 +1,5 @@
+$kind: http-request
+name: 01-CUSTOMER_A lấy thông tin yêu cầu hủy của booking thuộc mình
+url: "{{baseUrl}}/api/bookings/25/cancellation"
+method: GET
+order: 1000

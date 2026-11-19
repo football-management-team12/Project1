@@ -1,0 +1,21 @@
+{
+  "verifiedAt": "2026-11-09T17:51:27.414834+00:00",
+  "engine": "SQL Server",
+  "mode": "Read-only CTE VALUES fixtures, real aggregation query",
+  "databaseWrites": 0,
+  "cases": [
+    {
+      "finalPayment": 0,
+      "paid": 400000.0,
+      "remaining": 500000,
+      "status": "PARTIALLY_PAID"
+    },
+    {
+      "finalPayment": 500000,
+      "paid": 900000.0,
+      "remaining": 0,
+      "status": "PAID"
+    }
+  ],
+  "note": "Does not execute cash confirmation or modify existing customer records."
+}

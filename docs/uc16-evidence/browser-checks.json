@@ -1,0 +1,22 @@
+{
+  "passed": 16,
+  "scenarios": [
+    "Loading state before report arrives",
+    "Default month-to-date range ends today in Vietnam; summary shows applied boundaries",
+    "Completed fully paid booking count; payment-status section removed; chart and utilization retained",
+    "Deposit-only booking excluded from completed card; right column shows deposit and reconciled total",
+    "Submitted date filters match API query and result period",
+    "Accessible daily table matches chart data",
+    "Reversed date validation stops request",
+    "Over-366-day validation stops request",
+    "Current-month shortcut restores month-to-date and resets date validation",
+    "No-data report returns zero metrics and empty field list",
+    "Refund-only negative net revenue remains visible",
+    "Error hides stale report/export; retry restores report",
+    "All seven lifecycle groups shown; legacy missing counts show unavailable rather than NaN or fabricated zero",
+    "CSV contains same metrics, quotes text and neutralizes formula injection; React escapes field names",
+    "1024px report layout has no page overflow",
+    "Narrow report content wraps; tables scroll inside their containers"
+  ],
+  "note": "Real React routes with synthetic intercepted APIs. No live database writes. Desktop/tablet checks; no full mobile shell claim."
+}
