@@ -1,0 +1,81 @@
+{
+  "browser": "Edge headless",
+  "timezone": "UTC",
+  "deviceClock": "2026-11-15T16:30:00Z",
+  "serverClock": "2026-11-16T00:30:00+07:00",
+  "transport": "Intercepted GET fixtures only; no real user, database or booking writes",
+  "passed": 9,
+  "results": [
+    "Server-synchronized Vietnam today shown and requested automatically; only free fields bookable",
+    "Untouched default date follows Vietnam midnight and reloads availability",
+    "Manually selected date preserved across clock/day changes",
+    "Date change disables booking until matching availability arrives",
+    "Guest login redirect retains exact field/date",
+    "Authenticated direct Booking link without date defaults to server today and loads slots",
+    "Booking explicit date preserved; clearing date returns to current Vietnam day",
+    "Mobile default date and authenticated Book button navigate with current field/date",
+    "Availability failure never enables booking"
+  ],
+  "queries": [
+    {
+      "path": "/api/fields/availability",
+      "date": "2026-11-16"
+    },
+    {
+      "path": "/api/fields/availability",
+      "date": "2026-11-16"
+    },
+    {
+      "path": "/api/fields/availability",
+      "date": "2026-11-17"
+    },
+    {
+      "path": "/api/fields/availability",
+      "date": "2026-11-20"
+    },
+    {
+      "path": "/api/fields/availability",
+      "date": "2026-11-21"
+    },
+    {
+      "path": "/api/fields/1/availability",
+      "date": "2026-11-16"
+    },
+    {
+      "path": "/api/fields/1/availability",
+      "date": "2026-11-16"
+    },
+    {
+      "path": "/api/fields/1/availability",
+      "date": "2026-11-20"
+    },
+    {
+      "path": "/api/fields/1/availability",
+      "date": "2026-11-17"
+    },
+    {
+      "path": "/api/fields/availability",
+      "date": "2026-11-16"
+    },
+    {
+      "path": "/api/fields/availability",
+      "date": "2026-11-16"
+    },
+    {
+      "path": "/api/fields/1/availability",
+      "date": "2026-11-16"
+    },
+    {
+      "path": "/api/fields/1/availability",
+      "date": "2026-11-16"
+    },
+    {
+      "path": "/api/fields/availability",
+      "date": "2026-11-16"
+    },
+    {
+      "path": "/api/fields/availability",
+      "date": "2026-11-16"
+    }
+  ]
+}
