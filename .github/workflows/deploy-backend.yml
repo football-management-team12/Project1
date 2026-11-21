@@ -61,7 +61,7 @@ jobs:
             }
 
             CONFIG_DIR="/root/project1-config"
-            ENV_FILE="$CONFIG_DIR/.env.staging"
+            ENV_FILE="/root/Project1/.env.staging"
             STATE_DIR="$CONFIG_DIR/deployment"
             STATE_FILE="$STATE_DIR/staging-state"
             SERVICE="backend-staging"
