@@ -92,16 +92,27 @@ jobs:
         if: always()
         run: docker rm --force project1-backend-ci || true
 
-  deploy-backend:
-    name: CD backend after CI succeeds
+  deploy-staging:
+    name: CD Staging backend
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     needs: [frontend, backend, docker, api-test]
     uses: ./.github/workflows/deploy-backend.yml
+    with:
+      target_environment: staging
+    secrets: inherit
+
+  deploy-production:
+    name: CD Production backend
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [frontend, backend, docker, api-test]
+    uses: ./.github/workflows/deploy-backend.yml
+    with:
+      target_environment: production
     secrets: inherit
 
   sync-frontend:
     name: CD frontend after CI succeeds
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
     needs: [frontend]
     uses: ./.github/workflows/sync-frontend.yml
     secrets: inherit
