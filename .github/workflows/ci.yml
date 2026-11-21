@@ -49,16 +49,9 @@ jobs:
           DEBUG: "false"
         run: python -m unittest discover -s tests/api -p 'test_[a-z]*.py'
 
-  docker:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build backend Docker image
-        run: docker build --tag project1-backend-ci:latest ./backend
-
   api-test:
     runs-on: ubuntu-latest
-    needs: [backend, docker]
+    needs: [backend]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -66,6 +59,8 @@ jobs:
           node-version: 20
       - name: Install Newman
         run: npm install -g newman
+      - name: Build backend Docker image
+        run: docker build --tag project1-backend-ci:latest ./backend
       - name: Start backend without production credentials
         run: |
           docker run --detach \
@@ -95,7 +90,7 @@ jobs:
   deploy-staging:
     name: CD Staging backend
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-    needs: [frontend, backend, docker, api-test]
+    needs: [frontend, backend, api-test]
     uses: ./.github/workflows/deploy-backend.yml
     with:
       target_environment: staging
@@ -104,7 +99,7 @@ jobs:
   deploy-production:
     name: CD Production backend
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [frontend, backend, docker, api-test]
+    needs: [frontend, backend, api-test]
     uses: ./.github/workflows/deploy-backend.yml
     with:
       target_environment: production
