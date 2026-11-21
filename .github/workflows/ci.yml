@@ -98,7 +98,7 @@ jobs:
 
   deploy-production:
     name: CD Production backend
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.ENABLE_PRODUCTION_DEPLOY == 'true'
     needs: [frontend, backend, api-test]
     uses: ./.github/workflows/deploy-backend.yml
     with:
