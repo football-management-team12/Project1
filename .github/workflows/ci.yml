@@ -96,6 +96,6 @@ jobs:
   sync-frontend:
     name: CD frontend after CI succeeds
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-    needs: [frontend, backend, docker, api-test]
+    needs: [frontend]
     uses: ./.github/workflows/sync-frontend.yml
     secrets: inherit
