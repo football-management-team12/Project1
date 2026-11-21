@@ -2,282 +2,131 @@ name: Deploy Backend
 
 on:
   workflow_call:
+    inputs:
+      target_environment:
+        description: Backend environment to deploy
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: staging-backend-deploy
+  group: backend-deploy-${{ inputs.target_environment }}
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Deploy tested backend revision to VPS
+    name: Deploy ${{ inputs.target_environment }} backend
     runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
     steps:
-      - name: Deploy through SSH
+      - name: Deploy exact tested revision through SSH
         uses: appleboy/ssh-action@v1
         env:
           DEPLOY_SHA: ${{ github.sha }}
           DEPLOY_BRANCH: ${{ github.ref_name }}
+          TARGET_ENV: ${{ inputs.target_environment }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
-          envs: DEPLOY_SHA,DEPLOY_BRANCH
-          command_timeout: 15m
+          envs: DEPLOY_SHA,DEPLOY_BRANCH,TARGET_ENV
+          command_timeout: 20m
           script: |
             set -eu
             cd /root/Project1
 
-            # Coordinate deployment with environment switching.
-            mkdir -p /run/lock
-            exec 9>/run/lock/project1-switch-env.lock
-            flock -n 9 || {
-              echo "Another environment operation is running."
-              echo "Deployment stopped; retry after it finishes."
-              exit 1
-            }
-
-            CONFIG_DIR="/root/project1-config"
-            STATE_DIR="$CONFIG_DIR/deployment"
-            IMAGE_TAG="football-booking-backend:staging"
-            ROLLBACK_TAG="football-booking-backend:rollback-previous"
-
-            # Preserve the VPS environment configuration.
-            [ -f .env ] || {
-              echo "Missing VPS .env; deployment stopped."
-              exit 1
-            }
-
-            mkdir -p "$CONFIG_DIR" "$STATE_DIR"
-            chmod 700 "$CONFIG_DIR" "$STATE_DIR"
-            install -m 600 .env "$CONFIG_DIR/.env"
-
-            # Refuse to overwrite unrelated tracked modifications.
-            git diff --quiet -- . ':(exclude).env' || {
-              echo "Tracked files modified on VPS; deployment stopped."
-              exit 1
-            }
-
-            git diff --cached --quiet -- . ':(exclude).env' || {
-              echo "Staged changes exist on VPS; deployment stopped."
-              exit 1
-            }
-
-            case "$DEPLOY_BRANCH" in
-              develop) ;;
+            case "$TARGET_ENV:$DEPLOY_BRANCH" in
+              staging:develop)
+                SERVICE="backend-staging"
+                CONTAINER="backend-staging"
+                ENV_FILE=".env.staging"
+                EXPECTED_DB="FootballBookingDB"
+                HOST_PORT="5000"
+                IMAGE_TAG="football-booking-backend:staging-$DEPLOY_SHA"
+                ROLLBACK_TAG="football-booking-backend:staging-rollback"
+                STATE_FILE="/root/project1-config/deployment/staging-state"
+                ;;
+              production:main)
+                SERVICE="backend-production"
+                CONTAINER="backend-production"
+                ENV_FILE=".env.production"
+                EXPECTED_DB="FootballBookingDB_Production"
+                HOST_PORT="5001"
+                IMAGE_TAG="football-booking-backend:production-$DEPLOY_SHA"
+                ROLLBACK_TAG="football-booking-backend:production-rollback"
+                STATE_FILE="/root/project1-config/deployment/production-state"
+                ;;
               *)
-                echo "Unexpected deployment branch: $DEPLOY_BRANCH"
+                echo "Rejected environment/branch combination: $TARGET_ENV:$DEPLOY_BRANCH"
                 exit 1
                 ;;
             esac
 
-            if ! printf '%s\n' "$DEPLOY_SHA" | grep -Eq '^([a-f0-9]{40}|[a-f0-9]{64})$'; then
-              echo "Invalid DEPLOY_SHA format."
+            printf '%s\n' "$DEPLOY_SHA" | grep -Eq '^[a-f0-9]{40}$' || {
+              echo "Invalid deployment SHA."
               exit 1
-            fi
+            }
 
-            # Fetch and deploy only the exact revision tested by CI.
-            git fetch origin "+refs/heads/$DEPLOY_BRANCH:refs/remotes/origin/$DEPLOY_BRANCH"
+            mkdir -p /run/lock /root/project1-config/deployment
+            exec 9>/run/lock/project1-backend-deploy.lock
+            flock -n 9 || {
+              echo "Another backend deployment is running."
+              exit 1
+            }
 
-            latest_sha=$(git rev-parse "refs/remotes/origin/$DEPLOY_BRANCH")
+            [ -f "$ENV_FILE" ] && [ -f /root/project1-config/gmail_token.json ] || {
+              echo "Required environment or Gmail token file is missing."
+              exit 1
+            }
 
+            configured_db=$(awk -F= '$1=="DB_NAME" {count++; value=substr($0,index($0,"=")+1)} END {if(count==1) print value}' "$ENV_FILE")
+            [ "$configured_db" = "$EXPECTED_DB" ] || {
+              echo "Environment file database mismatch."
+              exit 1
+            }
+
+            git fetch origin "$DEPLOY_BRANCH"
+            latest_sha=$(git rev-parse FETCH_HEAD)
             if [ "$latest_sha" != "$DEPLOY_SHA" ]; then
-              echo "Skipping stale deployment."
-              echo "Requested SHA: $DEPLOY_SHA"
-              echo "Latest SHA:    $latest_sha"
+              echo "Skipping stale deployment; branch has advanced."
+              echo "Requested: $DEPLOY_SHA"
+              echo "Latest:    $latest_sha"
               exit 0
             fi
+            git cat-file -e "$DEPLOY_SHA^{commit}"
 
-            git cat-file -e "$DEPLOY_SHA^{commit}" || {
-              echo "Deployment commit does not exist locally."
+            [ "$(docker inspect "$CONTAINER" --format '{{.State.Running}}')" = "true" ] || {
+              echo "Current backend container is not running."
               exit 1
             }
 
-            echo "Checking out tested revision: $DEPLOY_SHA"
-            git checkout -f -B "$DEPLOY_BRANCH" "$DEPLOY_SHA"
-
-            # Restore VPS-only environment configuration after checkout.
-            install -m 600 "$CONFIG_DIR/.env" .env
-
-            # Confirm checkout selected the exact requested revision.
-            checked_out_sha=$(git rev-parse HEAD)
-
-            if [ "$checked_out_sha" != "$DEPLOY_SHA" ]; then
-              echo "ERROR: Checked-out revision does not match DEPLOY_SHA."
-              exit 1
-            fi
-
-            echo "Source revision verified: $checked_out_sha"
-
-            # Read the authoritative atomic deployment state.
-            STATE_FILE="$STATE_DIR/deployment-state"
-
-            [ -f "$STATE_FILE" ] && [ ! -L "$STATE_FILE" ] || {
-              echo "Missing or invalid deployment-state."
+            current_image=$(docker inspect "$CONTAINER" --format '{{.Image}}')
+            current_db=$(docker exec "$CONTAINER" printenv DB_NAME)
+            [ "$current_db" = "$EXPECTED_DB" ] || {
+              echo "Running container is connected to an unexpected database."
               exit 1
             }
 
-            # Match the state format shared by project1-switch-env and project1-rollback.
-            awk -F= '
-              NF != 2 { exit 1 }
-              $1 !~ /^(CURRENT_IMAGE|CURRENT_COMMIT|CURRENT_ENV|PREVIOUS_IMAGE|PREVIOUS_COMMIT|PREVIOUS_ENV)$/ { exit 1 }
-              seen[$1]++ { exit 1 }
-              END {
-                if (NR != 6) exit 1
-                if (seen["CURRENT_IMAGE"] != 1 ||
-                    seen["CURRENT_COMMIT"] != 1 ||
-                    seen["CURRENT_ENV"] != 1 ||
-                    seen["PREVIOUS_IMAGE"] != 1 ||
-                    seen["PREVIOUS_COMMIT"] != 1 ||
-                    seen["PREVIOUS_ENV"] != 1) exit 1
-              }
-            ' "$STATE_FILE" || {
-              echo "Invalid deployment-state format."
-              exit 1
-            }
-
-            state_value() {
-              awk -F= -v key="$1" '
-                $1 == key {
-                  value = substr($0, index($0, "=") + 1)
-                  found++
-                }
-                END {
-                  if (found != 1) exit 1
-                  print value
-                }
-              ' "$STATE_FILE"
-            }
-
-            recorded_image=$(state_value CURRENT_IMAGE)
-            previous_commit=$(state_value CURRENT_COMMIT)
-            current_env=$(state_value CURRENT_ENV)
-            recorded_previous_image=$(state_value PREVIOUS_IMAGE)
-            recorded_previous_commit=$(state_value PREVIOUS_COMMIT)
-            recorded_previous_env=$(state_value PREVIOUS_ENV)
-
-            if [ "$current_env" != "staging" ]; then
-              echo "Deployment stopped: deployment-state does not mark Staging as active."
-              exit 1
-            fi
-
-            # Validate image IDs and commit identifiers.
-            if ! printf '%s\n' "$recorded_image" | grep -Eq '^sha256:[a-f0-9]{64}$'; then
-              echo "Invalid CURRENT_IMAGE in deployment-state."
-              exit 1
-            fi
-
-            if ! printf '%s\n' "$previous_commit" | grep -Eq '^(unknown-baseline|[a-f0-9]{40}|[a-f0-9]{64})$'; then
-              echo "Invalid CURRENT_COMMIT in deployment-state."
-              exit 1
-            fi
-
-            if [ "$recorded_previous_image" = "NONE" ] &&
-               [ "$recorded_previous_commit" = "NONE" ] &&
-               [ "$recorded_previous_env" = "NONE" ]; then
-              :
-            elif printf '%s\n' "$recorded_previous_image" | grep -Eq '^sha256:[a-f0-9]{64}$' &&
-                 printf '%s\n' "$recorded_previous_commit" | grep -Eq '^(unknown-baseline|[a-f0-9]{40}|[a-f0-9]{64})$' &&
-                 printf '%s\n' "$recorded_previous_env" | grep -Eq '^(staging|rc|production)$'; then
-              :
-            else
-              echo "Invalid PREVIOUS_IMAGE/PREVIOUS_COMMIT/PREVIOUS_ENV combination."
-              exit 1
-            fi
-
-            # Identify and verify the currently running backend image.
-            previous_image=$(docker inspect backend --format='{{.Image}}')
-
-            [ -n "$previous_image" ] || {
-              echo "Cannot identify current backend image."
-              exit 1
-            }
-
-            if [ "$recorded_image" != "$previous_image" ]; then
-              echo "Deployment state does not match running container."
-              echo "Recorded: $recorded_image"
-              echo "Running:  $previous_image"
-              exit 1
-            fi
-
-            # Validate the active Staging database configuration.
-            db_name_count=$(grep -c '^DB_NAME=' .env || true)
-
-            if [ "$db_name_count" != "1" ]; then
-              echo "Invalid .env: expected exactly one DB_NAME entry."
-              exit 1
-            fi
-
-            active_db=$(grep '^DB_NAME=' .env | cut -d= -f2-)
-
-            if [ "$active_db" != "FootballBookingDB" ]; then
-              echo "Deployment stopped: Staging database is not active."
-              exit 1
-            fi
-
-            # Validate Compose configuration before building.
-            docker compose config --quiet
-
-            # Verify the previous image exists before building.
-            docker image inspect "$previous_image" >/dev/null
-            docker image tag "$previous_image" "$ROLLBACK_TAG"
-
-            # Verify actual SQL Server connection and database status.
-            check_runtime_database() {
-              local expected="$1"
-
-              docker exec -i backend python - "$expected" <<'PY_DB_CHECK'
-            import os
+            check_database() {
+              docker exec -i "$CONTAINER" python - "$EXPECTED_DB" <<'PY_DB_CHECK'
             import sys
             from database import get_connection
 
             expected = sys.argv[1]
-            configured = os.getenv("DB_NAME")
-
-            print("Container DB_NAME:", configured)
-
-            if configured != expected:
-                print("ERROR: Container DB_NAME mismatch.")
-                sys.exit(1)
-
             conn = None
-
             try:
                 conn = get_connection()
-
                 if conn is None:
-                    print("ERROR: Cannot connect to database.")
-                    sys.exit(1)
-
+                    raise RuntimeError("Database connection unavailable")
                 cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT DB_NAME(), state_desc
-                    FROM sys.databases
-                    WHERE name = DB_NAME()
-                """)
-
+                cursor.execute("SELECT DB_NAME(), state_desc FROM sys.databases WHERE name = DB_NAME()")
                 row = cursor.fetchone()
-
-                if row is None:
-                    print("ERROR: Connected database was not found.")
-                    sys.exit(1)
-
-                actual_db, status = row[0], row[1]
-
-                print("Connected database:", actual_db)
-                print("Database status:", status)
-
-                if actual_db != expected or status != "ONLINE":
-                    print("ERROR: Database validation failed.")
-                    sys.exit(1)
-
-            except Exception as exc:
-                print("ERROR: Database verification failed:", str(exc))
-                sys.exit(1)
-
+                if row is None or row[0] != expected or row[1] != "ONLINE":
+                    raise RuntimeError("Connected database is not ONLINE or has the wrong name")
+                print("Database check passed:", row[0], row[1])
             finally:
                 if conn is not None:
                     conn.close()
@@ -285,66 +134,81 @@ jobs:
             }
 
             verify_backend() {
-              local runtime_db
-
-              runtime_db=$(docker exec backend printenv DB_NAME 2>/dev/null || true)
-
-              [ "$runtime_db" = "$active_db" ] || return 1
-
-              curl --fail --silent --max-time 5 \
-                http://127.0.0.1:5000/ready >/dev/null || return 1
-
-              check_runtime_database "$active_db"
+              [ "$(docker exec "$CONTAINER" printenv DB_NAME 2>/dev/null || true)" = "$EXPECTED_DB" ] || return 1
+              curl --fail --silent --max-time 8 "http://127.0.0.1:$HOST_PORT/ready" >/dev/null || return 1
+              check_database
             }
 
-            # Verify the existing backend before changing anything.
-            echo "Verifying current Staging backend..."
+            echo "Verifying current $TARGET_ENV backend before deployment..."
             verify_backend || {
-              echo "Current backend is unhealthy or connected to the wrong database."
-              echo "Deployment stopped before building a new image."
+              echo "Current backend is unhealthy; refusing deployment."
               exit 1
             }
 
-            # Build the backend image.
-            echo "Building backend image..."
-            docker compose build backend
+            previous_commit="unknown-baseline"
+            if [ -f "$STATE_FILE" ]; then
+              state_image=$(awk -F= '$1=="CURRENT_IMAGE"{print substr($0,index($0,"=")+1)}' "$STATE_FILE")
+              previous_commit=$(awk -F= '$1=="CURRENT_COMMIT"{print substr($0,index($0,"=")+1)}' "$STATE_FILE")
+              [ "$state_image" = "$current_image" ] || {
+                echo "Environment deployment state does not match the running container."
+                exit 1
+              }
+            fi
+
+            BUILD_DIR=$(mktemp -d /tmp/project1-backend-build.XXXXXX)
+            OVERRIDE_FILE=$(mktemp /tmp/project1-compose-override.XXXXXX.yml)
+            cleanup() {
+              rm -rf "$BUILD_DIR"
+              rm -f "$OVERRIDE_FILE"
+            }
+            trap cleanup EXIT
+
+            mkdir -p "$BUILD_DIR"
+            git archive "$DEPLOY_SHA" backend | tar -x -C "$BUILD_DIR"
+
+            echo "Building immutable image $IMAGE_TAG..."
+            docker build --pull=false --tag "$IMAGE_TAG" "$BUILD_DIR/backend"
+            docker image tag "$current_image" "$ROLLBACK_TAG"
+
+            write_override() {
+              cat > "$OVERRIDE_FILE" <<EOF
+            services:
+              $SERVICE:
+                image: $1
+            EOF
+            }
+
+            compose_up() {
+              docker compose -f docker-compose.yml -f "$OVERRIDE_FILE" up \
+                --detach --no-deps --force-recreate --no-build "$SERVICE"
+            }
 
             rollback() {
-              echo "Restoring previous backend image..."
-
-              if ! docker image tag "$previous_image" "$IMAGE_TAG"; then
-                echo "CRITICAL: Cannot restore previous image tag."
+              echo "Attempting automatic $TARGET_ENV rollback..."
+              write_override "$ROLLBACK_TAG"
+              if ! compose_up; then
+                echo "CRITICAL: Compose could not restore the previous backend."
                 return 1
               fi
-
-              if ! docker compose up -d --no-deps --force-recreate backend; then
-                echo "CRITICAL: Cannot recreate previous backend."
-                return 1
-              fi
-
-              for i in $(seq 1 18); do
+              for attempt in $(seq 1 18); do
                 if verify_backend; then
                   echo "Previous backend restored and verified."
                   return 0
                 fi
                 sleep 5
               done
-
               echo "CRITICAL: Previous backend did not recover."
               return 1
             }
 
-            # Deploy the newly built image.
-            if ! docker compose up -d --no-deps --force-recreate backend; then
-              echo "Deployment failed."
+            write_override "$IMAGE_TAG"
+            if ! compose_up; then
               rollback || echo "MANUAL INTERVENTION REQUIRED."
               exit 1
             fi
 
-            # Wait for readiness and verify the real database connection.
             ready=0
-
-            for i in $(seq 1 18); do
+            for attempt in $(seq 1 18); do
               if verify_backend; then
                 ready=1
                 break
@@ -353,68 +217,25 @@ jobs:
             done
 
             if [ "$ready" -ne 1 ]; then
-              echo "Backend or database verification failed."
-              docker compose logs --tail=50 backend || true
+              docker compose -f docker-compose.yml -f "$OVERRIDE_FILE" logs --tail=60 "$SERVICE" || true
               rollback || echo "MANUAL INTERVENTION REQUIRED."
               exit 1
             fi
 
-            # Identify the actual deployed image.
-            new_image=$(docker inspect backend --format='{{.Image}}' 2>/dev/null) || {
-              echo "Cannot identify deployed image."
-              rollback || echo "MANUAL INTERVENTION REQUIRED."
-              exit 1
-            }
-
-            if [ -z "$new_image" ]; then
-              echo "Cannot identify deployed image."
-              rollback || echo "MANUAL INTERVENTION REQUIRED."
-              exit 1
-            fi
-
-            # Atomically replace the complete deployment state.
-            write_deployment_state() {
-              local tmp
-
-              tmp=$(mktemp "$STATE_DIR/.deployment-state.XXXXXX") || return 1
-
-              if ! {
-                printf 'CURRENT_IMAGE=%s\n' "$new_image"
-                printf 'CURRENT_COMMIT=%s\n' "$DEPLOY_SHA"
-                printf 'CURRENT_ENV=%s\n' "$current_env"
-                printf 'PREVIOUS_IMAGE=%s\n' "$previous_image"
-                printf 'PREVIOUS_COMMIT=%s\n' "$previous_commit"
-                printf 'PREVIOUS_ENV=%s\n' "$current_env"
-              } > "$tmp"; then
-                rm -f "$tmp"
-                return 1
-              fi
-
-              if ! chmod 600 "$tmp"; then
-                rm -f "$tmp"
-                return 1
-              fi
-
-              if ! mv -f "$tmp" "$STATE_FILE"; then
-                rm -f "$tmp"
-                return 1
-              fi
-            }
-
-            if ! write_deployment_state; then
-              echo "Failed to update deployment-state."
-              rollback || echo "MANUAL INTERVENTION REQUIRED."
-              exit 1
-            fi
-
-            # The state file is authoritative; this tag is only convenient.
-            docker image tag "$previous_image" "$ROLLBACK_TAG" || \
-              echo "WARNING: Could not update convenience rollback tag."
+            new_image=$(docker inspect "$CONTAINER" --format '{{.Image}}')
+            state_tmp=$(mktemp /root/project1-config/deployment/.state.XXXXXX)
+            {
+              printf 'CURRENT_IMAGE=%s\n' "$new_image"
+              printf 'CURRENT_COMMIT=%s\n' "$DEPLOY_SHA"
+              printf 'PREVIOUS_IMAGE=%s\n' "$current_image"
+              printf 'PREVIOUS_COMMIT=%s\n' "$previous_commit"
+            } > "$state_tmp"
+            chmod 600 "$state_tmp"
+            mv -f "$state_tmp" "$STATE_FILE"
 
             echo "======================================"
-            echo "BACKEND DEPLOYMENT SUCCESS"
-            echo "Previous commit: $previous_commit"
-            echo "Current commit:  $DEPLOY_SHA"
-            echo "Previous image:  $previous_image"
-            echo "Current image:   $new_image"
+            echo "$TARGET_ENV DEPLOYMENT SUCCESS"
+            echo "Commit: $DEPLOY_SHA"
+            echo "Image:  $new_image"
+            echo "State:  $STATE_FILE"
             echo "======================================"
