@@ -101,15 +101,6 @@ jobs:
       target_environment: staging
     secrets: inherit
 
-  deploy-production:
-    name: Deploy Production backend after CI succeeds
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [frontend, backend, docker, api-test]
-    uses: ./.github/workflows/deploy-backend.yml
-    with:
-      target_environment: production
-    secrets: inherit
-
   sync-frontend:
     name: CD frontend after CI succeeds
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
