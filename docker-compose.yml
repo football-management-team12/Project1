@@ -1,18 +1,35 @@
 services:
-  backend:
+  backend-staging:
     build:
       context: ./backend
       dockerfile: Dockerfile
     image: football-booking-backend:staging
-    container_name: backend
+    container_name: backend-staging
     restart: unless-stopped
     ports:
       - "5000:5000"
-    # On the VPS, .env already exists and must remain outside Git.
-    # CI only exercises endpoints that do not require the database.
     env_file:
-      - path: .env
-        required: false
+      - path: .env.staging
+        required: true
+    volumes:
+      - ${PROJECT1_CONFIG_DIR:-/root/project1-config}/gmail_token.json:/run/secrets/gmail_token.json:ro
+    networks:
+      - football-network
+
+  backend-production:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: football-booking-backend:production
+    container_name: backend-production
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    env_file:
+      - path: .env.production
+        required: true
+    volumes:
+      - ${PROJECT1_CONFIG_DIR:-/root/project1-config}/gmail_token.json:/run/secrets/gmail_token.json:ro
     networks:
       - football-network
 
