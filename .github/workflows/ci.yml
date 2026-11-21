@@ -54,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build backend Docker image
-        run: docker compose build backend
+        run: docker build --tag football-booking-backend:ci ./backend
 
   api-test:
     runs-on: ubuntu-latest
@@ -66,10 +66,16 @@ jobs:
           node-version: 20
       - name: Install Newman
         run: npm install -g newman
+      - name: Build isolated CI backend image
+        run: docker build --tag football-booking-backend:ci ./backend
       - name: Start backend without production credentials
         run: |
-          docker network create football-network
-          docker compose up -d --build backend
+          docker run --detach --name backend-ci \
+            --publish 5000:5000 \
+            --env APP_HOST=0.0.0.0 \
+            --env APP_PORT=5000 \
+            --env DEBUG=false \
+            football-booking-backend:ci
       - name: Wait for health endpoint
         run: |
           for i in $(seq 1 30); do
@@ -78,19 +84,21 @@ jobs:
             fi
             sleep 2
           done
-          docker compose logs backend
+          docker logs backend-ci
           exit 1
       - name: Test running API with assertions
         run: newman run tests/postman/staging-smoke.postman_collection.json --env-var baseUrl=http://127.0.0.1:5000
       - name: Stop backend
         if: always()
-        run: docker compose down
+        run: docker rm --force backend-ci || true
 
   deploy-backend:
-    name: CD backend after CI succeeds
+    name: Deploy Staging backend after CI succeeds
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     needs: [frontend, backend, docker, api-test]
     uses: ./.github/workflows/deploy-backend.yml
+    with:
+      target_environment: staging
     secrets: inherit
 
   sync-frontend:
