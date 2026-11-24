@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"FieldID\": 1031,\r
+
+    \  \"BookingDate\": \"2026-11-20\",\r
+
+    \  \r
+
+    \  \"Note\": \"Cần chuẩn bị sẵn 2 bộ áo lưới\",\r
+
+    \  \"StartTime\": \"8:00:00\",\r
+
+    \  \"EndTime\": \"10:00:00\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 8000

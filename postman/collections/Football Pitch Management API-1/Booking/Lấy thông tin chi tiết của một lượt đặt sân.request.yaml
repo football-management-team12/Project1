@@ -31,4 +31,4 @@ auth:
     token: "{{bearerToken}}"
 settings: {}
 examples: ./.resources/Lấy thông tin chi tiết của một lượt đặt sân.resources/examples
-order: 4000
+order: 3000

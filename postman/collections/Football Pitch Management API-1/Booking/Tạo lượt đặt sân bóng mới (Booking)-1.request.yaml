@@ -49,4 +49,4 @@ auth:
     token: "{{bearerToken}}"
 settings: {}
 examples: ./.resources/Tạo lượt đặt sân bóng mới (Booking)-1.resources/examples
-order: 1525
+order: 1000

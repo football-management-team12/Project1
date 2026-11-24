@@ -11,8 +11,8 @@ request:
     type: json
     content: |-
       {
-        "FieldID": 1,
-        "BookingDate": "2026-11-3",
+        "FieldID": 1009,
+        "BookingDate": "2026-11-19",
         "PriceID": 101,
         "Note": "Cần chuẩn bị sẵn 2 bộ áo lưới"
       }

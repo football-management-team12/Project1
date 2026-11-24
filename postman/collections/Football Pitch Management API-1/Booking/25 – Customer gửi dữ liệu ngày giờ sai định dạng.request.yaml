@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"FieldID\": 1007,\r
+
+    \  \"BookingDate\": \"2026/11/20\",\r
+
+    \  \"PriceID\": 101,\r
+
+    \  \"Note\": \"Cần chuẩn bị sẵn 2 bộ áo lưới\"\r
+
+    }"
+order: 14000

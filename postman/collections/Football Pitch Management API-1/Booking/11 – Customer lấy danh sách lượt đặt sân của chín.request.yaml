@@ -1,0 +1,5 @@
+$kind: http-request
+name: 11 – Customer lấy danh sách lượt đặt sân của chính mình
+url: ""
+method: GET
+order: 15000
