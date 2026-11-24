@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/?status=CONFIRMED"
+method: GET
+queryParams:
+  status: CONFIRMED
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 16000

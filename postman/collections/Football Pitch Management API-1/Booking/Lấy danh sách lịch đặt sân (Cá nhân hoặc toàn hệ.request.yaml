@@ -45,4 +45,4 @@ auth:
 settings: {}
 examples: ./.resources/Lấy danh sách lịch đặt sân (Cá nhân hoặc toàn
   hệ.resources/examples
-order: 3000
+order: 2000

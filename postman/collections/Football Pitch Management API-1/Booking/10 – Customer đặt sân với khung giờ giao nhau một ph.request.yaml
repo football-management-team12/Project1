@@ -1,0 +1,26 @@
+$kind: http-request
+name: 10 – Customer đặt sân với khung giờ giao nhau một phần
+url: "{{baseUrl}}/api/bookings/"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"FieldID\": 1009,\r
+
+    \  \"BookingDate\": \"2026-11-20\",\r
+
+    \  \r
+
+    \  \"Note\": \"Cần chuẩn bị sẵn 2 bộ áo lưới\",\r
+
+    \  \"StartTime\": \"9:00:00\",\r
+
+    \  \"EndTime\": \"20:00:00\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 9000

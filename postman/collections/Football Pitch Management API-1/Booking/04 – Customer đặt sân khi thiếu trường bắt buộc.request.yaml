@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/api/bookings/"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \r
+
+    \  \"BookingDate\": \"2026-11-20\",\r
+
+    \  \"Note\": \"Cần chuẩn bị sẵn 2 bộ áo lưới\",\r
+
+    \  \"StartTime\": \"16:00:00\",\r
+
+    \  \"EndTime\": \"18:00\"\r
+
+    }"
+auth:
+  type: inherit
+  credentials:
+    id: 63d8ac8f-e162-46ed-b194-01da62971184
+order: 5000
